@@ -82,6 +82,16 @@ export default function CodeEditor() {
               height="100%"
               defaultLanguage="typescript"
               onMount={handleEditorMount}
+              options={{
+                minimap: {
+                  enabled: false,
+                },
+                padding: {
+                  bottom: 4,
+                  top: 4,
+                },
+                scrollBeyondLastLine: false,
+              }}
               theme="vs-dark"
             />
           </div>
