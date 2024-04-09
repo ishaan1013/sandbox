@@ -11,7 +11,16 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable"
 import { Button } from "../ui/button"
-import { X } from "lucide-react"
+import {
+  ChevronLeft,
+  ChevronRight,
+  RotateCcw,
+  RotateCw,
+  Terminal,
+  TerminalSquare,
+  X,
+} from "lucide-react"
+import Tab from "../ui/tab"
 
 export default function CodeEditor() {
   const editorRef = useRef<null | monaco.editor.IStandaloneCodeEditor>(null)
@@ -65,22 +74,10 @@ export default function CodeEditor() {
           defaultSize={60}
         >
           <div className="h-10 w-full flex gap-2">
-            <Button
-              size="sm"
-              className="min-w-20 justify-between"
-              variant="secondary"
-            >
-              index.html <X className="w-3 h-3" />
-            </Button>
-            <Button
-              size="sm"
-              className="min-w-20 justify-between"
-              variant="secondary"
-            >
-              style.css <X className="w-3 h-3" />
-            </Button>
+            <Tab>index.html</Tab>
+            <Tab>style.css</Tab>
           </div>
-          <div className="grow w-full overflow-hidden rounded-lg">
+          <div className="grow w-full overflow-hidden rounded-md">
             <Editor
               height="100%"
               defaultLanguage="typescript"
@@ -97,16 +94,26 @@ export default function CodeEditor() {
               minSize={20}
               className="p-2 flex flex-col"
             >
-              <div className="h-10 w-full flex gap-2">
-                <Button
-                  size="sm"
-                  className="min-w-20 justify-between"
-                  variant="secondary"
-                >
-                  localhost:3000 <X className="w-3 h-3" />
-                </Button>
+              <div className="h-10 select-none w-full flex gap-2">
+                <div className="h-8 rounded-md px-3 text-xs bg-secondary flex items-center w-full justify-between">
+                  Preview
+                  <div className="flex space-x-1 translate-x-1">
+                    <div className="p-0.5 h-5 w-5 ml-0.5 flex items-center justify-center transition-colors bg-transparent hover:bg-muted-foreground/25 rounded-sm">
+                      <TerminalSquare className="w-4 h-4" />
+                    </div>
+                    <div className="p-0.5 h-5 w-5 ml-0.5 flex items-center justify-center transition-colors bg-transparent hover:bg-muted-foreground/25 rounded-sm">
+                      <ChevronLeft className="w-4 h-4" />
+                    </div>
+                    <div className="p-0.5 h-5 w-5 ml-0.5 flex items-center justify-center transition-colors bg-transparent hover:bg-muted-foreground/25 rounded-sm">
+                      <ChevronRight className="w-4 h-4" />
+                    </div>
+                    <div className="p-0.5 h-5 w-5 ml-0.5 flex items-center justify-center transition-colors bg-transparent hover:bg-muted-foreground/25 rounded-sm">
+                      <RotateCw className="w-3 h-3" />
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="w-full grow rounded-lg bg-foreground"></div>
+              <div className="w-full grow rounded-md bg-foreground"></div>
             </ResizablePanel>
             <ResizableHandle />
             <ResizablePanel
@@ -115,15 +122,10 @@ export default function CodeEditor() {
               className="p-2 flex flex-col"
             >
               <div className="h-10 w-full flex gap-2">
-                <Button
-                  size="sm"
-                  className="min-w-20 justify-between"
-                  variant="secondary"
-                >
-                  Node <X className="w-3 h-3" />
-                </Button>
+                <Tab>Node</Tab>
+                <Tab>Console</Tab>
               </div>
-              <div className="w-full grow rounded-lg bg-secondary"></div>
+              <div className="w-full grow rounded-md bg-secondary"></div>
             </ResizablePanel>
           </ResizablePanelGroup>
         </ResizablePanel>
