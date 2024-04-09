@@ -21,6 +21,7 @@ import {
   X,
 } from "lucide-react"
 import Tab from "../ui/tab"
+import Sidebar from "./sidebar"
 
 export default function CodeEditor() {
   const editorRef = useRef<null | monaco.editor.IStandaloneCodeEditor>(null)
@@ -65,7 +66,7 @@ export default function CodeEditor() {
 
   return (
     <>
-      <div className="h-full w-52"></div>
+      <Sidebar />
       <ResizablePanelGroup direction="horizontal">
         <ResizablePanel
           className="p-2 flex flex-col"
@@ -108,16 +109,16 @@ export default function CodeEditor() {
                 <div className="h-8 rounded-md px-3 text-xs bg-secondary flex items-center w-full justify-between">
                   Preview
                   <div className="flex space-x-1 translate-x-1">
-                    <div className="p-0.5 h-5 w-5 ml-0.5 flex items-center justify-center transition-colors bg-transparent hover:bg-muted-foreground/25 rounded-sm">
+                    <div className="p-0.5 h-5 w-5 ml-0.5 flex items-center justify-center transition-colors bg-transparent hover:bg-muted-foreground/25 cursor-pointer rounded-sm">
                       <TerminalSquare className="w-4 h-4" />
                     </div>
-                    <div className="p-0.5 h-5 w-5 ml-0.5 flex items-center justify-center transition-colors bg-transparent hover:bg-muted-foreground/25 rounded-sm">
+                    <div className="p-0.5 h-5 w-5 ml-0.5 flex items-center justify-center transition-colors bg-transparent hover:bg-muted-foreground/25 cursor-pointer rounded-sm">
                       <ChevronLeft className="w-4 h-4" />
                     </div>
-                    <div className="p-0.5 h-5 w-5 ml-0.5 flex items-center justify-center transition-colors bg-transparent hover:bg-muted-foreground/25 rounded-sm">
+                    <div className="p-0.5 h-5 w-5 ml-0.5 flex items-center justify-center transition-colors bg-transparent hover:bg-muted-foreground/25 cursor-pointer rounded-sm">
                       <ChevronRight className="w-4 h-4" />
                     </div>
-                    <div className="p-0.5 h-5 w-5 ml-0.5 flex items-center justify-center transition-colors bg-transparent hover:bg-muted-foreground/25 rounded-sm">
+                    <div className="p-0.5 h-5 w-5 ml-0.5 flex items-center justify-center transition-colors bg-transparent hover:bg-muted-foreground/25 cursor-pointer rounded-sm">
                       <RotateCw className="w-3 h-3" />
                     </div>
                   </div>

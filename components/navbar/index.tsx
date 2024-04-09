@@ -12,7 +12,7 @@ export default function Navbar() {
         </button>
         <div className="text-sm font-medium flex items-center">
           My React Project{" "}
-          <div className="h-7 w-7 ml-1 flex items-center justify-center transition-colors bg-transparent hover:bg-muted-foreground/25 rounded-md">
+          <div className="h-7 w-7 ml-1 flex items-center justify-center transition-colors bg-transparent hover:bg-muted-foreground/25 cursor-pointer rounded-md">
             <Pencil className="w-4 h-4" />
           </div>
         </div>

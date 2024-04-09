@@ -22,7 +22,7 @@ export default function Tab({
       {children}
       <div
         onClick={onClose ?? undefined}
-        className="h-5 w-5 ml-0.5 flex items-center justify-center translate-x-1 transition-colors bg-transparent hover:bg-muted-foreground/25 rounded-sm"
+        className="h-5 w-5 ml-0.5 flex items-center justify-center translate-x-1 transition-colors bg-transparent hover:bg-muted-foreground/25 cursor-pointer rounded-sm"
       >
         <X className="w-3 h-3" />
       </div>
