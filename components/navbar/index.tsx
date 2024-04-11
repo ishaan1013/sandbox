@@ -2,6 +2,7 @@ import Image from "next/image"
 import Logo from "@/assets/logo.svg"
 import { Input } from "../ui/input"
 import { Pencil } from "lucide-react"
+import { UserButton } from "@clerk/nextjs"
 
 export default function Navbar() {
   return (
@@ -12,11 +13,12 @@ export default function Navbar() {
         </button>
         <div className="text-sm font-medium flex items-center">
           My React Project{" "}
-          <div className="h-7 w-7 ml-1 flex items-center justify-center transition-colors bg-transparent hover:bg-muted-foreground/25 cursor-pointer rounded-md">
+          <div className="h-7 w-7 ml-2 flex items-center justify-center transition-colors bg-transparent hover:bg-muted-foreground/25 cursor-pointer rounded-md">
             <Pencil className="w-4 h-4" />
           </div>
         </div>
       </div>
+      <UserButton />
     </div>
   )
 }
