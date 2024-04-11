@@ -6,6 +6,8 @@ import {
   FolderPlus,
   Search,
 } from "lucide-react"
+import Image from "next/image"
+import { getIconForFile } from "vscode-icons-js"
 
 export default function Sidebar() {
   return (
@@ -26,8 +28,32 @@ export default function Sidebar() {
       </div>
       <div className="w-full mt-2">
         <div className="w-full flex items-center h-6 transition-colors hover:text-muted-foreground cursor-pointer">
-          <File className="w-4 h-4 mr-2" />
+          {getIconForFile("index.html") ? (
+            <Image
+              src={`/icons/${getIconForFile("index.html")}`}
+              alt="File Icon"
+              width={16}
+              height={16}
+              className="mr-2"
+            />
+          ) : (
+            <File className="w-4 h-4 mr-2" />
+          )}
           index.html
+        </div>
+        <div className="w-full flex items-center h-6 transition-colors hover:text-muted-foreground cursor-pointer">
+          {getIconForFile("index.html") ? (
+            <Image
+              src={`/icons/${getIconForFile("style.css")}`}
+              alt="File Icon"
+              width={16}
+              height={16}
+              className="mr-2"
+            />
+          ) : (
+            <File className="w-4 h-4 mr-2" />
+          )}
+          style.css
         </div>
         <div className="w-full flex items-center h-6 transition-colors hover:text-muted-foreground cursor-pointer">
           <Folder className="w-4 h-4 mr-2" />

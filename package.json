@@ -24,7 +24,8 @@
     "react-dom": "^18",
     "react-resizable-panels": "^2.0.16",
     "tailwind-merge": "^2.2.2",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "vscode-icons-js": "^11.6.1"
   },
   "devDependencies": {
     "@types/node": "^20",
