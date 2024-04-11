@@ -64,7 +64,7 @@ const data: (TFile | TFolder)[] = [
 
 export default function Sidebar() {
   return (
-    <div className="h-full w-56 flex flex-col text-sm items-start p-2">
+    <div className="h-full w-56 select-none flex flex-col text-sm items-start p-2">
       <div className="flex w-full items-center justify-between h-8 mb-1 ">
         <div className="text-muted-foreground">EXPLORER</div>
         <div className="flex space-x-1">
