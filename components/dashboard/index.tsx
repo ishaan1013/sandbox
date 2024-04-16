@@ -4,9 +4,11 @@ import CustomButton from "@/components/ui/customButton"
 import { Button } from "@/components/ui/button"
 import {
   Bolt,
+  Clock,
   Code2,
   FolderDot,
   FolderOpenDot,
+  Globe,
   HelpCircle,
   Plus,
   Settings,
@@ -14,6 +16,8 @@ import {
   Users,
 } from "lucide-react"
 import { useState } from "react"
+import { Card } from "../ui/card"
+import ProjectCard from "./projectCard"
 
 type TScreen = "projects" | "shared" | "settings" | "search"
 
@@ -27,7 +31,7 @@ export default function Dashboard() {
 
   return (
     <div className="flex grow w-full">
-      <div className="w-56 border-r border-border p-4 justify-between flex flex-col">
+      <div className="w-56 shrink-0 border-r border-border p-4 justify-between flex flex-col">
         <div className="flex flex-col">
           <CustomButton className="mb-4">
             <Plus className="w-4 h-4 mr-2" />
@@ -75,10 +79,20 @@ export default function Dashboard() {
           </Button>
         </div>
       </div>
-      <div className="grow flex flex-col items-start p-4">
-        <h1 className="text-2xl font-medium text-center">
-          A Collaborative, AI-Powered, Auto-Scaling Code Editor
-        </h1>
+      <div className="grow p-4 grid lg:grid-cols-4 xl:grid-cols-5 md:grid-cols-3 gap-4">
+        <ProjectCard>
+          <div className="font-medium flex items-center whitespace-nowrap w-full text-ellipsis overflow-hidden">
+            React Project 1
+          </div>
+          <div className="flex flex-col text-muted-foreground space-y-0.5 text-sm">
+            <div className="flex items-center">
+              <Globe className="w-3 h-3 mr-2" /> Public
+            </div>
+            <div className="flex items-center">
+              <Clock className="w-3 h-3 mr-2" /> 3d ago
+            </div>
+          </div>
+        </ProjectCard>
       </div>
     </div>
   )
