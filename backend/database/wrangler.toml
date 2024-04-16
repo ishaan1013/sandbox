@@ -1,0 +1,10 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "database"
+main = "src/index.ts"
+compatibility_date = "2024-04-05"
+compatibility_flags = ["nodejs_compat"]
+
+[[d1_databases]]
+binding = "DB"                                       # available in your Worker on env.DB
+database_name = "d1-sandbox"
+database_id = "0be4a930-1561-4d26-94f6-a8ead22c6b4d"
