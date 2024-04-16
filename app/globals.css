@@ -76,13 +76,13 @@
 }
 
 .gradient-button-bg {
-  background: radial-gradient(circle at top, #a5b4fc, #3730a3); /* violet 300 -> 800 */
+  background: radial-gradient(circle at top, #a5b4fc -25%, #3730a3 50%); /* violet 300 -> 800 */
 }
 
 .gradient-button {
-  background: radial-gradient(circle at bottom, #312e81 0%, hsl(0 0% 3.9%) 100%); /* violet 900 -> bg */
+  background: radial-gradient(circle at bottom, #312e81 0%, hsl(0 0% 3.9%) 80%); /* violet 900 -> bg */
 }
 
 .gradient-button-bg > div:hover {
-  background: radial-gradient(circle at bottom, #312e81 0%, hsl(0 0% 3.9%) 150%); /* violet 900 -> bg */
+  background: radial-gradient(circle at bottom, #312e81 0%, hsl(0 0% 3.9%) 130%); /* violet 900 -> bg */
 }

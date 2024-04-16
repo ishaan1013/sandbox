@@ -1,6 +1,6 @@
 "use client"
 
-import Navbar from "@/components/navbar"
+import Navbar from "@/components/editor/navbar"
 import { useClerk } from "@clerk/nextjs"
 import dynamic from "next/dynamic"
 
