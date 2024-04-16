@@ -1,15 +1,23 @@
 import Image from "next/image"
 import Logo from "@/assets/logo.svg"
 import XLogo from "@/assets/x.svg"
-import { Button } from "@/components/ui/button"
+import Button from "@/components/ui/customButton"
 import { ChevronRight } from "lucide-react"
 import Link from "next/link"
+import { currentUser } from "@clerk/nextjs"
+import { redirect } from "next/navigation"
 
-export default function Home() {
+export default async function Home() {
+  const user = await currentUser()
+
+  if (user) {
+    redirect("/dashboard")
+  }
+
   return (
     <div className="w-screen h-screen flex justify-center overflow-hidden overscroll-none">
       <div className="w-full max-w-screen-md px-8 flex flex-col items-center">
-        {/* <div className="w-full flex items-center justify-between py-8">
+        <div className="w-full flex items-center justify-between py-8">
           <div className="flex items-center font-medium">
             <Image
               src={Logo}
@@ -21,11 +29,11 @@ export default function Home() {
           </div>
           <div className="flex items-center space-x-4">
             <a href="https://www.x.com/ishaandey_" target="_blank">
-              <Image src={XLogo} alt="X Logo" width={20} height={20} />
+              <Image src={XLogo} alt="X Logo" width={18} height={18} />
             </a>
           </div>
-        </div> */}
-        <h1 className="text-2xl font-medium text-center mt-32">
+        </div>
+        <h1 className="text-2xl font-medium text-center mt-16">
           A Collaborative, AI-Powered, Auto-Scaling Code Editor
         </h1>
         <div className="text-muted-foreground mt-4 text-center ">
