@@ -4,6 +4,7 @@ export type User = {
   id: string
   name: string
   email: string
+  sandbox: Sandbox[]
 }
 
 export type Sandbox = {

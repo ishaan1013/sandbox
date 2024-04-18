@@ -21,38 +21,11 @@ export default {
 
 		const db = drizzle(env.DB, { schema });
 
-		if (path.startsWith("/api/user")) {
-			if (path === "/api/user") {
-				if (method === "GET") {
-					const params = url.searchParams;
-
-					if (params.has("id")) {
-						const id = params.get("id") as string;
-						const res = await db.select().from(user).where(eq(user.id, id)).get();
-						console.log(res);
-						return json(res ?? {});
-					} else {
-						const res = await db.select().from(user).all();
-						return json(res ?? {});
-					}
-				} else if (method === "POST") {
-					const userSchema = z.object({
-						id: z.string(),
-						name: z.string(),
-						email: z.string().email(),
-					});
-
-					const body = await request.json();
-					const { id, name, email } = userSchema.parse(body);
-
-					const res = await db.insert(user).values({ id, name, email }).returning().get();
-					return json({ res });
-				} else {
-					return new Response("Method Not Allowed", { status: 405 });
-				}
-			} else if (path === "/api/user/sandbox") {
+		if (path === "/api/user") {
+			if (method === "GET") {
 				const params = url.searchParams;
-				if (method === "GET" && params.has("id")) {
+
+				if (params.has("id")) {
 					const id = params.get("id") as string;
 					const res = await db.query.user.findFirst({
 						where: (user, { eq }) => eq(user.id, id),
@@ -62,10 +35,23 @@ export default {
 					});
 					return json(res ?? {});
 				} else {
-					return new Response("Method Not Allowed", { status: 405 });
+					const res = await db.select().from(user).all();
+					return json(res ?? {});
 				}
+			} else if (method === "POST") {
+				const userSchema = z.object({
+					id: z.string(),
+					name: z.string(),
+					email: z.string().email(),
+				});
+
+				const body = await request.json();
+				const { id, name, email } = userSchema.parse(body);
+
+				const res = await db.insert(user).values({ id, name, email }).returning().get();
+				return json({ res });
 			} else {
-				return new Response("Not Found", { status: 404 });
+				return new Response("Method Not Allowed", { status: 405 });
 			}
 		} else return new Response("Not Found", { status: 404 });
 	},
