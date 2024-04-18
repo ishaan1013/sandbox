@@ -27,6 +27,8 @@ export default async function AppAuthLayout({
         email: user.emailAddresses[0].emailAddress,
       }),
     })
+
+    console.log(res)
   } else {
     // user already exists in db
   }

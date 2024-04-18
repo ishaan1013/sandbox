@@ -1,0 +1,1 @@
+ALTER TABLE `sandbox` RENAME COLUMN `text` TO `type`;

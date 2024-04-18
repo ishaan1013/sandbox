@@ -18,10 +18,11 @@ import {
 import { useState } from "react"
 import { Card } from "../ui/card"
 import ProjectCard from "./projectCard"
+import { Sandbox } from "@/lib/types"
 
 type TScreen = "projects" | "shared" | "settings" | "search"
 
-export default function Dashboard() {
+export default function Dashboard({ sandboxes }: { sandboxes: Sandbox[] }) {
   const [screen, setScreen] = useState<TScreen>("projects")
 
   const activeScreen = (s: TScreen) => {
@@ -80,19 +81,21 @@ export default function Dashboard() {
         </div>
       </div>
       <div className="grow p-4 grid lg:grid-cols-4 xl:grid-cols-5 md:grid-cols-3 gap-4">
-        <ProjectCard>
-          <div className="font-medium flex items-center whitespace-nowrap w-full text-ellipsis overflow-hidden">
-            React Project 1
-          </div>
-          <div className="flex flex-col text-muted-foreground space-y-0.5 text-sm">
-            <div className="flex items-center">
-              <Globe className="w-3 h-3 mr-2" /> Public
+        {sandboxes.map((sandbox) => (
+          <ProjectCard key={sandbox.id}>
+            <div className="font-medium flex items-center whitespace-nowrap w-full text-ellipsis overflow-hidden">
+              {sandbox.name}
             </div>
-            <div className="flex items-center">
-              <Clock className="w-3 h-3 mr-2" /> 3d ago
+            <div className="flex flex-col text-muted-foreground space-y-0.5 text-sm">
+              <div className="flex items-center">
+                <Globe className="w-3 h-3 mr-2" /> Public
+              </div>
+              <div className="flex items-center">
+                <Clock className="w-3 h-3 mr-2" /> 3d ago
+              </div>
             </div>
-          </div>
-        </ProjectCard>
+          </ProjectCard>
+        ))}
       </div>
     </div>
   )
