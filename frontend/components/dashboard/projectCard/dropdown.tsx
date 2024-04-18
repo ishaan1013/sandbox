@@ -15,7 +15,13 @@ import {
 export default function ProjectCardDropdown({ sandbox }: { sandbox: Sandbox }) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="h-6 w-6 flex items-center justify-center transition-colors bg-transparent hover:bg-muted-foreground/25 rounded-sm">
+      <DropdownMenuTrigger
+        onClick={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+        }}
+        className="h-6 w-6 flex items-center justify-center transition-colors bg-transparent hover:bg-muted-foreground/25 rounded-sm"
+      >
         <Ellipsis className="w-4 h-4" />
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-40">
