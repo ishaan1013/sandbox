@@ -5,10 +5,12 @@ import { Button } from "./button"
 
 export default function Tab({
   children,
+  selected,
   onClick,
   onClose,
 }: {
   children: React.ReactNode
+  selected?: boolean
   onClick?: () => void
   onClose?: () => void
 }) {
@@ -16,8 +18,10 @@ export default function Tab({
     <Button
       onClick={onClick ?? undefined}
       size="sm"
-      variant="secondary"
-      className="group select-none"
+      variant={"secondary"}
+      className={`group select-none ${
+        selected ? "bg-neutral-700 hover:bg-neutral-600" : ""
+      }`}
     >
       {children}
       <div

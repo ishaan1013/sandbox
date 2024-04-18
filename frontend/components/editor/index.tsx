@@ -70,7 +70,7 @@ export default function CodeEditor() {
           defaultSize={60}
         >
           <div className="h-10 w-full flex gap-2">
-            <Tab>index.html</Tab>
+            <Tab selected>index.html</Tab>
             <Tab>style.css</Tab>
           </div>
           <div className="grow w-full overflow-hidden rounded-md">
@@ -130,7 +130,7 @@ export default function CodeEditor() {
               className="p-2 flex flex-col"
             >
               <div className="h-10 w-full flex gap-2">
-                <Tab>Node</Tab>
+                <Tab selected>Node</Tab>
                 <Tab>Console</Tab>
               </div>
               <div className="w-full grow rounded-md bg-secondary"></div>
