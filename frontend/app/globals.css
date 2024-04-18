@@ -57,7 +57,7 @@
     --accent: 0 0% 14.9%;
     --accent-foreground: 0 0% 98%;
  
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 62.8% 50%;
     --destructive-foreground: 0 0% 98%;
  
     --border: 0 0% 14.9%;
@@ -76,7 +76,7 @@
 }
 
 .gradient-button-bg {
-  background: radial-gradient(circle at top, #a5b4fc -25%, #3730a3 50%); /* violet 300 -> 800 */
+  background: radial-gradient(circle at top, #a5b4fc 0%, #3730a3 50%); /* violet 300 -> 800 */
 }
 
 .gradient-button {
@@ -92,9 +92,9 @@
 }
 
 .gradient-project-card {
-  background: radial-gradient(circle at bottom right, #312e81 -50%, hsl(0 0% 3.9%) 50%); /* violet 900 -> bg */
+  background: radial-gradient(circle at bottom right, #312e81 -75%, hsl(0 0% 3.9%) 50%); /* violet 900 -> bg */
 }
 
 .gradient-project-card-bg > div:hover {
-  background: radial-gradient(circle at bottom right, #312e81 -50%, hsl(0 0% 3.9%) 60%); /* violet 900 -> bg */
+  background: radial-gradient(circle at bottom right, #312e81 -75%, hsl(0 0% 3.9%) 60%); /* violet 900 -> bg */
 }

@@ -11,7 +11,7 @@ export default function ProjectCard({
     <div
       tabIndex={0}
       className={cn(
-        "rounded-lg border bg-card text-card-foreground shadow h-48 p-[1px] gradient-project-card-bg cursor-pointer transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        "rounded-lg border bg-card text-card-foreground shadow h-48 p-[1px] gradient-project-card-bg cursor-pointer transition-all focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:ring-2 focus-visible:ring-ring"
       )}
     >
       <div className="rounded-[7px] p-4 h-full flex flex-col justify-between gradient-project-card">

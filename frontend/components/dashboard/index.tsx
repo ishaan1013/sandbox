@@ -3,22 +3,21 @@
 import CustomButton from "@/components/ui/customButton"
 import { Button } from "@/components/ui/button"
 import {
-  Bolt,
   Clock,
   Code2,
+  Ellipsis,
   FolderDot,
-  FolderOpenDot,
   Globe,
   HelpCircle,
   Plus,
   Settings,
-  User,
   Users,
 } from "lucide-react"
 import { useState } from "react"
-import { Card } from "../ui/card"
 import ProjectCard from "./projectCard"
 import { Sandbox } from "@/lib/types"
+import Image from "next/image"
+import ProjectCardDropdown from "./projectCard/dropdown"
 
 type TScreen = "projects" | "shared" | "settings" | "search"
 
@@ -80,23 +79,38 @@ export default function Dashboard({ sandboxes }: { sandboxes: Sandbox[] }) {
           </Button>
         </div>
       </div>
-      <div className="grow p-4 grid lg:grid-cols-4 xl:grid-cols-5 md:grid-cols-3 gap-4">
-        {sandboxes.map((sandbox) => (
-          <ProjectCard key={sandbox.id}>
-            <div className="font-medium flex items-center whitespace-nowrap w-full text-ellipsis overflow-hidden">
-              {sandbox.name}
-            </div>
-            <div className="flex flex-col text-muted-foreground space-y-0.5 text-sm">
-              <div className="flex items-center">
-                <Globe className="w-3 h-3 mr-2" /> Public
+      {screen === "projects" ? (
+        <div className="grow p-4 grid lg:grid-cols-3 2xl:grid-cols-4  md:grid-cols-2 gap-4">
+          {sandboxes.map((sandbox) => (
+            <ProjectCard key={sandbox.id}>
+              <div className="space-x-2 flex items-center justify-start w-full">
+                <Image
+                  alt=""
+                  src={
+                    sandbox.type === "react"
+                      ? "/project-icons/react.svg"
+                      : "/project-icons/node.svg"
+                  }
+                  width={20}
+                  height={20}
+                />
+                <div className="font-medium static whitespace-nowrap w-full text-ellipsis overflow-hidden">
+                  {sandbox.name}
+                </div>
+                <ProjectCardDropdown sandbox={sandbox} />
               </div>
-              <div className="flex items-center">
-                <Clock className="w-3 h-3 mr-2" /> 3d ago
+              <div className="flex flex-col text-muted-foreground space-y-0.5 text-sm">
+                <div className="flex items-center">
+                  <Globe className="w-3 h-3 mr-2" /> Public
+                </div>
+                <div className="flex items-center">
+                  <Clock className="w-3 h-3 mr-2" /> 3d ago
+                </div>
               </div>
-            </div>
-          </ProjectCard>
-        ))}
-      </div>
+            </ProjectCard>
+          ))}
+        </div>
+      ) : screen === "shared" ? null : screen === "settings" ? null : null}
     </div>
   )
 }
