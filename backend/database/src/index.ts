@@ -12,45 +12,25 @@ export interface Env {
 	DB: D1Database;
 }
 
-interface Request extends IRequest {
-	db: DrizzleD1Database;
-}
-
-interface Methods {
-	get: Route;
-	post: Route;
-}
-
-async function injectDB(request: Request, env: Env) {
-	const db = drizzle(env.DB);
-	request.db = db;
-}
-
-const router = Router<Request>({ base: "/" });
-
-router.get("/user", injectDB, async (req: Request, env: Env) => {
-	const res = await req.db.select().from(user).all();
-	return json(res);
-});
-
-router.get("/user/:id", injectDB, async (req: Request, env: Env) => {
-	const res = await req.db.select().from(user).where(eq(user.id, req.params!["id"])).get();
-	return json(res ?? {});
-});
-
-router.post("/user", injectDB, async (req: Request, env: Env) => {
-	const userSchema = z.object({
-		name: z.string(),
-		email: z.string().email(),
-	});
-
-	const reqJSON = await req.json!();
-	const { name, email } = userSchema.parse(reqJSON);
-
-	const res = await req.db.insert(user).values({ name, email }).returning().get();
-	return json({ res });
-});
-
 export default {
-	fetch: router.handle,
+	async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+		const url = new URL(request.url);
+		const path = url.pathname;
+		const method = request.method;
+
+		const db = drizzle(env.DB);
+
+		if (path === "/api/user" && method === "GET") {
+			const params = url.searchParams;
+
+			if (params.has("id")) {
+				const id = params.get("id") as string;
+				const res = await db.select().from(user).where(eq(user.id, id)).get();
+				return json(res ?? {});
+			} else {
+				const res = await db.select().from(user).all();
+				return new Response(JSON.stringify(res));
+			}
+		} else return new Response("Not Found", { status: 404 });
+	},
 };
