@@ -2,7 +2,7 @@ import Image from "next/image"
 import Link from "next/link"
 import Logo from "@/assets/logo.svg"
 import DashboardNavbarSearch from "./search"
-import DashboardUserButton from "./userButton"
+import UserButton from "../../ui/userButton"
 import { User } from "@/lib/types"
 
 export default function DashboardNavbar({ userData }: { userData: User }) {
@@ -19,7 +19,7 @@ export default function DashboardNavbar({ userData }: { userData: User }) {
       </div>
       <div className="flex items-center space-x-4">
         <DashboardNavbarSearch />
-        <DashboardUserButton userData={userData} />
+        <UserButton userData={userData} />
       </div>
     </div>
   )

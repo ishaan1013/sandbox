@@ -1,11 +1,11 @@
 import Image from "next/image"
 import Logo from "@/assets/logo.svg"
 import { Pencil } from "lucide-react"
-import { UserButton } from "@clerk/nextjs"
 import Link from "next/link"
-import { dark } from "@clerk/themes"
+import { User } from "@/lib/types"
+import UserButton from "@/components/ui/userButton"
 
-export default function Navbar() {
+export default function Navbar({ userData }: { userData: User }) {
   return (
     <div className="h-14 px-2 w-full flex items-center justify-between border-b border-border">
       <div className="flex items-center space-x-4">
@@ -22,12 +22,7 @@ export default function Navbar() {
           </div>
         </div>
       </div>
-      <UserButton
-        appearance={{
-          baseTheme: dark,
-        }}
-        afterSignOutUrl="/"
-      />
+      <UserButton userData={userData} />
     </div>
   )
 }

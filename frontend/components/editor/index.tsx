@@ -22,6 +22,7 @@ import {
 } from "lucide-react"
 import Tab from "../ui/tab"
 import Sidebar from "./sidebar"
+import { useClerk } from "@clerk/nextjs"
 
 export default function CodeEditor() {
   const editorRef = useRef<null | monaco.editor.IStandaloneCodeEditor>(null)
@@ -52,17 +53,11 @@ export default function CodeEditor() {
     },
   ])
 
-  const handleEditorMount: OnMount = (editor, monaco) => {
-    editorRef.current = editor
+  // const handleEditorMount: OnMount = (editor, monaco) => {
+  //   editorRef.current = editor
+  // }
 
-    // import("monaco-themes/themes/Blackboard.json").then((data) => {
-    //   monaco.editor.defineTheme(
-    //     "Blackboard",
-    //     data as monaco.editor.IStandaloneThemeData
-    //   )
-    // })
-    // monaco.editor.setTheme("Blackboard")
-  }
+  const clerk = useClerk()
 
   return (
     <>
@@ -79,22 +74,24 @@ export default function CodeEditor() {
             <Tab>style.css</Tab>
           </div>
           <div className="grow w-full overflow-hidden rounded-md">
-            <Editor
-              height="100%"
-              defaultLanguage="typescript"
-              onMount={handleEditorMount}
-              options={{
-                minimap: {
-                  enabled: false,
-                },
-                padding: {
-                  bottom: 4,
-                  top: 4,
-                },
-                scrollBeyondLastLine: false,
-              }}
-              theme="vs-dark"
-            />
+            {clerk.loaded ? (
+              <Editor
+                height="100%"
+                defaultLanguage="typescript"
+                // onMount={handleEditorMount}
+                options={{
+                  minimap: {
+                    enabled: false,
+                  },
+                  padding: {
+                    bottom: 4,
+                    top: 4,
+                  },
+                  scrollBeyondLastLine: false,
+                }}
+                theme="vs-dark"
+              />
+            ) : null}
           </div>
         </ResizablePanel>
         <ResizableHandle />
