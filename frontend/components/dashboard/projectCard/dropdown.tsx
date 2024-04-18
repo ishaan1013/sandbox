@@ -25,11 +25,12 @@ export default function ProjectCardDropdown({ sandbox }: { sandbox: Sandbox }) {
         <Ellipsis className="w-4 h-4" />
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-40">
-        <DropdownMenuItem>
+        <DropdownMenuItem className="cursor-pointer">
           <Lock className="mr-2 h-4 w-4" />
           <span>Make Private</span>
         </DropdownMenuItem>
-        <DropdownMenuItem className="!text-destructive">
+        <DropdownMenuSeparator />
+        <DropdownMenuItem className="!text-destructive cursor-pointer">
           <Trash2 className="mr-2 h-4 w-4" />
           <span>Delete Project</span>
         </DropdownMenuItem>

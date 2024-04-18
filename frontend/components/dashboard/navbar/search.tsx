@@ -2,8 +2,8 @@
 
 import { Input } from "../../ui/input"
 import { Search } from "lucide-react"
-import { useCallback, useEffect, useState } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 
 export default function DashboardNavbarSearch() {
   const [search, setSearch] = useState("")

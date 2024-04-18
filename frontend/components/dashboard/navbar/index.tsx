@@ -1,17 +1,12 @@
-"use client"
-
 import { UserButton } from "@clerk/nextjs"
 import { dark } from "@clerk/themes"
 import Image from "next/image"
 import Link from "next/link"
 import Logo from "@/assets/logo.svg"
-import { Input } from "../../ui/input"
-import { Search } from "lucide-react"
-import { Suspense, useCallback, useEffect, useState } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
 import DashboardNavbarSearch from "./search"
+import DashboardUserButton from "./userButton"
 
-export default function DashboardNavbar() {
+export default function DashboardNavbar({ userId }: { userId: string }) {
   return (
     <div className="h-16 px-4 w-full flex items-center justify-between border-b border-border">
       <div className="flex items-center space-x-4">
@@ -25,12 +20,7 @@ export default function DashboardNavbar() {
       </div>
       <div className="flex items-center space-x-4">
         <DashboardNavbarSearch />
-        <UserButton
-          appearance={{
-            baseTheme: dark,
-          }}
-          afterSignOutUrl="/"
-        />
+        <DashboardUserButton userId={userId} />
       </div>
     </div>
   )

@@ -20,7 +20,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="w-screen h-screen flex flex-col overflow-hidden overscroll-none">
-      <Navbar />
+      <Navbar userId={user.id} />
       <Dashboard sandboxes={data} />
     </div>
   )
