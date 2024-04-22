@@ -16,6 +16,7 @@ const express_1 = __importDefault(require("express"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const http_1 = require("http");
 const socket_io_1 = require("socket.io");
+const zod_1 = require("zod");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const port = process.env.PORT || 4000;
@@ -26,24 +27,54 @@ const io = new socket_io_1.Server(httpServer, {
         origin: "*",
     },
 });
+const handshakeSchema = zod_1.z.object({
+    userId: zod_1.z.string(),
+    sandboxId: zod_1.z.string(),
+    type: zod_1.z.enum(["node", "react"]),
+    EIO: zod_1.z.string(),
+    transport: zod_1.z.string(),
+});
 io.use((socket, next) => __awaiter(void 0, void 0, void 0, function* () {
     const q = socket.handshake.query;
     console.log("middleware");
-    console.log(q);
-    if (!q.userId || !q.sandboxId) {
+    const parseQuery = handshakeSchema.safeParse(q);
+    if (!parseQuery.success) {
+        console.log("Invalid request.");
         next(new Error("Invalid request."));
+        return;
     }
-    const dbUser = yield fetch(`http://localhost:8787/api/user?id=${q.userId}`);
-    const dbUserJSON = yield dbUser.json();
-    if (!dbUserJSON || !dbUserJSON.sandbox.includes(q.sandboxId)) {
+    const query = parseQuery.data;
+    const dbUser = yield fetch(`http://localhost:8787/api/user?id=${query.userId}`);
+    const dbUserJSON = (yield dbUser.json());
+    console.log("dbUserJSON:", dbUserJSON);
+    if (!dbUserJSON) {
+        console.log("DB error.");
+        next(new Error("DB error."));
+        return;
+    }
+    const sandbox = dbUserJSON.sandbox.find((s) => s.id === query.sandboxId);
+    if (!sandbox) {
+        console.log("Invalid credentials.");
         next(new Error("Invalid credentials."));
+        return;
     }
+    const data = {
+        userId: query.userId,
+        sandboxId: query.sandboxId,
+        type: query.type,
+        init: sandbox.init,
+    };
+    socket.data = data;
     next();
 }));
 io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log(`connection`);
-    const userId = socket.handshake.query.userId;
-    console.log(userId);
+    const data = socket.data;
+    console.log("init:", data.init);
+    if (!data.init) {
+        // const dbUser = await fetch(
+        //   `http://localhost:8787/sandbox/${data.sandboxId}/init`
+        // )
+    }
     // socket.emit("loaded", {
     //     rootContent: await fetchDir("/workspace", "")
     // });

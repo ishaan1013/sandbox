@@ -13,6 +13,8 @@ export interface Env {
 	DB: D1Database;
 }
 
+// https://github.com/drizzle-team/drizzle-orm/tree/main/examples/cloudflare-d1
+
 export default {
 	async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
 		const url = new URL(request.url);
