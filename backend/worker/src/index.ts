@@ -1,8 +1,5 @@
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { drizzle } from "drizzle-orm/d1";
-import { eq } from "drizzle-orm/expressions";
-import type { IRequest, Route } from "itty-router";
-import { Router } from "itty-router";
 import { json } from "itty-router-extras";
 import { ZodError, z } from "zod";
 
