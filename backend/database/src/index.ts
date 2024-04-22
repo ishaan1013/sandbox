@@ -5,9 +5,15 @@ import { ZodError, z } from "zod";
 
 import { user, sandbox } from "./schema";
 import * as schema from "./schema";
+import { eq } from "drizzle-orm";
+
+const success = new Response("Success", { status: 200 });
+const notFound = new Response("Not Found", { status: 404 });
+const methodNotAllowed = new Response("Method Not Allowed", { status: 405 });
 
 export interface Env {
 	DB: D1Database;
+	R2: R2Bucket;
 }
 
 // https://github.com/drizzle-team/drizzle-orm/tree/main/examples/cloudflare-d1
@@ -20,7 +26,16 @@ export default {
 
 		const db = drizzle(env.DB, { schema });
 
-		if (path === "/api/user") {
+		// ^\/api\/sandbox\/([^\/]+)\/((init|files))$
+
+		if (new RegExp("^/api/sandbox/([^/]+)/((init|files))$").test(path)) {
+			const sandboxId = path.split("/")[2];
+			const command = path.split("/")[3] as "init" | "files";
+
+			if (command === "init") {
+				await db.update(sandbox).set({ init: true }).where(eq(sandbox.id, sandboxId));
+			}
+		} else if (path === "/api/user") {
 			if (method === "GET") {
 				const params = url.searchParams;
 
@@ -50,8 +65,8 @@ export default {
 				const res = await db.insert(user).values({ id, name, email }).returning().get();
 				return json({ res });
 			} else {
-				return new Response("Method Not Allowed", { status: 405 });
+				return methodNotAllowed;
 			}
-		} else return new Response("Not Found", { status: 404 });
+		} else return notFound;
 	},
 };
