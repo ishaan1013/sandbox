@@ -14,6 +14,7 @@ export default function ProjectCard({
     <Link
       href={`/code/${id}`}
       className={cn(
+        className,
         "rounded-lg border bg-card text-card-foreground shadow h-48 p-[1px] gradient-project-card-bg cursor-pointer transition-all focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:ring-2 focus-visible:ring-ring"
       )}
     >

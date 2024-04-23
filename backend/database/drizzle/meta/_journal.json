@@ -5,36 +5,8 @@
     {
       "idx": 0,
       "version": "5",
-      "when": 1713306026634,
-      "tag": "0000_sparkling_morg",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "5",
-      "when": 1713411309767,
-      "tag": "0001_right_omega_sentinel",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "5",
-      "when": 1713411654625,
-      "tag": "0002_curvy_darkhawk",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "5",
-      "when": 1713412439820,
-      "tag": "0003_outgoing_hammerhead",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "5",
-      "when": 1713753819469,
-      "tag": "0004_fantastic_venom",
+      "when": 1713849093097,
+      "tag": "0000_blushing_surge",
       "breakpoints": true
     }
   ]

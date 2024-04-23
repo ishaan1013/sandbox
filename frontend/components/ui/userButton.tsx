@@ -12,6 +12,7 @@ import { User } from "@/lib/types"
 import { LogOut, Pencil } from "lucide-react"
 
 export default function UserButton({ userData }: { userData: User }) {
+  if (!userData) return null
   return (
     <DropdownMenu>
       <DropdownMenuTrigger>

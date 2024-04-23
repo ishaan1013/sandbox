@@ -1,7 +1,9 @@
 CREATE TABLE `sandbox` (
 	`id` text PRIMARY KEY NOT NULL,
 	`name` text NOT NULL,
-	`text` text NOT NULL,
+	`type` text NOT NULL,
+	`bucket` text,
+	`init` integer DEFAULT false,
 	`user_id` text NOT NULL,
 	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE no action
 );

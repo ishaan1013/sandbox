@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "sqlite",
-  "id": "af9c2bc3-e4c9-42f6-bf73-bb2399b894c7",
+  "id": "9c09f493-3a05-496c-997e-b527c8f17cf9",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "sandbox": {
@@ -21,12 +21,27 @@
           "notNull": true,
           "autoincrement": false
         },
-        "text": {
-          "name": "text",
+        "type": {
+          "name": "type",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
+        },
+        "bucket": {
+          "name": "bucket",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "init": {
+          "name": "init",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": false
         },
         "user_id": {
           "name": "user_id",

@@ -6,14 +6,17 @@ const Button = ({
   children,
   className,
   onClick,
+  type,
 }: {
   children: React.ReactNode
   className?: string
   onClick?: () => void
+  type?: "button" | "submit" | "reset"
 }) => {
   return (
     <button
       onClick={onClick}
+      type={type ?? "button"}
       className={cn(
         className,
         "gradient-button-bg p-[1px] inline-flex group rounded-md text-sm font-medium focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"

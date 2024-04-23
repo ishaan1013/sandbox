@@ -1,1 +1,0 @@
-ALTER TABLE sandbox ADD `init` integer DEFAULT false;

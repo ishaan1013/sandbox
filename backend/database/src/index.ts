@@ -7,35 +7,35 @@ import { user, sandbox } from "./schema";
 import * as schema from "./schema";
 import { eq } from "drizzle-orm";
 
-const success = new Response("Success", { status: 200 });
-const notFound = new Response("Not Found", { status: 404 });
-const methodNotAllowed = new Response("Method Not Allowed", { status: 405 });
-
 export interface Env {
 	DB: D1Database;
-	R2: R2Bucket;
 }
 
 // https://github.com/drizzle-team/drizzle-orm/tree/main/examples/cloudflare-d1
 
 export default {
 	async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+		const success = new Response("Success", { status: 200 });
+		const notFound = new Response("Not Found", { status: 404 });
+		const methodNotAllowed = new Response("Method Not Allowed", { status: 405 });
+
 		const url = new URL(request.url);
 		const path = url.pathname;
 		const method = request.method;
 
 		const db = drizzle(env.DB, { schema });
 
-		// ^\/api\/sandbox\/([^\/]+)\/((init|files))$
+		// if (path === "/api/sandbox/create") {
+		//   if (method === "POST") {}
+		//   else return methodNotAllowed;
+		// } else if (path === "/api/sandbox/init") {
+		//   const params = url.searchParams;
 
-		if (new RegExp("^/api/sandbox/([^/]+)/((init|files))$").test(path)) {
-			const sandboxId = path.split("/")[2];
-			const command = path.split("/")[3] as "init" | "files";
+		//   await db.update(sandbox).set({ init: true }).where(eq(sandbox.id, sandboxId));
+		// } else if (path === "/api/sandbox/files") {
 
-			if (command === "init") {
-				await db.update(sandbox).set({ init: true }).where(eq(sandbox.id, sandboxId));
-			}
-		} else if (path === "/api/user") {
+		// } else
+		if (path === "/api/user") {
 			if (method === "GET") {
 				const params = url.searchParams;
 
