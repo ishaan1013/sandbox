@@ -24,13 +24,10 @@ export default {
 			const body = await request.json();
 			const { sandboxId, type } = initSchema.parse(body);
 
-			// startercode.node.forEach(async (file) => {
-			// 	await env.R2.put(`${sandboxId}/${file.name}`, file.body);
-			// });
+			console.log(startercode[type]);
 
-			// parallel data fetching with promise.all:
 			await Promise.all(
-				startercode.node.map(async (file) => {
+				startercode[type].map(async (file) => {
 					await env.R2.put(`projects/${sandboxId}/${file.name}`, file.body);
 				})
 			);
