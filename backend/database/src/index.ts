@@ -16,6 +16,7 @@ export interface Env {
 export default {
 	async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
 		const success = new Response("Success", { status: 200 });
+		const invalidRequest = new Response("Invalid Request", { status: 400 });
 		const notFound = new Response("Not Found", { status: 404 });
 		const methodNotAllowed = new Response("Method Not Allowed", { status: 405 });
 
@@ -25,17 +26,29 @@ export default {
 
 		const db = drizzle(env.DB, { schema });
 
-		// if (path === "/api/sandbox/create") {
-		//   if (method === "POST") {}
-		//   else return methodNotAllowed;
-		// } else if (path === "/api/sandbox/init") {
-		//   const params = url.searchParams;
+		if (path === "/api/sandbox/create" && method === "POST") {
+			const initSchema = z.object({
+				type: z.enum(["react", "node"]),
+				name: z.string(),
+				userId: z.string(),
+			});
 
-		//   await db.update(sandbox).set({ init: true }).where(eq(sandbox.id, sandboxId));
-		// } else if (path === "/api/sandbox/files") {
+			const body = await request.json();
+			const { type, name, userId } = initSchema.parse(body);
 
-		// } else
-		if (path === "/api/user") {
+			const sb = await db.insert(sandbox).values({ type, name, userId }).returning().get();
+
+			console.log("sb:", sb);
+			await fetch("https://storage.ishaan1013.workers.dev/api/init", {
+				method: "POST",
+				body: JSON.stringify({ sandboxId: sb.id, type }),
+				headers: { "Content-Type": "application/json" },
+			});
+
+			return success;
+
+			// } else if (path === "/api/sandbox/files") {
+		} else if (path === "/api/user") {
 			if (method === "GET") {
 				const params = url.searchParams;
 
