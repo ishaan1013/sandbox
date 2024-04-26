@@ -3,55 +3,26 @@
 import Editor, { OnMount } from "@monaco-editor/react"
 import monaco from "monaco-editor"
 import { useRef, useState } from "react"
-import theme from "./theme.json"
+// import theme from "./theme.json"
 
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable"
-import { Button } from "../ui/button"
 import {
   ChevronLeft,
   ChevronRight,
-  RotateCcw,
   RotateCw,
-  Terminal,
   TerminalSquare,
-  X,
 } from "lucide-react"
 import Tab from "../ui/tab"
 import Sidebar from "./sidebar"
 import { useClerk } from "@clerk/nextjs"
+import { TFile, TFolder } from "./sidebar/types"
 
-export default function CodeEditor() {
-  const editorRef = useRef<null | monaco.editor.IStandaloneCodeEditor>(null)
-  const [code, setCode] = useState([
-    {
-      language: "css",
-      name: "style.css",
-      value: `body { background-color: #282c34; color: white; }`,
-    },
-    {
-      language: "html",
-      name: "index.html",
-      value: `<!DOCTYPE html>
-<html>
-<head>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <h1>Hello, world!</h1>
-  <script src="script.js"></script>
-</body>
-</html>`,
-    },
-    {
-      language: "javascript",
-      name: "script.js",
-      value: `console.log("Hello, world!")`,
-    },
-  ])
+export default function CodeEditor({ files }: { files: (TFile | TFolder)[] }) {
+  // const editorRef = useRef<null | monaco.editor.IStandaloneCodeEditor>(null)
 
   // const handleEditorMount: OnMount = (editor, monaco) => {
   //   editorRef.current = editor
@@ -59,9 +30,42 @@ export default function CodeEditor() {
 
   const clerk = useClerk()
 
+  const [tabs, setTabs] = useState<TFile[]>([])
+  const [activeId, setActiveId] = useState<string | null>(null)
+
+  const selectFile = (tab: TFile) => {
+    setTabs((prev) => {
+      const exists = prev.find((t) => t.id === tab.id)
+      if (exists) {
+        setActiveId(exists.id)
+        return prev
+      }
+      return [...prev, tab]
+    })
+    setActiveId(tab.id)
+  }
+
+  const closeTab = (tab: TFile) => {
+    const numTabs = tabs.length
+    const index = tabs.findIndex((t) => t.id === tab.id)
+    setActiveId((prev) => {
+      const next =
+        prev === tab.id
+          ? numTabs === 1
+            ? null
+            : index < numTabs - 1
+            ? tabs[index + 1].id
+            : tabs[index - 1].id
+          : prev
+
+      return next
+    })
+    setTabs((prev) => prev.filter((t) => t.id !== tab.id))
+  }
+
   return (
     <>
-      <Sidebar />
+      <Sidebar files={files} selectFile={selectFile} />
       <ResizablePanelGroup direction="horizontal">
         <ResizablePanel
           className="p-2 flex flex-col"
@@ -70,11 +74,25 @@ export default function CodeEditor() {
           defaultSize={60}
         >
           <div className="h-10 w-full flex gap-2">
-            <Tab selected>index.html</Tab>
-            <Tab>style.css</Tab>
+            {tabs.map((tab) => (
+              <Tab
+                key={tab.id}
+                selected={activeId === tab.id}
+                onClick={() => setActiveId(tab.id)}
+                onClose={() => closeTab(tab)}
+              >
+                {tab.name}
+              </Tab>
+            ))}
           </div>
           <div className="grow w-full overflow-hidden rounded-md">
-            {clerk.loaded ? (
+            {activeId === null ? (
+              <>
+                <div className="w-full h-full flex items-center justify-center text-xl font-medium text-secondary select-none">
+                  No file selected.
+                </div>
+              </>
+            ) : clerk.loaded ? (
               <Editor
                 height="100%"
                 defaultLanguage="typescript"

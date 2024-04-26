@@ -15,3 +15,20 @@ export type Sandbox = {
   bucket: string | null
   userId: string
 }
+
+export type R2Files = {
+  objects: R2FileData[]
+  truncated: boolean
+  delimitedPrefixes: any[]
+}
+
+export type R2FileData = {
+  storageClass: string
+  uploaded: string
+  checksums: any
+  httpEtag: string
+  etag: string
+  size: number
+  version: string
+  key: string
+}
