@@ -8,6 +8,7 @@ export interface Env {
 export default {
 	async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
 		const success = new Response('Success', { status: 200 });
+		const invalidRequest = new Response('Invalid Request', { status: 400 });
 		const notFound = new Response('Not Found', { status: 404 });
 		const methodNotAllowed = new Response('Method Not Allowed', { status: 405 });
 
@@ -15,7 +16,19 @@ export default {
 		const path = url.pathname;
 		const method = request.method;
 
-		if (path === '/api/init' && method === 'POST') {
+		if (path === '/api') {
+			if (method === 'GET') {
+				const params = url.searchParams;
+				const sandboxId = params.get('sandboxId');
+				if (!sandboxId) {
+					return invalidRequest;
+				}
+				const res = await env.R2.list({ prefix: `projects/${sandboxId}` });
+				return new Response(JSON.stringify(res), { status: 200 });
+			} else if (method === 'POST') {
+				return new Response('Hello, world!');
+			} else return methodNotAllowed;
+		} else if (path === '/api/init' && method === 'POST') {
 			const initSchema = z.object({
 				sandboxId: z.string(),
 				type: z.enum(['react', 'node']),
