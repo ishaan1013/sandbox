@@ -5,6 +5,7 @@ import { Server } from "socket.io"
 
 import { z } from "zod"
 import { User } from "./types"
+import getSandboxFiles from "./getSandboxFiles"
 
 dotenv.config()
 
@@ -39,11 +40,9 @@ io.use(async (socket, next) => {
     return
   }
 
-  const query = parseQuery.data
+  const { sandboxId, userId, type } = parseQuery.data
 
-  const dbUser = await fetch(
-    `http://localhost:8787/api/user?id=${query.userId}`
-  )
+  const dbUser = await fetch(`http://localhost:8787/api/user?id=${userId}`)
   const dbUserJSON = (await dbUser.json()) as User
 
   console.log("dbUserJSON:", dbUserJSON)
@@ -54,7 +53,7 @@ io.use(async (socket, next) => {
     return
   }
 
-  const sandbox = dbUserJSON.sandbox.find((s) => s.id === query.sandboxId)
+  const sandbox = dbUserJSON.sandbox.find((s) => s.id === sandboxId)
 
   if (!sandbox) {
     console.log("Invalid credentials.")
@@ -62,14 +61,11 @@ io.use(async (socket, next) => {
     return
   }
 
-  const data = {
-    userId: query.userId,
-    sandboxId: query.sandboxId,
-    type: query.type,
-    init: sandbox.init,
+  socket.data = {
+    id: sandboxId,
+    type,
+    userId,
   }
-
-  socket.data = data
 
   next()
 })
@@ -77,18 +73,13 @@ io.use(async (socket, next) => {
 io.on("connection", async (socket) => {
   const data = socket.data as {
     userId: string
-    sandboxId: string
+    id: string
     type: "node" | "react"
-    init: boolean
   }
 
-  console.log("init:", data.init)
+  const sandboxFiles = await getSandboxFiles(data.id)
 
-  if (!data.init) {
-    // const dbUser = await fetch(
-    //   `http://localhost:8787/sandbox/${data.sandboxId}/init`
-    // )
-  }
+  // fetch all file data TODO
 
   // socket.emit("loaded", {
   //     rootContent: await fetchDir("/workspace", "")

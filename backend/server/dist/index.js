@@ -17,6 +17,7 @@ const dotenv_1 = __importDefault(require("dotenv"));
 const http_1 = require("http");
 const socket_io_1 = require("socket.io");
 const zod_1 = require("zod");
+const getSandboxFiles_1 = __importDefault(require("./getSandboxFiles"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const port = process.env.PORT || 4000;
@@ -43,8 +44,8 @@ io.use((socket, next) => __awaiter(void 0, void 0, void 0, function* () {
         next(new Error("Invalid request."));
         return;
     }
-    const query = parseQuery.data;
-    const dbUser = yield fetch(`http://localhost:8787/api/user?id=${query.userId}`);
+    const { sandboxId, userId, type } = parseQuery.data;
+    const dbUser = yield fetch(`http://localhost:8787/api/user?id=${userId}`);
     const dbUserJSON = (yield dbUser.json());
     console.log("dbUserJSON:", dbUserJSON);
     if (!dbUserJSON) {
@@ -52,29 +53,23 @@ io.use((socket, next) => __awaiter(void 0, void 0, void 0, function* () {
         next(new Error("DB error."));
         return;
     }
-    const sandbox = dbUserJSON.sandbox.find((s) => s.id === query.sandboxId);
+    const sandbox = dbUserJSON.sandbox.find((s) => s.id === sandboxId);
     if (!sandbox) {
         console.log("Invalid credentials.");
         next(new Error("Invalid credentials."));
         return;
     }
-    const data = {
-        userId: query.userId,
-        sandboxId: query.sandboxId,
-        type: query.type,
-        init: sandbox.init,
+    socket.data = {
+        id: sandboxId,
+        type,
+        userId,
     };
-    socket.data = data;
     next();
 }));
 io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
     const data = socket.data;
-    console.log("init:", data.init);
-    if (!data.init) {
-        // const dbUser = await fetch(
-        //   `http://localhost:8787/sandbox/${data.sandboxId}/init`
-        // )
-    }
+    const sandboxFiles = yield (0, getSandboxFiles_1.default)(data.id);
+    // fetch all file data TODO
     // socket.emit("loaded", {
     //     rootContent: await fetchDir("/workspace", "")
     // });

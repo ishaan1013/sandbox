@@ -11,7 +11,35 @@ export type Sandbox = {
   id: string
   name: string
   type: "react" | "node"
-  init: boolean
-  bucket: string | null
   userId: string
+}
+
+export type TFolder = {
+  id: string
+  type: "folder"
+  name: string
+  children: (TFile | TFolder)[]
+}
+
+export type TFile = {
+  id: string
+  type: "file"
+  name: string
+}
+
+export type R2Files = {
+  objects: R2FileData[]
+  truncated: boolean
+  delimitedPrefixes: any[]
+}
+
+export type R2FileData = {
+  storageClass: string
+  uploaded: string
+  checksums: any
+  httpEtag: string
+  etag: string
+  size: number
+  version: string
+  key: string
 }

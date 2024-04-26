@@ -11,8 +11,6 @@ export type Sandbox = {
   id: string
   name: string
   type: "react" | "node"
-  init: boolean
-  bucket: string | null
   userId: string
 }
 
