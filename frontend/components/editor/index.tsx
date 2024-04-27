@@ -49,9 +49,34 @@ export default function CodeEditor({
     `http://localhost:4000?userId=${userId}&sandboxId=${sandboxId}`
   )
 
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "s" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault()
+
+        const activeTab = tabs.find((t) => t.id === activeId)
+        console.log("saving " + activeTab?.name)
+
+        setTabs((prev) =>
+          prev.map((tab) =>
+            tab.id === activeId ? { ...tab, saved: true } : tab
+          )
+        )
+
+        socket.emit("saveFile", activeId, editorRef.current?.getValue())
+      }
+    }
+    document.addEventListener("keydown", down)
+
+    return () => {
+      document.removeEventListener("keydown", down)
+    }
+  }, [tabs, activeId])
+
+  // WS event handlers ------------
+
   // connection/disconnection effect
   useEffect(() => {
-    console.log("connecting")
     socket.connect()
 
     return () => {
@@ -79,6 +104,8 @@ export default function CodeEditor({
       socket.off("file", onFileEvent)
     }
   }, [])
+
+  // ------------
 
   const clerk = useClerk()
 

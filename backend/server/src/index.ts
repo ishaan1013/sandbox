@@ -78,6 +78,12 @@ io.on("connection", async (socket) => {
     console.log("file " + file.id + ": ", file.data)
     callback(file.data)
   })
+  socket.on("saveFile", (activeId: string, body: string, callback) => {
+    // const file = sandboxFiles.fileData.find((f) => f.id === fileId)
+    // if (!file) return
+    // console.log("file " + file.id + ": ", file.data)
+    // callback(file.data)
+  })
   socket.on("renameFile", async (fileId: string, newName: string) => {
     const file = sandboxFiles.fileData.find((f) => f.id === fileId)
     if (!file) return
