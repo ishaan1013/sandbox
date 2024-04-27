@@ -2,7 +2,7 @@
 
 import Editor, { OnMount } from "@monaco-editor/react"
 import monaco from "monaco-editor"
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 // import theme from "./theme.json"
 
 import {
@@ -21,12 +21,49 @@ import Sidebar from "./sidebar"
 import { useClerk } from "@clerk/nextjs"
 import { TFile, TFolder } from "./sidebar/types"
 
-export default function CodeEditor({ files }: { files: (TFile | TFolder)[] }) {
+import { io } from "socket.io-client"
+
+export default function CodeEditor({
+  userId,
+  sandboxId,
+}: {
+  userId: string
+  sandboxId: string
+}) {
   // const editorRef = useRef<null | monaco.editor.IStandaloneCodeEditor>(null)
 
   // const handleEditorMount: OnMount = (editor, monaco) => {
   //   editorRef.current = editor
   // }
+
+  const [files, setFiles] = useState<(TFolder | TFile)[]>([])
+
+  const socket = io(
+    `http://localhost:4000?userId=${userId}&sandboxId=${sandboxId}`
+  )
+
+  // connection/disconnection effect
+  useEffect(() => {
+    socket.connect()
+
+    return () => {
+      socket.disconnect()
+    }
+  }, [])
+
+  // event listener effect
+  useEffect(() => {
+    function onLoadedEvent(files: (TFolder | TFile)[]) {
+      setFiles(files)
+    }
+
+    socket.on("loaded", onLoadedEvent)
+
+    return () => {
+      socket.off("loaded", onLoadedEvent)
+    }
+  }, [])
+  // use the dependency array!
 
   const clerk = useClerk()
 

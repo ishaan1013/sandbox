@@ -30,6 +30,7 @@
     "react-dom": "^18",
     "react-hook-form": "^7.51.3",
     "react-resizable-panels": "^2.0.16",
+    "socket.io-client": "^4.7.5",
     "tailwind-merge": "^2.2.2",
     "tailwindcss-animate": "^1.0.7",
     "vscode-icons-js": "^11.6.1",
