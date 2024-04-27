@@ -23,6 +23,7 @@ import { TFile, TFileData, TFolder } from "./sidebar/types"
 
 import { io } from "socket.io-client"
 import { set } from "zod"
+import { processFileType } from "@/lib/utils"
 
 export default function CodeEditor({
   userId,
@@ -92,7 +93,7 @@ export default function CodeEditor({
     socket.emit("getFile", tab.id, (response: string) => {
       setActiveFile(response)
     })
-    setEditorLanguage(tab.name.split(".").pop() ?? "plaintext")
+    setEditorLanguage(processFileType(tab.name))
     setActiveId(tab.id)
   }
 

@@ -46,8 +46,18 @@ export default {
 			});
 
 			return success;
-
-			// } else if (path === "/api/sandbox/files") {
+		} else if (path === "/api/sandbox" && method === "GET") {
+			const params = url.searchParams;
+			if (params.has("id")) {
+				const id = params.get("id") as string;
+				const res = await db.query.sandbox.findFirst({
+					where: (sandbox, { eq }) => eq(sandbox.id, id),
+				});
+				return json(res ?? {});
+			} else {
+				const res = await db.select().from(sandbox).all();
+				return json(res ?? {});
+			}
 		} else if (path === "/api/user") {
 			if (method === "GET") {
 				const params = url.searchParams;

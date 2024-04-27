@@ -2,10 +2,16 @@ import Image from "next/image"
 import Logo from "@/assets/logo.svg"
 import { Pencil } from "lucide-react"
 import Link from "next/link"
-import { User } from "@/lib/types"
+import { Sandbox, User } from "@/lib/types"
 import UserButton from "@/components/ui/userButton"
 
-export default function Navbar({ userData }: { userData: User }) {
+export default function Navbar({
+  userData,
+  sandboxData,
+}: {
+  userData: User
+  sandboxData: Sandbox
+}) {
   return (
     <div className="h-14 px-2 w-full flex items-center justify-between border-b border-border">
       <div className="flex items-center space-x-4">
@@ -16,7 +22,7 @@ export default function Navbar({ userData }: { userData: User }) {
           <Image src={Logo} alt="Logo" width={36} height={36} />
         </Link>
         <div className="text-sm font-medium flex items-center">
-          My React Project{" "}
+          {sandboxData.name}
           <div className="h-7 w-7 ml-2 flex items-center justify-center transition-colors bg-transparent hover:bg-muted-foreground/25 cursor-pointer rounded-md">
             <Pencil className="w-4 h-4" />
           </div>
