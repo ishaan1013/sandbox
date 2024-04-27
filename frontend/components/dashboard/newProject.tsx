@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog"
 import Image from "next/image"
 import { useState } from "react"
-import { z } from "zod"
+import { set, z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 
@@ -32,6 +32,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { useUser } from "@clerk/nextjs"
+import { createSandbox } from "@/lib/actions"
+import { useRouter } from "next/navigation"
+import { Loader2 } from "lucide-react"
 
 type TOptions = "react" | "node"
 
@@ -68,6 +72,10 @@ export default function NewProjectModal({
   setOpen: (open: boolean) => void
 }) {
   const [selected, setSelected] = useState<TOptions>("react")
+  const [loading, setLoading] = useState(false)
+  const router = useRouter()
+
+  const user = useUser()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -77,8 +85,14 @@ export default function NewProjectModal({
     },
   })
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    const sandboxData = { type: selected, ...values }
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!user.isSignedIn) return
+
+    const sandboxData = { type: selected, userId: user.user.id, ...values }
+    setLoading(true)
+
+    const id = await createSandbox(sandboxData)
+    router.push(`/code/${id}`)
   }
 
   return (
@@ -146,8 +160,14 @@ export default function NewProjectModal({
                 </FormItem>
               )}
             />
-            <CustomButton type="submit" className="w-full">
-              Submit
+            <CustomButton disabled={loading} type="submit" className="w-full">
+              {loading ? (
+                <>
+                  <Loader2 className="animate-spin mr-2 h-4 w-4" /> Loading...
+                </>
+              ) : (
+                "Submit"
+              )}
             </CustomButton>
           </form>
         </Form>

@@ -13,6 +13,9 @@ export interface Env {
 
 // https://github.com/drizzle-team/drizzle-orm/tree/main/examples/cloudflare-d1
 
+// npm run generate
+// npx wrangler d1 execute d1-sandbox --local --file=./drizzle/<FILE>
+
 export default {
 	async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
 		const success = new Response("Success", { status: 200 });
@@ -26,37 +29,43 @@ export default {
 
 		const db = drizzle(env.DB, { schema });
 
-		if (path === "/api/sandbox/create" && method === "POST") {
-			const initSchema = z.object({
-				type: z.enum(["react", "node"]),
-				name: z.string(),
-				userId: z.string(),
-			});
-
-			const body = await request.json();
-			const { type, name, userId } = initSchema.parse(body);
-
-			const sb = await db.insert(sandbox).values({ type, name, userId }).returning().get();
-
-			console.log("sb:", sb);
-			await fetch("https://storage.ishaan1013.workers.dev/api/init", {
-				method: "POST",
-				body: JSON.stringify({ sandboxId: sb.id, type }),
-				headers: { "Content-Type": "application/json" },
-			});
-
-			return success;
-		} else if (path === "/api/sandbox" && method === "GET") {
-			const params = url.searchParams;
-			if (params.has("id")) {
-				const id = params.get("id") as string;
-				const res = await db.query.sandbox.findFirst({
-					where: (sandbox, { eq }) => eq(sandbox.id, id),
+		if (path === "/api/sandbox") {
+			if (method === "GET") {
+				const params = url.searchParams;
+				if (params.has("id")) {
+					const id = params.get("id") as string;
+					const res = await db.query.sandbox.findFirst({
+						where: (sandbox, { eq }) => eq(sandbox.id, id),
+					});
+					return json(res ?? {});
+				} else {
+					const res = await db.select().from(sandbox).all();
+					return json(res ?? {});
+				}
+			} else if (method === "PUT") {
+				const initSchema = z.object({
+					type: z.enum(["react", "node"]),
+					name: z.string(),
+					userId: z.string(),
+					visibility: z.enum(["public", "private"]),
 				});
-				return json(res ?? {});
+
+				const body = await request.json();
+				const { type, name, userId, visibility } = initSchema.parse(body);
+
+				const sb = await db.insert(sandbox).values({ type, name, userId, visibility }).returning().get();
+
+				// console.log("sb:", sb);
+				await fetch("https://storage.ishaan1013.workers.dev/api/init", {
+					method: "POST",
+					body: JSON.stringify({ sandboxId: sb.id, type }),
+					headers: { "Content-Type": "application/json" },
+				});
+
+				return new Response(sb.id, { status: 200 });
 			} else {
-				const res = await db.select().from(sandbox).all();
-				return json(res ?? {});
+				console.log(method);
+				return methodNotAllowed;
 			}
 		} else if (path === "/api/user") {
 			if (method === "GET") {

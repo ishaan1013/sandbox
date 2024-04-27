@@ -4,6 +4,7 @@ import { GeistMono } from "geist/font/mono"
 import "./globals.css"
 import { ThemeProvider } from "@/components/layout/themeProvider"
 import { ClerkProvider } from "@clerk/nextjs"
+import { Toaster } from "@/components/ui/sonner"
 
 export const metadata: Metadata = {
   title: "Sandbox",
@@ -26,6 +27,7 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             {children}
+            <Toaster position="bottom-left" richColors />
           </ThemeProvider>
         </body>
       </html>

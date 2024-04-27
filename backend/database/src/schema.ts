@@ -24,6 +24,7 @@ export const sandbox = sqliteTable("sandbox", {
 		.unique(),
 	name: text("name").notNull(),
 	type: text("type", { enum: ["react", "node"] }).notNull(),
+	visibility: text("visibility", { enum: ["public", "private"] }),
 	userId: text("user_id")
 		.notNull()
 		.references(() => user.id),

@@ -15,6 +15,20 @@
       "when": 1713937589365,
       "tag": "0001_magenta_tenebrous",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1714247208074,
+      "tag": "0002_rare_beyonder",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1714247272878,
+      "tag": "0003_silky_talos",
+      "breakpoints": true
     }
   ]
 }

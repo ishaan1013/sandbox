@@ -11,6 +11,7 @@ export type Sandbox = {
   id: string
   name: string
   type: "react" | "node"
+  visibility: "public" | "private"
   userId: string
 }
 

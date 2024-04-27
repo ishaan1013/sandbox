@@ -23,8 +23,8 @@ import { useClerk } from "@clerk/nextjs"
 import { TFile, TFileData, TFolder, TTab } from "./sidebar/types"
 
 import { io } from "socket.io-client"
-import { set } from "zod"
 import { processFileType } from "@/lib/utils"
+import { toast } from "sonner"
 
 export default function CodeEditor({
   userId,
@@ -117,11 +117,6 @@ export default function CodeEditor({
     setTabs((prev) => prev.filter((t) => t.id !== tab.id))
   }
 
-  // Note: add renaming validation:
-  // In general: must not contain / or \ or whitespace, not empty, no duplicates
-  // Files: must contain dot
-  // Folders: must not contain dot
-
   const handleRename = (
     id: string,
     newName: string,
@@ -129,14 +124,18 @@ export default function CodeEditor({
     type: "file" | "folder"
   ) => {
     // Validation
+    if (newName === oldName) {
+      return false
+    }
+
     if (
-      newName === oldName ||
       newName.includes("/") ||
       newName.includes("\\") ||
       newName.includes(" ") ||
       (type === "file" && !newName.includes(".")) ||
       (type === "folder" && newName.includes("."))
     ) {
+      toast.error("Invalid file name.")
       return false
     }
 
