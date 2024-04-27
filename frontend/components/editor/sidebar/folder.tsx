@@ -3,7 +3,7 @@
 import Image from "next/image"
 import { useState } from "react"
 import { getIconForFolder, getIconForOpenFolder } from "vscode-icons-js"
-import { TFile, TFolder } from "./types"
+import { TFile, TFolder, TTab } from "./types"
 import SidebarFile from "./file"
 
 export default function SidebarFolder({
@@ -11,7 +11,7 @@ export default function SidebarFolder({
   selectFile,
 }: {
   data: TFolder
-  selectFile: (file: TFile) => void
+  selectFile: (file: TTab) => void
 }) {
   const [isOpen, setIsOpen] = useState(false)
   const folder = isOpen

@@ -13,13 +13,14 @@ import {
 import {
   ChevronLeft,
   ChevronRight,
+  FileJson,
   RotateCw,
   TerminalSquare,
 } from "lucide-react"
 import Tab from "../ui/tab"
 import Sidebar from "./sidebar"
 import { useClerk } from "@clerk/nextjs"
-import { TFile, TFileData, TFolder } from "./sidebar/types"
+import { TFile, TFileData, TFolder, TTab } from "./sidebar/types"
 
 import { io } from "socket.io-client"
 import { set } from "zod"
@@ -41,7 +42,7 @@ export default function CodeEditor({
   const [files, setFiles] = useState<(TFolder | TFile)[]>([])
   const [editorLanguage, setEditorLanguage] = useState("plaintext")
   const [activeFile, setActiveFile] = useState<string | null>(null)
-  const [tabs, setTabs] = useState<TFile[]>([])
+  const [tabs, setTabs] = useState<TTab[]>([])
   const [activeId, setActiveId] = useState<string | null>(null)
 
   const socket = io(
@@ -81,7 +82,7 @@ export default function CodeEditor({
 
   const clerk = useClerk()
 
-  const selectFile = (tab: TFile) => {
+  const selectFile = (tab: TTab) => {
     setTabs((prev) => {
       const exists = prev.find((t) => t.id === tab.id)
       if (exists) {
@@ -115,6 +116,13 @@ export default function CodeEditor({
     setTabs((prev) => prev.filter((t) => t.id !== tab.id))
   }
 
+  const handleFileNameChange = (id: string, newName: string) => {
+    socket.emit("renameFile", id, newName)
+    setTabs((prev) =>
+      prev.map((tab) => (tab.id === id ? { ...tab, name: newName } : tab))
+    )
+  }
+
   return (
     <>
       <Sidebar files={files} selectFile={selectFile} />
@@ -129,6 +137,7 @@ export default function CodeEditor({
             {tabs.map((tab) => (
               <Tab
                 key={tab.id}
+                saved={tab.saved}
                 selected={activeId === tab.id}
                 onClick={() => {
                   selectFile(tab)
@@ -143,6 +152,7 @@ export default function CodeEditor({
             {activeId === null ? (
               <>
                 <div className="w-full h-full flex items-center justify-center text-xl font-medium text-secondary select-none">
+                  <FileJson className="w-6 h-6 mr-3" />
                   No file selected.
                 </div>
               </>
@@ -152,6 +162,13 @@ export default function CodeEditor({
                 // defaultLanguage="typescript"
                 language={editorLanguage}
                 onMount={handleEditorMount}
+                onChange={(value) => {
+                  setTabs((prev) =>
+                    prev.map((tab) =>
+                      tab.id === activeId ? { ...tab, saved: false } : tab
+                    )
+                  )
+                }}
                 options={{
                   minimap: {
                     enabled: false,

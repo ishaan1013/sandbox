@@ -3,7 +3,7 @@
 import { FilePlus, FolderPlus, Loader2, Search } from "lucide-react"
 import SidebarFile from "./file"
 import SidebarFolder from "./folder"
-import { TFile, TFolder } from "./types"
+import { TFile, TFolder, TTab } from "./types"
 
 // Note: add renaming validation:
 // In general: must not contain / or \ or whitespace, not empty, no duplicates
@@ -15,7 +15,7 @@ export default function Sidebar({
   selectFile,
 }: {
   files: (TFile | TFolder)[]
-  selectFile: (tab: TFile) => void
+  selectFile: (tab: TTab) => void
 }) {
   return (
     <div className="h-full w-56 select-none flex flex-col text-sm items-start p-2">
