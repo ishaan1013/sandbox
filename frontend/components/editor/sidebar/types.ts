@@ -10,3 +10,8 @@ export type TFile = {
   type: "file"
   name: string
 }
+
+export type TFileData = {
+  id: string
+  data: string
+}

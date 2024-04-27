@@ -19,9 +19,10 @@ import {
 import Tab from "../ui/tab"
 import Sidebar from "./sidebar"
 import { useClerk } from "@clerk/nextjs"
-import { TFile, TFolder } from "./sidebar/types"
+import { TFile, TFileData, TFolder } from "./sidebar/types"
 
 import { io } from "socket.io-client"
+import { set } from "zod"
 
 export default function CodeEditor({
   userId,
@@ -30,13 +31,17 @@ export default function CodeEditor({
   userId: string
   sandboxId: string
 }) {
-  // const editorRef = useRef<null | monaco.editor.IStandaloneCodeEditor>(null)
+  const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
 
-  // const handleEditorMount: OnMount = (editor, monaco) => {
-  //   editorRef.current = editor
-  // }
+  const handleEditorMount: OnMount = (editor, monaco) => {
+    editorRef.current = editor
+  }
 
   const [files, setFiles] = useState<(TFolder | TFile)[]>([])
+  const [editorLanguage, setEditorLanguage] = useState("plaintext")
+  const [activeFile, setActiveFile] = useState<string | null>(null)
+  const [tabs, setTabs] = useState<TFile[]>([])
+  const [activeId, setActiveId] = useState<string | null>(null)
 
   const socket = io(
     `http://localhost:4000?userId=${userId}&sandboxId=${sandboxId}`
@@ -44,6 +49,7 @@ export default function CodeEditor({
 
   // connection/disconnection effect
   useEffect(() => {
+    console.log("connecting")
     socket.connect()
 
     return () => {
@@ -54,21 +60,25 @@ export default function CodeEditor({
   // event listener effect
   useEffect(() => {
     function onLoadedEvent(files: (TFolder | TFile)[]) {
+      console.log("onLoadedEvent")
       setFiles(files)
     }
 
+    function onFileEvent() {
+      console.log("onFileEvent")
+      // setActiveFile(file)
+    }
+
     socket.on("loaded", onLoadedEvent)
+    socket.on("file", onFileEvent)
 
     return () => {
       socket.off("loaded", onLoadedEvent)
+      socket.off("file", onFileEvent)
     }
   }, [])
-  // use the dependency array!
 
   const clerk = useClerk()
-
-  const [tabs, setTabs] = useState<TFile[]>([])
-  const [activeId, setActiveId] = useState<string | null>(null)
 
   const selectFile = (tab: TFile) => {
     setTabs((prev) => {
@@ -79,24 +89,28 @@ export default function CodeEditor({
       }
       return [...prev, tab]
     })
+    socket.emit("getFile", tab.id, (response: string) => {
+      setActiveFile(response)
+    })
+    setEditorLanguage(tab.name.split(".").pop() ?? "plaintext")
     setActiveId(tab.id)
   }
 
   const closeTab = (tab: TFile) => {
     const numTabs = tabs.length
     const index = tabs.findIndex((t) => t.id === tab.id)
-    setActiveId((prev) => {
-      const next =
-        prev === tab.id
-          ? numTabs === 1
-            ? null
-            : index < numTabs - 1
-            ? tabs[index + 1].id
-            : tabs[index - 1].id
-          : prev
+    const nextId =
+      activeId === tab.id
+        ? numTabs === 1
+          ? null
+          : index < numTabs - 1
+          ? tabs[index + 1].id
+          : tabs[index - 1].id
+        : activeId
+    const nextTab = tabs.find((t) => t.id === nextId)
 
-      return next
-    })
+    if (nextTab) selectFile(nextTab)
+    else setActiveId(null)
     setTabs((prev) => prev.filter((t) => t.id !== tab.id))
   }
 
@@ -115,7 +129,9 @@ export default function CodeEditor({
               <Tab
                 key={tab.id}
                 selected={activeId === tab.id}
-                onClick={() => setActiveId(tab.id)}
+                onClick={() => {
+                  selectFile(tab)
+                }}
                 onClose={() => closeTab(tab)}
               >
                 {tab.name}
@@ -132,8 +148,9 @@ export default function CodeEditor({
             ) : clerk.loaded ? (
               <Editor
                 height="100%"
-                defaultLanguage="typescript"
-                // onMount={handleEditorMount}
+                // defaultLanguage="typescript"
+                language={editorLanguage}
+                onMount={handleEditorMount}
                 options={{
                   minimap: {
                     enabled: false,
@@ -143,8 +160,10 @@ export default function CodeEditor({
                     top: 4,
                   },
                   scrollBeyondLastLine: false,
+                  fixedOverflowWidgets: true,
                 }}
                 theme="vs-dark"
+                value={activeFile ?? ""}
               />
             ) : null}
           </div>

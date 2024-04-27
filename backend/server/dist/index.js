@@ -36,7 +36,6 @@ const handshakeSchema = zod_1.z.object({
 });
 io.use((socket, next) => __awaiter(void 0, void 0, void 0, function* () {
     const q = socket.handshake.query;
-    console.log("middleware");
     const parseQuery = handshakeSchema.safeParse(q);
     if (!parseQuery.success) {
         console.log("Invalid request.");
@@ -46,7 +45,6 @@ io.use((socket, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { sandboxId, userId } = parseQuery.data;
     const dbUser = yield fetch(`http://localhost:8787/api/user?id=${userId}`);
     const dbUserJSON = (yield dbUser.json());
-    console.log("dbUserJSON:", dbUserJSON);
     if (!dbUserJSON) {
         console.log("DB error.");
         next(new Error("DB error."));
@@ -68,6 +66,13 @@ io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
     const data = socket.data;
     const sandboxFiles = yield (0, getSandboxFiles_1.default)(data.id);
     socket.emit("loaded", sandboxFiles.files);
+    socket.on("getFile", (fileId, callback) => {
+        const file = sandboxFiles.fileData.find((f) => f.id === fileId);
+        if (!file)
+            return;
+        // console.log("file " + file.id + ": ", file.data)
+        callback(file.data);
+    });
 }));
 httpServer.listen(port, () => {
     console.log(`Server running on port ${port}`);
