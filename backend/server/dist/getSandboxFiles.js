@@ -13,10 +13,13 @@ const getSandboxFiles = (id) => __awaiter(void 0, void 0, void 0, function* () {
     const sandboxRes = yield fetch(`https://storage.ishaan1013.workers.dev/api?sandboxId=${id}`);
     const sandboxData = yield sandboxRes.json();
     const paths = sandboxData.objects.map((obj) => obj.key);
-    return processFiles(paths, id);
+    const processedFiles = yield processFiles(paths, id);
+    // console.log("processedFiles.fileData:", processedFiles.fileData)
+    return processedFiles;
 });
-const processFiles = (paths, id) => {
+const processFiles = (paths, id) => __awaiter(void 0, void 0, void 0, function* () {
     const root = { id: "/", type: "folder", name: "/", children: [] };
+    const fileData = [];
     paths.forEach((path) => {
         const allParts = path.split("/");
         if (allParts[1] !== id) {
@@ -38,6 +41,7 @@ const processFiles = (paths, id) => {
                 if (isFile) {
                     const file = { id: path, type: "file", name: part };
                     current.children.push(file);
+                    fileData.push({ id: path, data: "" });
                 }
                 else {
                     const folder = {
@@ -52,6 +56,23 @@ const processFiles = (paths, id) => {
             }
         }
     });
-    return root.children;
-};
+    yield Promise.all(fileData.map((file) => __awaiter(void 0, void 0, void 0, function* () {
+        const data = yield fetchFileContent(file.id);
+        file.data = data;
+    })));
+    return {
+        files: root.children,
+        fileData,
+    };
+});
+const fetchFileContent = (fileId) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const fileRes = yield fetch(`https://storage.ishaan1013.workers.dev/api?fileId=${fileId}`);
+        return yield fileRes.text();
+    }
+    catch (error) {
+        console.error("ERROR fetching file:", error);
+        return "";
+    }
+});
 exports.default = getSandboxFiles;

@@ -27,6 +27,11 @@ export type TFile = {
   name: string
 }
 
+export type TFileData = {
+  id: string
+  data: string
+}
+
 export type R2Files = {
   objects: R2FileData[]
   truncated: boolean
@@ -42,4 +47,13 @@ export type R2FileData = {
   size: number
   version: string
   key: string
+}
+
+export type R2FileBody = R2FileData & {
+  body: ReadableStream
+  bodyUsed: boolean
+  arrayBuffer: Promise<ArrayBuffer>
+  text: Promise<string>
+  json: Promise<any>
+  blob: Promise<Blob>
 }

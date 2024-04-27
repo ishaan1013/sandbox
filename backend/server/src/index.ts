@@ -22,7 +22,6 @@ const io = new Server(httpServer, {
 const handshakeSchema = z.object({
   userId: z.string(),
   sandboxId: z.string(),
-  type: z.enum(["node", "react"]),
   EIO: z.string(),
   transport: z.string(),
 })
@@ -40,7 +39,7 @@ io.use(async (socket, next) => {
     return
   }
 
-  const { sandboxId, userId, type } = parseQuery.data
+  const { sandboxId, userId } = parseQuery.data
 
   const dbUser = await fetch(`http://localhost:8787/api/user?id=${userId}`)
   const dbUserJSON = (await dbUser.json()) as User
@@ -63,7 +62,6 @@ io.use(async (socket, next) => {
 
   socket.data = {
     id: sandboxId,
-    type,
     userId,
   }
 
@@ -74,18 +72,11 @@ io.on("connection", async (socket) => {
   const data = socket.data as {
     userId: string
     id: string
-    type: "node" | "react"
   }
 
   const sandboxFiles = await getSandboxFiles(data.id)
 
-  // fetch all file data TODO
-
-  // socket.emit("loaded", {
-  //     rootContent: await fetchDir("/workspace", "")
-  // });
-
-  // initHandlers(socket, replId);
+  socket.emit("loaded", sandboxFiles.files)
 })
 
 httpServer.listen(port, () => {

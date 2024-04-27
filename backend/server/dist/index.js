@@ -31,7 +31,6 @@ const io = new socket_io_1.Server(httpServer, {
 const handshakeSchema = zod_1.z.object({
     userId: zod_1.z.string(),
     sandboxId: zod_1.z.string(),
-    type: zod_1.z.enum(["node", "react"]),
     EIO: zod_1.z.string(),
     transport: zod_1.z.string(),
 });
@@ -44,7 +43,7 @@ io.use((socket, next) => __awaiter(void 0, void 0, void 0, function* () {
         next(new Error("Invalid request."));
         return;
     }
-    const { sandboxId, userId, type } = parseQuery.data;
+    const { sandboxId, userId } = parseQuery.data;
     const dbUser = yield fetch(`http://localhost:8787/api/user?id=${userId}`);
     const dbUserJSON = (yield dbUser.json());
     console.log("dbUserJSON:", dbUserJSON);
@@ -61,7 +60,6 @@ io.use((socket, next) => __awaiter(void 0, void 0, void 0, function* () {
     }
     socket.data = {
         id: sandboxId,
-        type,
         userId,
     };
     next();
@@ -69,11 +67,7 @@ io.use((socket, next) => __awaiter(void 0, void 0, void 0, function* () {
 io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
     const data = socket.data;
     const sandboxFiles = yield (0, getSandboxFiles_1.default)(data.id);
-    // fetch all file data TODO
-    // socket.emit("loaded", {
-    //     rootContent: await fetchDir("/workspace", "")
-    // });
-    // initHandlers(socket, replId);
+    socket.emit("loaded", sandboxFiles.files);
 }));
 httpServer.listen(port, () => {
     console.log(`Server running on port ${port}`);

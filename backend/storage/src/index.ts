@@ -20,11 +20,26 @@ export default {
 			if (method === 'GET') {
 				const params = url.searchParams;
 				const sandboxId = params.get('sandboxId');
-				if (!sandboxId) {
-					return invalidRequest;
-				}
-				const res = await env.R2.list({ prefix: `projects/${sandboxId}` });
-				return new Response(JSON.stringify(res), { status: 200 });
+				const fileId = params.get('fileId');
+
+				if (sandboxId) {
+					const res = await env.R2.list({ prefix: `projects/${sandboxId}` });
+					return new Response(JSON.stringify(res), { status: 200 });
+				} else if (fileId) {
+					const obj = await env.R2.get(fileId);
+					if (obj === null) {
+						return new Response(`${fileId} not found`, { status: 404 });
+					}
+					const headers = new Headers();
+					headers.set('etag', obj.httpEtag);
+					obj.writeHttpMetadata(headers);
+
+					const text = await obj.text();
+
+					return new Response(text, {
+						headers,
+					});
+				} else return invalidRequest;
 			} else if (method === 'POST') {
 				return new Response('Hello, world!');
 			} else return methodNotAllowed;
