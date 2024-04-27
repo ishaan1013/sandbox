@@ -8,9 +8,16 @@ import { useEffect, useRef, useState } from "react"
 export default function SidebarFile({
   data,
   selectFile,
+  handleRename,
 }: {
   data: TFile
   selectFile: (file: TTab) => void
+  handleRename: (
+    id: string,
+    newName: string,
+    oldName: string,
+    type: "file" | "folder"
+  ) => boolean
 }) {
   const [imgSrc, setImgSrc] = useState(`/icons/${getIconForFile(data.name)}`)
   const [editing, setEditing] = useState(false)
@@ -21,6 +28,19 @@ export default function SidebarFile({
       inputRef.current?.focus()
     }
   }, [editing])
+
+  const renameFile = () => {
+    const renamed = handleRename(
+      data.id,
+      inputRef.current?.value ?? data.name,
+      data.name,
+      "file"
+    )
+    if (!renamed && inputRef.current) {
+      inputRef.current.value = data.name
+    }
+    setEditing(false)
+  }
 
   return (
     <button
@@ -41,18 +61,17 @@ export default function SidebarFile({
       <form
         onSubmit={(e) => {
           e.preventDefault()
-          console.log("submit")
-          setEditing(false)
+          renameFile()
         }}
       >
         <input
           ref={inputRef}
-          className={`bg-transparent w-full ${
+          className={`bg-transparent outline-foreground w-full ${
             editing ? "" : "pointer-events-none"
           }`}
           disabled={!editing}
           defaultValue={data.name}
-          onBlur={() => setEditing(false)}
+          onBlur={() => renameFile()}
         />
       </form>
     </button>

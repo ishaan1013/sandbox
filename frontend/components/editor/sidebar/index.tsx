@@ -5,17 +5,19 @@ import SidebarFile from "./file"
 import SidebarFolder from "./folder"
 import { TFile, TFolder, TTab } from "./types"
 
-// Note: add renaming validation:
-// In general: must not contain / or \ or whitespace, not empty, no duplicates
-// Files: must contain dot
-// Folders: must not contain dot
-
 export default function Sidebar({
   files,
   selectFile,
+  handleRename,
 }: {
   files: (TFile | TFolder)[]
   selectFile: (tab: TTab) => void
+  handleRename: (
+    id: string,
+    newName: string,
+    oldName: string,
+    type: "file" | "folder"
+  ) => boolean
 }) {
   return (
     <div className="h-full w-56 select-none flex flex-col text-sm items-start p-2">
@@ -45,12 +47,14 @@ export default function Sidebar({
                 key={child.id}
                 data={child}
                 selectFile={selectFile}
+                handleRename={handleRename}
               />
             ) : (
               <SidebarFolder
                 key={child.id}
                 data={child}
                 selectFile={selectFile}
+                handleRename={handleRename}
               />
             )
           )

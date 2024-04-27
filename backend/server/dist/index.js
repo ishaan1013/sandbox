@@ -17,7 +17,7 @@ const dotenv_1 = __importDefault(require("dotenv"));
 const http_1 = require("http");
 const socket_io_1 = require("socket.io");
 const zod_1 = require("zod");
-const getSandboxFiles_1 = __importDefault(require("./getSandboxFiles"));
+const utils_1 = require("./utils");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const port = process.env.PORT || 4000;
@@ -64,15 +64,22 @@ io.use((socket, next) => __awaiter(void 0, void 0, void 0, function* () {
 }));
 io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
     const data = socket.data;
-    const sandboxFiles = yield (0, getSandboxFiles_1.default)(data.id);
+    const sandboxFiles = yield (0, utils_1.getSandboxFiles)(data.id);
     socket.emit("loaded", sandboxFiles.files);
     socket.on("getFile", (fileId, callback) => {
         const file = sandboxFiles.fileData.find((f) => f.id === fileId);
         if (!file)
             return;
-        // console.log("file " + file.id + ": ", file.data)
+        console.log("file " + file.id + ": ", file.data);
         callback(file.data);
     });
+    socket.on("renameFile", (fileId, newName) => __awaiter(void 0, void 0, void 0, function* () {
+        const file = sandboxFiles.fileData.find((f) => f.id === fileId);
+        if (!file)
+            return;
+        yield (0, utils_1.renameFile)(fileId, newName, file.data);
+        file.id = newName;
+    }));
 }));
 httpServer.listen(port, () => {
     console.log(`Server running on port ${port}`);

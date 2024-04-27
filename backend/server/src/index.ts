@@ -5,7 +5,7 @@ import { Server } from "socket.io"
 
 import { z } from "zod"
 import { User } from "./types"
-import getSandboxFiles from "./getSandboxFiles"
+import { getSandboxFiles, renameFile } from "./utils"
 
 dotenv.config()
 
@@ -75,8 +75,15 @@ io.on("connection", async (socket) => {
     const file = sandboxFiles.fileData.find((f) => f.id === fileId)
     if (!file) return
 
-    // console.log("file " + file.id + ": ", file.data)
+    console.log("file " + file.id + ": ", file.data)
     callback(file.data)
+  })
+  socket.on("renameFile", async (fileId: string, newName: string) => {
+    const file = sandboxFiles.fileData.find((f) => f.id === fileId)
+    if (!file) return
+    await renameFile(fileId, newName, file.data)
+
+    file.id = newName
   })
 })
 

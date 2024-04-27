@@ -8,7 +8,7 @@ import {
   User,
 } from "./types"
 
-const getSandboxFiles = async (id: string) => {
+export const getSandboxFiles = async (id: string) => {
   const sandboxRes = await fetch(
     `https://storage.ishaan1013.workers.dev/api?sandboxId=${id}`
   )
@@ -50,7 +50,7 @@ const processFiles = async (paths: string[], id: string) => {
           fileData.push({ id: path, data: "" })
         } else {
           const folder: TFolder = {
-            id: path,
+            id: path, // issue todo: for example, folder "src" ID is: projects/a7vgttfqbgy403ratp7du3ln/src/App.css
             type: "folder",
             name: part,
             children: [],
@@ -87,4 +87,20 @@ const fetchFileContent = async (fileId: string): Promise<string> => {
   }
 }
 
-export default getSandboxFiles
+export const renameFile = async (
+  fileId: string,
+  newName: string,
+  data: string
+) => {
+  const parts = fileId.split("/")
+  const newFileId = parts.slice(0, parts.length - 1).join("/") + "/" + newName
+
+  const res = await fetch(`https://storage.ishaan1013.workers.dev/api/rename`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ fileId, newFileId, data }),
+  })
+  return res.ok
+}

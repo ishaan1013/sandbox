@@ -86,6 +86,7 @@ export default function CodeEditor({
     setTabs((prev) => {
       const exists = prev.find((t) => t.id === tab.id)
       if (exists) {
+        // console.log("exists")
         setActiveId(exists.id)
         return prev
       }
@@ -116,16 +117,45 @@ export default function CodeEditor({
     setTabs((prev) => prev.filter((t) => t.id !== tab.id))
   }
 
-  const handleFileNameChange = (id: string, newName: string) => {
+  // Note: add renaming validation:
+  // In general: must not contain / or \ or whitespace, not empty, no duplicates
+  // Files: must contain dot
+  // Folders: must not contain dot
+
+  const handleRename = (
+    id: string,
+    newName: string,
+    oldName: string,
+    type: "file" | "folder"
+  ) => {
+    // Validation
+    if (
+      newName === oldName ||
+      newName.includes("/") ||
+      newName.includes("\\") ||
+      newName.includes(" ") ||
+      (type === "file" && !newName.includes(".")) ||
+      (type === "folder" && newName.includes("."))
+    ) {
+      return false
+    }
+
+    // Action
     socket.emit("renameFile", id, newName)
     setTabs((prev) =>
       prev.map((tab) => (tab.id === id ? { ...tab, name: newName } : tab))
     )
+
+    return true
   }
 
   return (
     <>
-      <Sidebar files={files} selectFile={selectFile} />
+      <Sidebar
+        files={files}
+        selectFile={selectFile}
+        handleRename={handleRename}
+      />
       <ResizablePanelGroup direction="horizontal">
         <ResizablePanel
           className="p-2 flex flex-col"

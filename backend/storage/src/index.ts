@@ -43,6 +43,20 @@ export default {
 			} else if (method === 'POST') {
 				return new Response('Hello, world!');
 			} else return methodNotAllowed;
+		} else if (path === '/api/rename' && method === 'POST') {
+			const renameSchema = z.object({
+				fileId: z.string(),
+				newFileId: z.string(),
+				data: z.string(),
+			});
+
+			const body = await request.json();
+			const { fileId, newFileId, data } = renameSchema.parse(body);
+
+			await env.R2.delete(fileId);
+			await env.R2.put(newFileId, data);
+
+			return success;
 		} else if (path === '/api/init' && method === 'POST') {
 			const initSchema = z.object({
 				sandboxId: z.string(),
