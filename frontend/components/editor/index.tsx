@@ -55,7 +55,7 @@ export default function CodeEditor({
         e.preventDefault()
 
         const activeTab = tabs.find((t) => t.id === activeId)
-        console.log("saving " + activeTab?.name)
+        console.log("saving:", activeTab?.name, editorRef.current?.getValue())
 
         setTabs((prev) =>
           prev.map((tab) =>
@@ -91,17 +91,10 @@ export default function CodeEditor({
       setFiles(files)
     }
 
-    function onFileEvent() {
-      console.log("onFileEvent")
-      // setActiveFile(file)
-    }
-
     socket.on("loaded", onLoadedEvent)
-    socket.on("file", onFileEvent)
 
     return () => {
       socket.off("loaded", onLoadedEvent)
-      socket.off("file", onFileEvent)
     }
   }, [])
 

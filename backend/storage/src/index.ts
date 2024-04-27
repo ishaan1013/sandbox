@@ -57,6 +57,18 @@ export default {
 			await env.R2.put(newFileId, data);
 
 			return success;
+		} else if (path === '/api/save' && method === 'POST') {
+			const renameSchema = z.object({
+				fileId: z.string(),
+				data: z.string(),
+			});
+
+			const body = await request.json();
+			const { fileId, data } = renameSchema.parse(body);
+
+			await env.R2.put(fileId, data);
+
+			return success;
 		} else if (path === '/api/init' && method === 'POST') {
 			const initSchema = z.object({
 				sandboxId: z.string(),

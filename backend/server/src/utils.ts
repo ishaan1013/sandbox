@@ -50,7 +50,7 @@ const processFiles = async (paths: string[], id: string) => {
           fileData.push({ id: path, data: "" })
         } else {
           const folder: TFolder = {
-            id: path, // issue todo: for example, folder "src" ID is: projects/a7vgttfqbgy403ratp7du3ln/src/App.css
+            id: path, // todo: wrong id. for example, folder "src" ID is: projects/a7vgttfqbgy403ratp7du3ln/src/App.css
             type: "folder",
             name: part,
             children: [],
@@ -101,6 +101,17 @@ export const renameFile = async (
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ fileId, newFileId, data }),
+  })
+  return res.ok
+}
+
+export const saveFile = async (fileId: string, data: string) => {
+  const res = await fetch(`https://storage.ishaan1013.workers.dev/api/save`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ fileId, data }),
   })
   return res.ok
 }

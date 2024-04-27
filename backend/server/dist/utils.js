@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.renameFile = exports.getSandboxFiles = void 0;
+exports.saveFile = exports.renameFile = exports.getSandboxFiles = void 0;
 const getSandboxFiles = (id) => __awaiter(void 0, void 0, void 0, function* () {
     const sandboxRes = yield fetch(`https://storage.ishaan1013.workers.dev/api?sandboxId=${id}`);
     const sandboxData = yield sandboxRes.json();
@@ -47,7 +47,7 @@ const processFiles = (paths, id) => __awaiter(void 0, void 0, void 0, function* 
                 }
                 else {
                     const folder = {
-                        id: path, // issue todo: for example, folder "src" ID is: projects/a7vgttfqbgy403ratp7du3ln/src/App.css
+                        id: path, // todo: wrong id. for example, folder "src" ID is: projects/a7vgttfqbgy403ratp7du3ln/src/App.css
                         type: "folder",
                         name: part,
                         children: [],
@@ -90,3 +90,14 @@ const renameFile = (fileId, newName, data) => __awaiter(void 0, void 0, void 0, 
     return res.ok;
 });
 exports.renameFile = renameFile;
+const saveFile = (fileId, data) => __awaiter(void 0, void 0, void 0, function* () {
+    const res = yield fetch(`https://storage.ishaan1013.workers.dev/api/save`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ fileId, data }),
+    });
+    return res.ok;
+});
+exports.saveFile = saveFile;

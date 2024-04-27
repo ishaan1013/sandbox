@@ -5,7 +5,7 @@ import { Server } from "socket.io"
 
 import { z } from "zod"
 import { User } from "./types"
-import { getSandboxFiles, renameFile } from "./utils"
+import { getSandboxFiles, renameFile, saveFile } from "./utils"
 
 dotenv.config()
 
@@ -71,25 +71,30 @@ io.on("connection", async (socket) => {
   const sandboxFiles = await getSandboxFiles(data.id)
 
   socket.emit("loaded", sandboxFiles.files)
+
   socket.on("getFile", (fileId: string, callback) => {
     const file = sandboxFiles.fileData.find((f) => f.id === fileId)
     if (!file) return
 
-    console.log("file " + file.id + ": ", file.data)
     callback(file.data)
   })
-  socket.on("saveFile", (activeId: string, body: string, callback) => {
-    // const file = sandboxFiles.fileData.find((f) => f.id === fileId)
-    // if (!file) return
-    // console.log("file " + file.id + ": ", file.data)
-    // callback(file.data)
+
+  // todo: send diffs + debounce for efficiency
+  socket.on("saveFile", async (fileId: string, body: string) => {
+    const file = sandboxFiles.fileData.find((f) => f.id === fileId)
+    if (!file) return
+    file.data = body
+
+    console.log("save file " + file.id + ": ", file.data)
+    await saveFile(fileId, body)
   })
+
   socket.on("renameFile", async (fileId: string, newName: string) => {
     const file = sandboxFiles.fileData.find((f) => f.id === fileId)
     if (!file) return
-    await renameFile(fileId, newName, file.data)
-
     file.id = newName
+
+    await renameFile(fileId, newName, file.data)
   })
 })
 

@@ -70,21 +70,23 @@ io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
         const file = sandboxFiles.fileData.find((f) => f.id === fileId);
         if (!file)
             return;
-        console.log("file " + file.id + ": ", file.data);
         callback(file.data);
     });
-    socket.on("saveFile", (activeId, body, callback) => {
-        // const file = sandboxFiles.fileData.find((f) => f.id === fileId)
-        // if (!file) return
-        // console.log("file " + file.id + ": ", file.data)
-        // callback(file.data)
-    });
+    // todo: send diffs + debounce for efficiency
+    socket.on("saveFile", (fileId, body) => __awaiter(void 0, void 0, void 0, function* () {
+        const file = sandboxFiles.fileData.find((f) => f.id === fileId);
+        if (!file)
+            return;
+        file.data = body;
+        console.log("save file " + file.id + ": ", file.data);
+        yield (0, utils_1.saveFile)(fileId, body);
+    }));
     socket.on("renameFile", (fileId, newName) => __awaiter(void 0, void 0, void 0, function* () {
         const file = sandboxFiles.fileData.find((f) => f.id === fileId);
         if (!file)
             return;
-        yield (0, utils_1.renameFile)(fileId, newName, file.data);
         file.id = newName;
+        yield (0, utils_1.renameFile)(fileId, newName, file.data);
     }));
 }));
 httpServer.listen(port, () => {
