@@ -59,7 +59,7 @@ export default function SidebarFolder({
         >
           <input
             ref={inputRef}
-            className={`bg-transparent outline-foreground w-full ${
+            className={`bg-transparent transition-all focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:ring-2 focus-visible:ring-ring rounded-sm w-full ${
               editing ? "" : "pointer-events-none"
             }`}
             disabled={!editing}
