@@ -1,7 +1,7 @@
 "use client"
 
 import { Sandbox } from "@/lib/types"
-import { Ellipsis, Lock, Trash2 } from "lucide-react"
+import { Ellipsis, Globe, Lock, Trash2 } from "lucide-react"
 
 import {
   DropdownMenu,
@@ -12,7 +12,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-export default function ProjectCardDropdown({ sandbox }: { sandbox: Sandbox }) {
+export default function ProjectCardDropdown({
+  sandbox,
+  onVisibilityChange,
+  onDelete,
+}: {
+  sandbox: Sandbox
+  onVisibilityChange: (sandbox: Sandbox) => void
+  onDelete: (sandbox: Sandbox) => void
+}) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -25,12 +33,33 @@ export default function ProjectCardDropdown({ sandbox }: { sandbox: Sandbox }) {
         <Ellipsis className="w-4 h-4" />
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-40">
-        <DropdownMenuItem className="cursor-pointer">
-          <Lock className="mr-2 h-4 w-4" />
-          <span>Make Private</span>
+        <DropdownMenuItem
+          onClick={(e) => {
+            e.stopPropagation()
+            onVisibilityChange(sandbox)
+          }}
+          className="cursor-pointer"
+        >
+          {sandbox.visibility === "public" ? (
+            <>
+              <Lock className="mr-2 h-4 w-4" />
+              <span>Make Private</span>
+            </>
+          ) : (
+            <>
+              <Globe className="mr-2 h-4 w-4" />
+              <span>Make Public</span>
+            </>
+          )}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="!text-destructive cursor-pointer">
+        <DropdownMenuItem
+          onClick={(e) => {
+            e.stopPropagation()
+            onDelete(sandbox)
+          }}
+          className="!text-destructive cursor-pointer"
+        >
           <Trash2 className="mr-2 h-4 w-4" />
           <span>Delete Project</span>
         </DropdownMenuItem>

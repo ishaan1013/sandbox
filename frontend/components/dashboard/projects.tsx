@@ -1,3 +1,5 @@
+"use client"
+
 import { Sandbox } from "@/lib/types"
 import ProjectCard from "./projectCard"
 import Image from "next/image"
@@ -5,12 +7,28 @@ import ProjectCardDropdown from "./projectCard/dropdown"
 import { Clock, Globe, Lock } from "lucide-react"
 import Link from "next/link"
 import { Card } from "../ui/card"
+import { deleteSandbox, updateSandbox } from "@/lib/actions"
+import { toast } from "sonner"
 
 export default function DashboardProjects({
   sandboxes,
 }: {
   sandboxes: Sandbox[]
 }) {
+  const onDelete = async (sandbox: Sandbox) => {
+    toast(`Project ${sandbox.name} deleted.`)
+    const res = await deleteSandbox(sandbox.id)
+  }
+
+  const onVisibilityChange = async (sandbox: Sandbox) => {
+    const newVisibility = sandbox.visibility === "public" ? "private" : "public"
+    toast(`Project ${sandbox.name} is now ${newVisibility}.`)
+    const res = await updateSandbox({
+      id: sandbox.id,
+      visibility: newVisibility,
+    })
+  }
+
   return (
     <div className="grow p-4 flex flex-col">
       <div className="text-xl font-medium mb-8">My Projects</div>
@@ -38,7 +56,11 @@ export default function DashboardProjects({
                   <div className="font-medium static whitespace-nowrap w-full text-ellipsis overflow-hidden">
                     {sandbox.name}
                   </div>
-                  <ProjectCardDropdown sandbox={sandbox} />
+                  <ProjectCardDropdown
+                    sandbox={sandbox}
+                    onVisibilityChange={onVisibilityChange}
+                    onDelete={onDelete}
+                  />
                 </div>
                 <div className="flex flex-col text-muted-foreground space-y-0.5 text-sm">
                   <div className="flex items-center">

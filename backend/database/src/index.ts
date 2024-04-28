@@ -42,6 +42,27 @@ export default {
 					const res = await db.select().from(sandbox).all();
 					return json(res ?? {});
 				}
+			} else if (method === "DELETE") {
+				const params = url.searchParams;
+				if (params.has("id")) {
+					const id = params.get("id") as string;
+					const res = await db.delete(sandbox).where(eq(sandbox.id, id)).get();
+					return success;
+				} else {
+					return invalidRequest;
+				}
+			} else if (method === "POST") {
+				const initSchema = z.object({
+					id: z.string(),
+					name: z.string().optional(),
+					visibility: z.enum(["public", "private"]).optional(),
+				});
+
+				const body = await request.json();
+				const { id, name, visibility } = initSchema.parse(body);
+				const sb = await db.update(sandbox).set({ name, visibility }).where(eq(sandbox.id, id)).returning().get();
+
+				return success;
 			} else if (method === "PUT") {
 				const initSchema = z.object({
 					type: z.enum(["react", "node"]),
