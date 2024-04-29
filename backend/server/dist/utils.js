@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.saveFile = exports.renameFile = exports.getSandboxFiles = void 0;
+exports.saveFile = exports.renameFile = exports.createFile = exports.getSandboxFiles = void 0;
 const getSandboxFiles = (id) => __awaiter(void 0, void 0, void 0, function* () {
     const sandboxRes = yield fetch(`https://storage.ishaan1013.workers.dev/api?sandboxId=${id}`);
     const sandboxData = yield sandboxRes.json();
@@ -77,9 +77,18 @@ const fetchFileContent = (fileId) => __awaiter(void 0, void 0, void 0, function*
         return "";
     }
 });
-const renameFile = (fileId, newName, data) => __awaiter(void 0, void 0, void 0, function* () {
-    const parts = fileId.split("/");
-    const newFileId = parts.slice(0, parts.length - 1).join("/") + "/" + newName;
+const createFile = (fileId) => __awaiter(void 0, void 0, void 0, function* () {
+    const res = yield fetch(`https://storage.ishaan1013.workers.dev/api`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ fileId }),
+    });
+    return res.ok;
+});
+exports.createFile = createFile;
+const renameFile = (fileId, newFileId, data) => __awaiter(void 0, void 0, void 0, function* () {
     const res = yield fetch(`https://storage.ishaan1013.workers.dev/api/rename`, {
         method: "POST",
         headers: {

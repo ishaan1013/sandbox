@@ -6,15 +6,17 @@ export class Pty {
   socket: Socket
   ptyProcess: IPty
   shell: string
+  id: string
 
-  constructor(socket: Socket, id: string) {
+  constructor(socket: Socket, id: string, cwd: string) {
     this.socket = socket
     this.shell = os.platform() === "win32" ? "cmd.exe" : "bash"
+    this.id = id
 
     this.ptyProcess = spawn(this.shell, [], {
       name: "xterm",
       cols: 100,
-      cwd: `/temp`,
+      cwd: cwd,
       // env: process.env as { [key: string]: string },
     })
 

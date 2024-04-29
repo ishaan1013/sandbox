@@ -23,7 +23,7 @@ import { useClerk } from "@clerk/nextjs"
 import { TFile, TFileData, TFolder, TTab } from "./sidebar/types"
 
 import { io } from "socket.io-client"
-import { processFileType } from "@/lib/utils"
+import { processFileType, validateName } from "@/lib/utils"
 import { toast } from "sonner"
 import EditorTerminal from "./terminal"
 
@@ -158,21 +158,7 @@ export default function CodeEditor({
     oldName: string,
     type: "file" | "folder"
   ) => {
-    // Validation
-    if (newName === oldName) {
-      return false
-    }
-
-    if (
-      newName.includes("/") ||
-      newName.includes("\\") ||
-      newName.includes(" ") ||
-      (type === "file" && !newName.includes(".")) ||
-      (type === "folder" && newName.includes("."))
-    ) {
-      toast.error("Invalid file name.")
-      return false
-    }
+    if (!validateName(newName, oldName, type)) return false
 
     // Action
     socket.emit("renameFile", id, newName)
@@ -189,6 +175,19 @@ export default function CodeEditor({
         files={files}
         selectFile={selectFile}
         handleRename={handleRename}
+        socket={socket}
+        addNew={(name, type) => {
+          if (type === "file") {
+            console.log("adding file")
+            setFiles((prev) => [
+              ...prev,
+              { id: `projects/${sandboxId}/${name}`, name, type: "file" },
+            ])
+          } else {
+            console.log("adding folder")
+            // setFiles(prev => [...prev, { id, name, type: "folder", children: [] }])
+          }
+        }}
       />
       <ResizablePanelGroup direction="horizontal">
         <ResizablePanel

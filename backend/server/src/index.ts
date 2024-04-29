@@ -1,3 +1,5 @@
+import fs from "fs"
+import path from "path"
 import express, { Express, NextFunction, Request, Response } from "express"
 import dotenv from "dotenv"
 import { createServer } from "http"
@@ -5,7 +7,7 @@ import { Server } from "socket.io"
 
 import { z } from "zod"
 import { User } from "./types"
-import { getSandboxFiles, renameFile, saveFile } from "./utils"
+import { createFile, getSandboxFiles, renameFile, saveFile } from "./utils"
 import { Pty } from "./terminal"
 
 dotenv.config()
@@ -21,6 +23,8 @@ const io = new Server(httpServer, {
 })
 
 const terminals: { [id: string]: Pty } = {}
+
+const dirName = path.join(__dirname, "..")
 
 const handshakeSchema = z.object({
   userId: z.string(),
@@ -72,6 +76,14 @@ io.on("connection", async (socket) => {
   }
 
   const sandboxFiles = await getSandboxFiles(data.id)
+  sandboxFiles.fileData.forEach((file) => {
+    const filePath = path.join(dirName, file.id)
+    fs.mkdirSync(path.dirname(filePath), { recursive: true })
+    fs.writeFile(filePath, file.data, function (err) {
+      if (err) throw err
+      // console.log("Saved File:", file.id)
+    })
+  })
 
   socket.emit("loaded", sandboxFiles.files)
 
@@ -79,7 +91,7 @@ io.on("connection", async (socket) => {
     const file = sandboxFiles.fileData.find((f) => f.id === fileId)
     if (!file) return
 
-    console.log("get file " + file.id + ": ", file.data.slice(0, 10) + "...")
+    // console.log("get file " + file.id + ": ", file.data.slice(0, 10) + "...")
     callback(file.data)
   })
 
@@ -88,9 +100,34 @@ io.on("connection", async (socket) => {
     const file = sandboxFiles.fileData.find((f) => f.id === fileId)
     if (!file) return
     file.data = body
+    // console.log("save file " + file.id + ": ", file.data)
 
-    console.log("save file " + file.id + ": ", file.data)
+    fs.writeFile(path.join(dirName, file.id), body, function (err) {
+      if (err) throw err
+    })
     await saveFile(fileId, body)
+  })
+
+  socket.on("createFile", async (name: string) => {
+    const id = `projects/${data.id}/${name}`
+    console.log("create file", id, name)
+
+    fs.writeFile(path.join(dirName, id), "", function (err) {
+      if (err) throw err
+    })
+
+    sandboxFiles.files.push({
+      id,
+      name,
+      type: "file",
+    })
+
+    sandboxFiles.fileData.push({
+      id,
+      data: "",
+    })
+
+    await createFile(id)
   })
 
   socket.on("renameFile", async (fileId: string, newName: string) => {
@@ -98,12 +135,22 @@ io.on("connection", async (socket) => {
     if (!file) return
     file.id = newName
 
-    await renameFile(fileId, newName, file.data)
+    const parts = fileId.split("/")
+    const newFileId = parts.slice(0, parts.length - 1).join("/") + "/" + newName
+
+    fs.rename(
+      path.join(dirName, fileId),
+      path.join(dirName, newFileId),
+      function (err) {
+        if (err) throw err
+      }
+    )
+    await renameFile(fileId, newFileId, file.data)
   })
 
   socket.on("createTerminal", ({ id }: { id: string }) => {
     console.log("creating terminal (" + id + ")")
-    terminals[id] = new Pty(socket, id)
+    terminals[id] = new Pty(socket, id, `/projects/${data.id}`)
   })
 
   socket.on("terminalData", ({ id, data }: { id: string; data: string }) => {

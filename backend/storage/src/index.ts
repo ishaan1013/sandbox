@@ -41,7 +41,16 @@ export default {
 					});
 				} else return invalidRequest;
 			} else if (method === 'POST') {
-				return new Response('Hello, world!');
+				const createSchema = z.object({
+					fileId: z.string(),
+				});
+
+				const body = await request.json();
+				const { fileId } = createSchema.parse(body);
+
+				await env.R2.put(fileId, '');
+
+				return success;
 			} else return methodNotAllowed;
 		} else if (path === '/api/rename' && method === 'POST') {
 			const renameSchema = z.object({

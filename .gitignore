@@ -37,3 +37,5 @@ yarn-error.log*
 next-env.d.ts
 
 wrangler.toml
+
+backend/server/projects

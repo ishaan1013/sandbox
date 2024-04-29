@@ -12,6 +12,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const fs_1 = __importDefault(require("fs"));
+const path_1 = __importDefault(require("path"));
 const express_1 = __importDefault(require("express"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const http_1 = require("http");
@@ -30,6 +32,7 @@ const io = new socket_io_1.Server(httpServer, {
     },
 });
 const terminals = {};
+const dirName = path_1.default.join(__dirname, "..");
 const handshakeSchema = zod_1.z.object({
     userId: zod_1.z.string(),
     sandboxId: zod_1.z.string(),
@@ -67,12 +70,21 @@ io.use((socket, next) => __awaiter(void 0, void 0, void 0, function* () {
 io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
     const data = socket.data;
     const sandboxFiles = yield (0, utils_1.getSandboxFiles)(data.id);
+    sandboxFiles.fileData.forEach((file) => {
+        const filePath = path_1.default.join(dirName, file.id);
+        fs_1.default.mkdirSync(path_1.default.dirname(filePath), { recursive: true });
+        fs_1.default.writeFile(filePath, file.data, function (err) {
+            if (err)
+                throw err;
+            // console.log("Saved File:", file.id)
+        });
+    });
     socket.emit("loaded", sandboxFiles.files);
     socket.on("getFile", (fileId, callback) => {
         const file = sandboxFiles.fileData.find((f) => f.id === fileId);
         if (!file)
             return;
-        console.log("get file " + file.id + ": ", file.data.slice(0, 10) + "...");
+        // console.log("get file " + file.id + ": ", file.data.slice(0, 10) + "...")
         callback(file.data);
     });
     // todo: send diffs + debounce for efficiency
@@ -81,19 +93,47 @@ io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
         if (!file)
             return;
         file.data = body;
-        console.log("save file " + file.id + ": ", file.data);
+        // console.log("save file " + file.id + ": ", file.data)
+        fs_1.default.writeFile(path_1.default.join(dirName, file.id), body, function (err) {
+            if (err)
+                throw err;
+        });
         yield (0, utils_1.saveFile)(fileId, body);
+    }));
+    socket.on("createFile", (name) => __awaiter(void 0, void 0, void 0, function* () {
+        const id = `projects/${data.id}/${name}`;
+        console.log("create file", id, name);
+        fs_1.default.writeFile(path_1.default.join(dirName, id), "", function (err) {
+            if (err)
+                throw err;
+        });
+        sandboxFiles.files.push({
+            id,
+            name,
+            type: "file",
+        });
+        sandboxFiles.fileData.push({
+            id,
+            data: "",
+        });
+        yield (0, utils_1.createFile)(id);
     }));
     socket.on("renameFile", (fileId, newName) => __awaiter(void 0, void 0, void 0, function* () {
         const file = sandboxFiles.fileData.find((f) => f.id === fileId);
         if (!file)
             return;
         file.id = newName;
-        yield (0, utils_1.renameFile)(fileId, newName, file.data);
+        const parts = fileId.split("/");
+        const newFileId = parts.slice(0, parts.length - 1).join("/") + "/" + newName;
+        fs_1.default.rename(path_1.default.join(dirName, fileId), path_1.default.join(dirName, newFileId), function (err) {
+            if (err)
+                throw err;
+        });
+        yield (0, utils_1.renameFile)(fileId, newFileId, file.data);
     }));
     socket.on("createTerminal", ({ id }) => {
         console.log("creating terminal (" + id + ")");
-        terminals[id] = new terminal_1.Pty(socket, id);
+        terminals[id] = new terminal_1.Pty(socket, id, `/projects/${data.id}`);
     });
     socket.on("terminalData", ({ id, data }) => {
         console.log(`Received data for terminal ${id}: ${data}`);

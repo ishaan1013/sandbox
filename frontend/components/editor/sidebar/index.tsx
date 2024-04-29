@@ -6,11 +6,14 @@ import SidebarFolder from "./folder"
 import { TFile, TFolder, TTab } from "./types"
 import { useState } from "react"
 import New from "./new"
+import { Socket } from "socket.io-client"
 
 export default function Sidebar({
   files,
   selectFile,
   handleRename,
+  socket,
+  addNew,
 }: {
   files: (TFile | TFolder)[]
   selectFile: (tab: TTab) => void
@@ -20,6 +23,8 @@ export default function Sidebar({
     oldName: string,
     type: "file" | "folder"
   ) => boolean
+  socket: Socket
+  addNew: (name: string, type: "file" | "folder") => void
 }) {
   const [creatingNew, setCreatingNew] = useState<"file" | "folder" | null>(null)
 
@@ -73,8 +78,13 @@ export default function Sidebar({
               )}
               {creatingNew !== null ? (
                 <New
+                  socket={socket}
                   type={creatingNew}
-                  stopEditing={() => setCreatingNew(null)}
+                  stopEditing={() => {
+                    console.log("stopped editing")
+                    setCreatingNew(null)
+                  }}
+                  addNew={addNew}
                 />
               ) : null}
             </>

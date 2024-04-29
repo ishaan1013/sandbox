@@ -87,14 +87,22 @@ const fetchFileContent = async (fileId: string): Promise<string> => {
   }
 }
 
+export const createFile = async (fileId: string) => {
+  const res = await fetch(`https://storage.ishaan1013.workers.dev/api`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ fileId }),
+  })
+  return res.ok
+}
+
 export const renameFile = async (
   fileId: string,
-  newName: string,
+  newFileId: string,
   data: string
 ) => {
-  const parts = fileId.split("/")
-  const newFileId = parts.slice(0, parts.length - 1).join("/") + "/" + newName
-
   const res = await fetch(`https://storage.ishaan1013.workers.dev/api/rename`, {
     method: "POST",
     headers: {

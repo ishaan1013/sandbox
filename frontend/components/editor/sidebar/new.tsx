@@ -1,19 +1,33 @@
 "use client"
 
+import { validateName } from "@/lib/utils"
 import Image from "next/image"
 import { useEffect, useRef } from "react"
+import { Socket } from "socket.io-client"
 
 export default function New({
+  socket,
   type,
   stopEditing,
+  addNew,
 }: {
+  socket: Socket
   type: "file" | "folder"
   stopEditing: () => void
+  addNew: (name: string, type: "file" | "folder") => void
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const createFile = () => {
-    console.log("Create File")
+  const createNew = () => {
+    const name = inputRef.current?.value
+    // console.log("Create:", name, type)
+
+    if (name && validateName(name, "", type)) {
+      if (type === "file") {
+        socket.emit("createFile", name)
+      }
+      addNew(name, type)
+    }
     stopEditing()
   }
 
@@ -37,13 +51,13 @@ export default function New({
       <form
         onSubmit={(e) => {
           e.preventDefault()
-          createFile()
+          createNew()
         }}
       >
         <input
           ref={inputRef}
           className={`bg-transparent transition-all focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:ring-2 focus-visible:ring-ring rounded-sm w-full`}
-          onBlur={() => createFile()}
+          onBlur={() => createNew()}
         />
       </form>
     </div>
