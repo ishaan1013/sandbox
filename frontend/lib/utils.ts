@@ -16,10 +16,6 @@ export function processFileType(file: string) {
   return "plaintext"
 }
 
-export function decodeTerminalResponse(buffer: Buffer): string {
-  return buffer.toString("utf-8")
-}
-
 export function validateName(
   newName: string,
   oldName: string,

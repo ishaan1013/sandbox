@@ -13,6 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs_1 = __importDefault(require("fs"));
+const os_1 = __importDefault(require("os"));
 const path_1 = __importDefault(require("path"));
 const express_1 = __importDefault(require("express"));
 const dotenv_1 = __importDefault(require("dotenv"));
@@ -20,7 +21,7 @@ const http_1 = require("http");
 const socket_io_1 = require("socket.io");
 const zod_1 = require("zod");
 const utils_1 = require("./utils");
-const terminal_1 = require("./terminal");
+const node_pty_1 = require("node-pty");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const port = process.env.PORT || 4000;
@@ -132,18 +133,37 @@ io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
         yield (0, utils_1.renameFile)(fileId, newFileId, file.data);
     }));
     socket.on("createTerminal", ({ id }) => {
-        console.log("creating terminal (" + id + ")");
-        terminals[id] = new terminal_1.Pty(socket, id, `/projects/${data.id}`);
+        console.log("creating terminal, id=" + id);
+        const pty = (0, node_pty_1.spawn)(os_1.default.platform() === "win32" ? "cmd.exe" : "bash", [], {
+            name: "xterm",
+            cols: 100,
+            cwd: path_1.default.join(dirName, "projects", data.id),
+        });
+        pty.onData((data) => {
+            console.log(data);
+            socket.emit("terminalResponse", {
+                // data: Buffer.from(data, "utf-8").toString("base64"),
+                data,
+            });
+        });
+        pty.onExit((code) => console.log("exit :(", code));
+        terminals[id] = pty;
     });
-    socket.on("terminalData", ({ id, data }) => {
+    socket.on("terminalData", (id, data) => {
+        // socket.on("terminalData", (data: string) => {
         console.log(`Received data for terminal ${id}: ${data}`);
+        // pty.write(data)
         if (!terminals[id]) {
             console.log("terminal not found");
             console.log("terminals", terminals);
             return;
         }
-        console.log(`Writing to terminal ${id}`);
-        terminals[id].write(data);
+        try {
+            terminals[id].write(data);
+        }
+        catch (e) {
+            console.log("Error writing to terminal", e);
+        }
     });
     socket.on("disconnect", () => { });
 }));

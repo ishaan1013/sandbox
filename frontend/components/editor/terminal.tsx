@@ -5,7 +5,6 @@ import { FitAddon } from "@xterm/addon-fit"
 
 import { useEffect, useRef, useState } from "react"
 import { Socket } from "socket.io-client"
-import { decodeTerminalResponse } from "@/lib/utils"
 
 export default function EditorTerminal({ socket }: { socket: Socket }) {
   const terminalRef = useRef(null)
@@ -36,9 +35,11 @@ export default function EditorTerminal({ socket }: { socket: Socket }) {
       }, 500)
     }
 
-    const onTerminalResponse = (data: Buffer) => {
-      console.log("received data", decodeTerminalResponse(data))
-      term.write(decodeTerminalResponse(data))
+    const onTerminalResponse = (response: { data: string }) => {
+      // const res = Buffer.from(response.data, "base64").toString("utf-8")
+      const res = response.data
+      console.log("terminal response", res)
+      term.write(res)
     }
 
     socket.on("connect", onConnect)
@@ -54,15 +55,10 @@ export default function EditorTerminal({ socket }: { socket: Socket }) {
     }
     const disposable = term.onData((data) => {
       console.log("sending data", data)
-      socket.emit("terminalData", {
-        id: "testId",
-        data,
-      })
+      socket.emit("terminalData", "testId", data)
     })
 
-    socket.emit("terminalData", {
-      data: "\n",
-    })
+    socket.emit("terminalData", "\n")
 
     return () => {
       socket.off("connect", onConnect)

@@ -1,4 +1,5 @@
 import fs from "fs"
+import os from "os"
 import path from "path"
 import express, { Express, NextFunction, Request, Response } from "express"
 import dotenv from "dotenv"
@@ -9,6 +10,7 @@ import { z } from "zod"
 import { User } from "./types"
 import { createFile, getSandboxFiles, renameFile, saveFile } from "./utils"
 import { Pty } from "./terminal"
+import { IPty, spawn } from "node-pty"
 
 dotenv.config()
 
@@ -22,7 +24,7 @@ const io = new Server(httpServer, {
   },
 })
 
-const terminals: { [id: string]: Pty } = {}
+const terminals: { [id: string]: IPty } = {}
 
 const dirName = path.join(__dirname, "..")
 
@@ -149,12 +151,30 @@ io.on("connection", async (socket) => {
   })
 
   socket.on("createTerminal", ({ id }: { id: string }) => {
-    console.log("creating terminal (" + id + ")")
-    terminals[id] = new Pty(socket, id, `/projects/${data.id}`)
+    console.log("creating terminal, id=" + id)
+    const pty = spawn(os.platform() === "win32" ? "cmd.exe" : "bash", [], {
+      name: "xterm",
+      cols: 100,
+      cwd: path.join(dirName, "projects", data.id),
+    })
+
+    pty.onData((data) => {
+      console.log(data)
+      socket.emit("terminalResponse", {
+        // data: Buffer.from(data, "utf-8").toString("base64"),
+        data,
+      })
+    })
+
+    pty.onExit((code) => console.log("exit :(", code))
+
+    terminals[id] = pty
   })
 
-  socket.on("terminalData", ({ id, data }: { id: string; data: string }) => {
+  socket.on("terminalData", (id: string, data: string) => {
+    // socket.on("terminalData", (data: string) => {
     console.log(`Received data for terminal ${id}: ${data}`)
+    // pty.write(data)
 
     if (!terminals[id]) {
       console.log("terminal not found")
@@ -162,8 +182,11 @@ io.on("connection", async (socket) => {
       return
     }
 
-    console.log(`Writing to terminal ${id}`)
-    terminals[id].write(data)
+    try {
+      terminals[id].write(data)
+    } catch (e) {
+      console.log("Error writing to terminal", e)
+    }
   })
 
   socket.on("disconnect", () => {})

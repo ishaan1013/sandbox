@@ -9,13 +9,11 @@ const os_1 = __importDefault(require("os"));
 class Pty {
     constructor(socket, id, cwd) {
         this.socket = socket;
-        this.shell = os_1.default.platform() === "win32" ? "cmd.exe" : "bash";
         this.id = id;
-        this.ptyProcess = (0, node_pty_1.spawn)(this.shell, [], {
+        this.ptyProcess = (0, node_pty_1.spawn)(os_1.default.platform() === "win32" ? "cmd.exe" : "bash", [], {
             name: "xterm",
             cols: 100,
             cwd: cwd,
-            // env: process.env as { [key: string]: string },
         });
         this.ptyProcess.onData((data) => {
             console.log("onData", data);

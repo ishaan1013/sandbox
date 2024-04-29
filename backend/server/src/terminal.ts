@@ -5,20 +5,21 @@ import os from "os"
 export class Pty {
   socket: Socket
   ptyProcess: IPty
-  shell: string
   id: string
 
   constructor(socket: Socket, id: string, cwd: string) {
     this.socket = socket
-    this.shell = os.platform() === "win32" ? "cmd.exe" : "bash"
     this.id = id
 
-    this.ptyProcess = spawn(this.shell, [], {
-      name: "xterm",
-      cols: 100,
-      cwd: cwd,
-      // env: process.env as { [key: string]: string },
-    })
+    this.ptyProcess = spawn(
+      os.platform() === "win32" ? "cmd.exe" : "bash",
+      [],
+      {
+        name: "xterm",
+        cols: 100,
+        cwd: cwd,
+      }
+    )
 
     this.ptyProcess.onData((data) => {
       console.log("onData", data)
