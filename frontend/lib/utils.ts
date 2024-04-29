@@ -14,3 +14,7 @@ export function processFileType(file: string) {
   if (ending) return ending
   return "plaintext"
 }
+
+export function decodeTerminalResponse(buffer: Buffer): string {
+  return buffer.toString("utf-8")
+}

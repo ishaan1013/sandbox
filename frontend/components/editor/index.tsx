@@ -25,6 +25,12 @@ import { TFile, TFileData, TFolder, TTab } from "./sidebar/types"
 import { io } from "socket.io-client"
 import { processFileType } from "@/lib/utils"
 import { toast } from "sonner"
+import EditorTerminal from "./terminal"
+
+import { Terminal } from "@xterm/xterm"
+import { FitAddon } from "@xterm/addon-fit"
+
+import { decodeTerminalResponse } from "@/lib/utils"
 
 export default function CodeEditor({
   userId,
@@ -33,6 +39,8 @@ export default function CodeEditor({
   userId: string
   sandboxId: string
 }) {
+  const clerk = useClerk()
+
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
 
   const handleEditorMount: OnMount = (editor, monaco) => {
@@ -73,7 +81,7 @@ export default function CodeEditor({
     }
   }, [tabs, activeId])
 
-  // WS event handlers ------------
+  // WS event handlers:
 
   // connection/disconnection effect
   useEffect(() => {
@@ -86,21 +94,28 @@ export default function CodeEditor({
 
   // event listener effect
   useEffect(() => {
-    function onLoadedEvent(files: (TFolder | TFile)[]) {
+    const onConnect = () => {}
+
+    const onDisconnect = () => {}
+
+    const onLoadedEvent = (files: (TFolder | TFile)[]) => {
       console.log("onLoadedEvent")
       setFiles(files)
     }
 
+    socket.on("connect", onConnect)
+
+    socket.on("disconnect", onDisconnect)
     socket.on("loaded", onLoadedEvent)
 
     return () => {
+      socket.off("connect", onConnect)
+      socket.off("disconnect", onDisconnect)
       socket.off("loaded", onLoadedEvent)
     }
   }, [])
 
-  // ------------
-
-  const clerk = useClerk()
+  // Helper functions:
 
   const selectFile = (tab: TTab) => {
     setTabs((prev) => {
@@ -274,7 +289,9 @@ export default function CodeEditor({
                 <Tab selected>Node</Tab>
                 <Tab>Console</Tab>
               </div>
-              <div className="w-full grow rounded-md bg-secondary"></div>
+              <div className="w-full relative grow rounded-md bg-secondary">
+                {socket ? <EditorTerminal socket={socket} /> : null}
+              </div>
             </ResizablePanel>
           </ResizablePanelGroup>
         </ResizablePanel>

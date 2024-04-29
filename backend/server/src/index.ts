@@ -6,6 +6,7 @@ import { Server } from "socket.io"
 import { z } from "zod"
 import { User } from "./types"
 import { getSandboxFiles, renameFile, saveFile } from "./utils"
+import { Pty } from "./terminal"
 
 dotenv.config()
 
@@ -18,6 +19,8 @@ const io = new Server(httpServer, {
     origin: "*",
   },
 })
+
+const terminals: { [id: string]: Pty } = {}
 
 const handshakeSchema = z.object({
   userId: z.string(),
@@ -76,6 +79,7 @@ io.on("connection", async (socket) => {
     const file = sandboxFiles.fileData.find((f) => f.id === fileId)
     if (!file) return
 
+    console.log("get file " + file.id + ": ", file.data.slice(0, 10) + "...")
     callback(file.data)
   })
 
@@ -96,6 +100,26 @@ io.on("connection", async (socket) => {
 
     await renameFile(fileId, newName, file.data)
   })
+
+  socket.on("createTerminal", ({ id }: { id: string }) => {
+    console.log("creating terminal (" + id + ")")
+    terminals[id] = new Pty(socket, id)
+  })
+
+  socket.on("terminalData", ({ id, data }: { id: string; data: string }) => {
+    console.log(`Received data for terminal ${id}: ${data}`)
+
+    if (!terminals[id]) {
+      console.log("terminal not found")
+      console.log("terminals", terminals)
+      return
+    }
+
+    console.log(`Writing to terminal ${id}`)
+    terminals[id].write(data)
+  })
+
+  socket.on("disconnect", () => {})
 })
 
 httpServer.listen(port, () => {

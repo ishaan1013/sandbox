@@ -18,6 +18,7 @@ const http_1 = require("http");
 const socket_io_1 = require("socket.io");
 const zod_1 = require("zod");
 const utils_1 = require("./utils");
+const terminal_1 = require("./terminal");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const port = process.env.PORT || 4000;
@@ -28,6 +29,7 @@ const io = new socket_io_1.Server(httpServer, {
         origin: "*",
     },
 });
+const terminals = {};
 const handshakeSchema = zod_1.z.object({
     userId: zod_1.z.string(),
     sandboxId: zod_1.z.string(),
@@ -70,6 +72,7 @@ io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
         const file = sandboxFiles.fileData.find((f) => f.id === fileId);
         if (!file)
             return;
+        console.log("get file " + file.id + ": ", file.data.slice(0, 10) + "...");
         callback(file.data);
     });
     // todo: send diffs + debounce for efficiency
@@ -88,6 +91,21 @@ io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
         file.id = newName;
         yield (0, utils_1.renameFile)(fileId, newName, file.data);
     }));
+    socket.on("createTerminal", ({ id }) => {
+        console.log("creating terminal (" + id + ")");
+        terminals[id] = new terminal_1.Pty(socket, id);
+    });
+    socket.on("terminalData", ({ id, data }) => {
+        console.log(`Received data for terminal ${id}: ${data}`);
+        if (!terminals[id]) {
+            console.log("terminal not found");
+            console.log("terminals", terminals);
+            return;
+        }
+        console.log(`Writing to terminal ${id}`);
+        terminals[id].write(data);
+    });
+    socket.on("disconnect", () => { });
 }));
 httpServer.listen(port, () => {
     console.log(`Server running on port ${port}`);
