@@ -2,6 +2,7 @@
 
 import { Terminal } from "@xterm/xterm"
 import { FitAddon } from "@xterm/addon-fit"
+import "./xterm.css"
 
 import { useEffect, useRef, useState } from "react"
 import { Socket } from "socket.io-client"
@@ -14,7 +15,10 @@ export default function EditorTerminal({ socket }: { socket: Socket }) {
     if (!terminalRef.current) return
 
     const terminal = new Terminal({
-      cursorBlink: false,
+      cursorBlink: true,
+      theme: {
+        background: "#262626",
+      },
     })
 
     setTerm(terminal)
@@ -67,9 +71,5 @@ export default function EditorTerminal({ socket }: { socket: Socket }) {
     }
   }, [term, terminalRef.current])
 
-  return (
-    <div>
-      <div ref={terminalRef} className="w-full h-1/2 text-left"></div>
-    </div>
-  )
+  return <div ref={terminalRef} className="w-full h-full text-left"></div>
 }

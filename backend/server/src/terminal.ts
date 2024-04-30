@@ -44,9 +44,9 @@ export class Pty {
   // kill() {
   //   console.log("killing terminal")
 
-  //   if (os.platform() !== "win32") {
-  //     this.ptyProcess.kill()
-  //     return
-  //   }
+  // if (os.platform() !== "win32") {
+  //   this.ptyProcess.kill()
+  //   return
+  // }
   // }
 }

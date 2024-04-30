@@ -77,7 +77,6 @@ io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
         fs_1.default.writeFile(filePath, file.data, function (err) {
             if (err)
                 throw err;
-            // console.log("Saved File:", file.id)
         });
     });
     socket.emit("loaded", sandboxFiles.files);
@@ -85,7 +84,6 @@ io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
         const file = sandboxFiles.fileData.find((f) => f.id === fileId);
         if (!file)
             return;
-        // console.log("get file " + file.id + ": ", file.data.slice(0, 10) + "...")
         callback(file.data);
     });
     // todo: send diffs + debounce for efficiency
@@ -94,7 +92,6 @@ io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
         if (!file)
             return;
         file.data = body;
-        // console.log("save file " + file.id + ": ", file.data)
         fs_1.default.writeFile(path_1.default.join(dirName, file.id), body, function (err) {
             if (err)
                 throw err;
@@ -139,15 +136,19 @@ io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
             cols: 100,
             cwd: path_1.default.join(dirName, "projects", data.id),
         });
-        pty.onData((data) => {
+        const onData = pty.onData((data) => {
             console.log(data);
             socket.emit("terminalResponse", {
                 // data: Buffer.from(data, "utf-8").toString("base64"),
                 data,
             });
         });
-        pty.onExit((code) => console.log("exit :(", code));
-        terminals[id] = pty;
+        const onExit = pty.onExit((code) => console.log("exit :(", code));
+        terminals[id] = {
+            terminal: pty,
+            onData,
+            onExit,
+        };
     });
     socket.on("terminalData", (id, data) => {
         // socket.on("terminalData", (data: string) => {
@@ -159,13 +160,22 @@ io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
             return;
         }
         try {
-            terminals[id].write(data);
+            terminals[id].terminal.write(data);
         }
         catch (e) {
             console.log("Error writing to terminal", e);
         }
     });
-    socket.on("disconnect", () => { });
+    socket.on("disconnect", () => {
+        Object.entries(terminals).forEach((t) => {
+            const { terminal, onData, onExit } = t[1];
+            if (os_1.default.platform() !== "win32")
+                terminal.kill();
+            onData.dispose();
+            onExit.dispose();
+            delete terminals[t[0]];
+        });
+    });
 }));
 httpServer.listen(port, () => {
     console.log(`Server running on port ${port}`);

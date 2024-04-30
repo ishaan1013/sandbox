@@ -10,7 +10,7 @@ import { z } from "zod"
 import { User } from "./types"
 import { createFile, getSandboxFiles, renameFile, saveFile } from "./utils"
 import { Pty } from "./terminal"
-import { IPty, spawn } from "node-pty"
+import { IDisposable, IPty, spawn } from "node-pty"
 
 dotenv.config()
 
@@ -24,7 +24,9 @@ const io = new Server(httpServer, {
   },
 })
 
-const terminals: { [id: string]: IPty } = {}
+const terminals: {
+  [id: string]: { terminal: IPty; onData: IDisposable; onExit: IDisposable }
+} = {}
 
 const dirName = path.join(__dirname, "..")
 
@@ -83,7 +85,6 @@ io.on("connection", async (socket) => {
     fs.mkdirSync(path.dirname(filePath), { recursive: true })
     fs.writeFile(filePath, file.data, function (err) {
       if (err) throw err
-      // console.log("Saved File:", file.id)
     })
   })
 
@@ -93,7 +94,6 @@ io.on("connection", async (socket) => {
     const file = sandboxFiles.fileData.find((f) => f.id === fileId)
     if (!file) return
 
-    // console.log("get file " + file.id + ": ", file.data.slice(0, 10) + "...")
     callback(file.data)
   })
 
@@ -102,7 +102,6 @@ io.on("connection", async (socket) => {
     const file = sandboxFiles.fileData.find((f) => f.id === fileId)
     if (!file) return
     file.data = body
-    // console.log("save file " + file.id + ": ", file.data)
 
     fs.writeFile(path.join(dirName, file.id), body, function (err) {
       if (err) throw err
@@ -158,7 +157,7 @@ io.on("connection", async (socket) => {
       cwd: path.join(dirName, "projects", data.id),
     })
 
-    pty.onData((data) => {
+    const onData = pty.onData((data) => {
       console.log(data)
       socket.emit("terminalResponse", {
         // data: Buffer.from(data, "utf-8").toString("base64"),
@@ -166,9 +165,13 @@ io.on("connection", async (socket) => {
       })
     })
 
-    pty.onExit((code) => console.log("exit :(", code))
+    const onExit = pty.onExit((code) => console.log("exit :(", code))
 
-    terminals[id] = pty
+    terminals[id] = {
+      terminal: pty,
+      onData,
+      onExit,
+    }
   })
 
   socket.on("terminalData", (id: string, data: string) => {
@@ -183,13 +186,21 @@ io.on("connection", async (socket) => {
     }
 
     try {
-      terminals[id].write(data)
+      terminals[id].terminal.write(data)
     } catch (e) {
       console.log("Error writing to terminal", e)
     }
   })
 
-  socket.on("disconnect", () => {})
+  socket.on("disconnect", () => {
+    Object.entries(terminals).forEach((t) => {
+      const { terminal, onData, onExit } = t[1]
+      if (os.platform() !== "win32") terminal.kill()
+      onData.dispose()
+      onExit.dispose()
+      delete terminals[t[0]]
+    })
+  })
 })
 
 httpServer.listen(port, () => {

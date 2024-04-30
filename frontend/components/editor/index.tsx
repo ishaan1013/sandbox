@@ -30,8 +30,6 @@ import EditorTerminal from "./terminal"
 import { Terminal } from "@xterm/xterm"
 import { FitAddon } from "@xterm/addon-fit"
 
-import { decodeTerminalResponse } from "@/lib/utils"
-
 export default function CodeEditor({
   userId,
   sandboxId,
@@ -284,11 +282,11 @@ export default function CodeEditor({
               minSize={20}
               className="p-2 flex flex-col"
             >
-              <div className="h-10 w-full flex gap-2">
+              <div className="h-10 w-full flex gap-2 shrink-0">
                 <Tab selected>Node</Tab>
                 <Tab>Console</Tab>
               </div>
-              <div className="w-full relative grow rounded-md bg-secondary">
+              <div className="w-full relative grow h-full overflow-hidden rounded-md bg-secondary">
                 {socket ? <EditorTerminal socket={socket} /> : null}
               </div>
             </ResizablePanel>
