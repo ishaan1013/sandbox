@@ -129,6 +129,19 @@ io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
         });
         yield (0, utils_1.renameFile)(fileId, newFileId, file.data);
     }));
+    socket.on("deleteFile", (fileId, callback) => __awaiter(void 0, void 0, void 0, function* () {
+        const file = sandboxFiles.fileData.find((f) => f.id === fileId);
+        if (!file)
+            return;
+        fs_1.default.unlink(path_1.default.join(dirName, fileId), function (err) {
+            if (err)
+                throw err;
+        });
+        sandboxFiles.fileData = sandboxFiles.fileData.filter((f) => f.id !== fileId);
+        yield (0, utils_1.deleteFile)(fileId);
+        const newFiles = yield (0, utils_1.getSandboxFiles)(data.id);
+        callback(newFiles.files);
+    }));
     socket.on("createTerminal", ({ id }) => {
         console.log("creating terminal, id=" + id);
         const pty = (0, node_pty_1.spawn)(os_1.default.platform() === "win32" ? "cmd.exe" : "bash", [], {

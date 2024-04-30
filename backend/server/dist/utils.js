@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.saveFile = exports.renameFile = exports.createFile = exports.getSandboxFiles = void 0;
+exports.deleteFile = exports.saveFile = exports.renameFile = exports.createFile = exports.getSandboxFiles = void 0;
 const getSandboxFiles = (id) => __awaiter(void 0, void 0, void 0, function* () {
     const sandboxRes = yield fetch(`https://storage.ishaan1013.workers.dev/api?sandboxId=${id}`);
     const sandboxData = yield sandboxRes.json();
@@ -110,3 +110,14 @@ const saveFile = (fileId, data) => __awaiter(void 0, void 0, void 0, function* (
     return res.ok;
 });
 exports.saveFile = saveFile;
+const deleteFile = (fileId) => __awaiter(void 0, void 0, void 0, function* () {
+    const res = yield fetch(`https://storage.ishaan1013.workers.dev/api`, {
+        method: "DELETE",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ fileId }),
+    });
+    return res.ok;
+});
+exports.deleteFile = deleteFile;

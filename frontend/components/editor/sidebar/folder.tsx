@@ -10,6 +10,8 @@ export default function SidebarFolder({
   data,
   selectFile,
   handleRename,
+  handleDeleteFile,
+  handleDeleteFolder,
 }: {
   data: TFolder
   selectFile: (file: TTab) => void
@@ -19,6 +21,8 @@ export default function SidebarFolder({
     oldName: string,
     type: "file" | "folder"
   ) => boolean
+  handleDeleteFile: (file: TFile) => void
+  handleDeleteFolder: (folder: TFolder) => void
 }) {
   const [isOpen, setIsOpen] = useState(false)
   const folder = isOpen
@@ -82,6 +86,7 @@ export default function SidebarFolder({
                   data={child}
                   selectFile={selectFile}
                   handleRename={handleRename}
+                  handleDeleteFile={handleDeleteFile}
                 />
               ) : (
                 <SidebarFolder
@@ -89,6 +94,8 @@ export default function SidebarFolder({
                   data={child}
                   selectFile={selectFile}
                   handleRename={handleRename}
+                  handleDeleteFile={handleDeleteFile}
+                  handleDeleteFolder={handleDeleteFolder}
                 />
               )
             )}

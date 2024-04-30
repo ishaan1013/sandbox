@@ -8,7 +8,13 @@ import { Server } from "socket.io"
 
 import { z } from "zod"
 import { User } from "./types"
-import { createFile, getSandboxFiles, renameFile, saveFile } from "./utils"
+import {
+  createFile,
+  deleteFile,
+  getSandboxFiles,
+  renameFile,
+  saveFile,
+} from "./utils"
 import { IDisposable, IPty, spawn } from "node-pty"
 
 dotenv.config()
@@ -146,6 +152,21 @@ io.on("connection", async (socket) => {
       }
     )
     await renameFile(fileId, newFileId, file.data)
+  })
+
+  socket.on("deleteFile", async (fileId: string, callback) => {
+    const file = sandboxFiles.fileData.find((f) => f.id === fileId)
+    if (!file) return
+
+    fs.unlink(path.join(dirName, fileId), function (err) {
+      if (err) throw err
+    })
+    sandboxFiles.fileData = sandboxFiles.fileData.filter((f) => f.id !== fileId)
+
+    await deleteFile(fileId)
+
+    const newFiles = await getSandboxFiles(data.id)
+    callback(newFiles.files)
   })
 
   socket.on("createTerminal", ({ id }: { id: string }) => {

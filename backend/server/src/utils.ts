@@ -123,3 +123,14 @@ export const saveFile = async (fileId: string, data: string) => {
   })
   return res.ok
 }
+
+export const deleteFile = async (fileId: string) => {
+  const res = await fetch(`https://storage.ishaan1013.workers.dev/api`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ fileId }),
+  })
+  return res.ok
+}

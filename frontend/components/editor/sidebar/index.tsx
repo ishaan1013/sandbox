@@ -12,6 +12,8 @@ export default function Sidebar({
   files,
   selectFile,
   handleRename,
+  handleDeleteFile,
+  handleDeleteFolder,
   socket,
   addNew,
 }: {
@@ -23,6 +25,8 @@ export default function Sidebar({
     oldName: string,
     type: "file" | "folder"
   ) => boolean
+  handleDeleteFile: (file: TFile) => void
+  handleDeleteFolder: (folder: TFolder) => void
   socket: Socket
   addNew: (name: string, type: "file" | "folder") => void
 }) {
@@ -66,6 +70,7 @@ export default function Sidebar({
                     data={child}
                     selectFile={selectFile}
                     handleRename={handleRename}
+                    handleDeleteFile={handleDeleteFile}
                   />
                 ) : (
                   <SidebarFolder
@@ -73,6 +78,8 @@ export default function Sidebar({
                     data={child}
                     selectFile={selectFile}
                     handleRename={handleRename}
+                    handleDeleteFile={handleDeleteFile}
+                    handleDeleteFolder={handleDeleteFolder}
                   />
                 )
               )}

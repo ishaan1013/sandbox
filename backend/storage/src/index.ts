@@ -51,6 +51,17 @@ export default {
 				await env.R2.put(fileId, '');
 
 				return success;
+			} else if (method === 'DELETE') {
+				const deleteSchema = z.object({
+					fileId: z.string(),
+				});
+
+				const body = await request.json();
+				const { fileId } = deleteSchema.parse(body);
+
+				await env.R2.delete(fileId);
+
+				return success;
 			} else return methodNotAllowed;
 		} else if (path === '/api/rename' && method === 'POST') {
 			const renameSchema = z.object({

@@ -27,9 +27,6 @@ import { processFileType, validateName } from "@/lib/utils"
 import { toast } from "sonner"
 import EditorTerminal from "./terminal"
 
-import { Terminal } from "@xterm/xterm"
-import { FitAddon } from "@xterm/addon-fit"
-
 export default function CodeEditor({
   userId,
   sandboxId,
@@ -135,6 +132,9 @@ export default function CodeEditor({
   const closeTab = (tab: TFile) => {
     const numTabs = tabs.length
     const index = tabs.findIndex((t) => t.id === tab.id)
+
+    if (index === -1) return
+
     const nextId =
       activeId === tab.id
         ? numTabs === 1
@@ -156,9 +156,12 @@ export default function CodeEditor({
     oldName: string,
     type: "file" | "folder"
   ) => {
-    if (!validateName(newName, oldName, type)) return false
+    if (!validateName(newName, oldName, type)) {
+      toast.error("Invalid file name.")
+      console.log("invalid name")
+      return false
+    }
 
-    // Action
     socket.emit("renameFile", id, newName)
     setTabs((prev) =>
       prev.map((tab) => (tab.id === id ? { ...tab, name: newName } : tab))
@@ -167,12 +170,27 @@ export default function CodeEditor({
     return true
   }
 
+  const handleDeleteFile = (file: TFile) => {
+    socket.emit("deleteFile", file.id, (response: (TFolder | TFile)[]) => {
+      setFiles(response)
+    })
+    closeTab(file)
+  }
+
+  const handleDeleteFolder = (folder: TFolder) => {
+    // socket.emit("deleteFolder", folder.id, (response: (TFolder | TFile)[]) => {
+    //   setFiles(response)
+    // })
+  }
+
   return (
     <>
       <Sidebar
         files={files}
         selectFile={selectFile}
         handleRename={handleRename}
+        handleDeleteFile={handleDeleteFile}
+        handleDeleteFolder={handleDeleteFolder}
         socket={socket}
         addNew={(name, type) => {
           if (type === "file") {

@@ -1,5 +1,5 @@
 import { type ClassValue, clsx } from "clsx"
-import { toast } from "sonner"
+// import { toast } from "sonner"
 import { twMerge } from "tailwind-merge"
 
 export function cn(...inputs: ClassValue[]) {
@@ -21,18 +21,15 @@ export function validateName(
   oldName: string,
   type: "file" | "folder"
 ) {
-  if (newName === oldName || newName.length === 0) {
-    return false
-  }
-
   if (
+    newName === oldName ||
+    newName.length === 0 ||
     newName.includes("/") ||
     newName.includes("\\") ||
     newName.includes(" ") ||
     (type === "file" && !newName.includes(".")) ||
     (type === "folder" && newName.includes("."))
   ) {
-    toast.error("Invalid file name.")
     return false
   }
   return true
