@@ -1,7 +1,7 @@
 import fs from "fs"
 import os from "os"
 import path from "path"
-import express, { Express, NextFunction, Request, Response } from "express"
+import express, { Express } from "express"
 import dotenv from "dotenv"
 import { createServer } from "http"
 import { Server } from "socket.io"
@@ -9,7 +9,6 @@ import { Server } from "socket.io"
 import { z } from "zod"
 import { User } from "./types"
 import { createFile, getSandboxFiles, renameFile, saveFile } from "./utils"
-import { Pty } from "./terminal"
 import { IDisposable, IPty, spawn } from "node-pty"
 
 dotenv.config()
