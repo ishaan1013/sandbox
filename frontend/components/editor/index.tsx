@@ -14,7 +14,10 @@ import {
   ChevronLeft,
   ChevronRight,
   FileJson,
+  Plus,
   RotateCw,
+  Shell,
+  SquareTerminal,
   TerminalSquare,
 } from "lucide-react"
 import Tab from "../ui/tab"
@@ -26,6 +29,7 @@ import { io } from "socket.io-client"
 import { processFileType, validateName } from "@/lib/utils"
 import { toast } from "sonner"
 import EditorTerminal from "./terminal"
+import { Button } from "../ui/button"
 
 export default function CodeEditor({
   userId,
@@ -47,6 +51,7 @@ export default function CodeEditor({
   const [activeFile, setActiveFile] = useState<string | null>(null)
   const [tabs, setTabs] = useState<TTab[]>([])
   const [activeId, setActiveId] = useState<string | null>(null)
+  const [terminals, setTerminals] = useState<string[]>([])
 
   const socket = io(
     `http://localhost:4000?userId=${userId}&sandboxId=${sandboxId}`
@@ -301,8 +306,17 @@ export default function CodeEditor({
               className="p-2 flex flex-col"
             >
               <div className="h-10 w-full flex gap-2 shrink-0">
-                <Tab selected>Node</Tab>
-                <Tab>Console</Tab>
+                <Tab selected>
+                  <SquareTerminal className="w-4 h-4 mr-2" />
+                  Shell
+                </Tab>
+                <Button
+                  size="smIcon"
+                  variant={"secondary"}
+                  className={`font-normal select-none text-muted-foreground`}
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
               </div>
               <div className="w-full relative grow h-full overflow-hidden rounded-md bg-secondary">
                 {socket ? <EditorTerminal socket={socket} /> : null}
