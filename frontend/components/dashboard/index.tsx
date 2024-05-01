@@ -15,6 +15,8 @@ import { Sandbox } from "@/lib/types"
 import DashboardProjects from "./projects"
 import DashboardSharedWithMe from "./shared"
 import NewProjectModal from "./newProject"
+import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 
 type TScreen = "projects" | "shared" | "settings" | "search"
 
@@ -39,6 +41,9 @@ export default function Dashboard({
     if (screen === s) return "justify-start"
     else return "justify-start font-normal text-muted-foreground"
   }
+
+  const searchParams = useSearchParams()
+  const q = searchParams.get("q")
 
   return (
     <>
@@ -72,23 +77,25 @@ export default function Dashboard({
               <Users className="w-4 h-4 mr-2" />
               Shared With Me
             </Button>
-            <Button
+            {/* <Button
               variant="ghost"
               onClick={() => setScreen("settings")}
               className={activeScreen("settings")}
             >
               <Settings className="w-4 h-4 mr-2" />
               Settings
-            </Button>
+            </Button> */}
           </div>
           <div className="flex flex-col">
-            <Button
-              variant="ghost"
-              className="justify-start font-normal text-muted-foreground"
-            >
-              <Code2 className="w-4 h-4 mr-2" />
-              GitHub Repository
-            </Button>
+            <Link href="https://github.com/ishaan1013/sandbox">
+              <Button
+                variant="ghost"
+                className="justify-start font-normal text-muted-foreground"
+              >
+                <Code2 className="w-4 h-4 mr-2" />
+                GitHub Repository
+              </Button>
+            </Link>
             <Button
               variant="ghost"
               className="justify-start font-normal text-muted-foreground"
@@ -99,7 +106,7 @@ export default function Dashboard({
           </div>
         </div>
         {screen === "projects" ? (
-          <DashboardProjects sandboxes={sandboxes} />
+          <DashboardProjects sandboxes={sandboxes} q={q} />
         ) : screen === "shared" ? (
           <DashboardSharedWithMe shared={shared} />
         ) : screen === "settings" ? null : null}
