@@ -5,7 +5,7 @@ import { ZodError, z } from "zod";
 
 import { user, sandbox, usersToSandboxes } from "./schema";
 import * as schema from "./schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 export interface Env {
 	DB: D1Database;
@@ -91,33 +91,48 @@ export default {
 				console.log(method);
 				return methodNotAllowed;
 			}
-		} else if (path === "/api/sandbox/share" && method === "POST") {
-			const shareSchema = z.object({
-				sandboxId: z.string(),
-				email: z.string(),
-			});
+		} else if (path === "/api/sandbox/share") {
+			if (method === "POST") {
+				const shareSchema = z.object({
+					sandboxId: z.string(),
+					email: z.string(),
+				});
 
-			const body = await request.json();
-			const { sandboxId, email } = shareSchema.parse(body);
+				const body = await request.json();
+				const { sandboxId, email } = shareSchema.parse(body);
 
-			const user = await db.query.user.findFirst({
-				where: (user, { eq }) => eq(user.email, email),
-				with: {
-					usersToSandboxes: true,
-				},
-			});
+				const user = await db.query.user.findFirst({
+					where: (user, { eq }) => eq(user.email, email),
+					with: {
+						usersToSandboxes: true,
+					},
+				});
 
-			if (!user) {
-				return new Response("No user associated with email.", { status: 400 });
-			}
+				if (!user) {
+					return new Response("No user associated with email.", { status: 400 });
+				}
 
-			if (user.usersToSandboxes.find((uts) => uts.sandboxId === sandboxId)) {
-				return new Response("User already has access.", { status: 400 });
-			}
+				if (user.usersToSandboxes.find((uts) => uts.sandboxId === sandboxId)) {
+					return new Response("User already has access.", { status: 400 });
+				}
 
-			await db.insert(usersToSandboxes).values({ userId: user.id, sandboxId }).get();
+				await db.insert(usersToSandboxes).values({ userId: user.id, sandboxId }).get();
 
-			return success;
+				return success;
+			} else if (method === "DELETE") {
+				const deleteShareSchema = z.object({
+					sandboxId: z.string(),
+					userId: z.string(),
+				});
+
+				const body = await request.json();
+				const { sandboxId, userId } = deleteShareSchema.parse(body);
+				console.log("DELETE", sandboxId, userId);
+
+				await db.delete(usersToSandboxes).where(and(eq(usersToSandboxes.userId, userId), eq(usersToSandboxes.sandboxId, sandboxId)));
+
+				return success;
+			} else return methodNotAllowed;
 		} else if (path === "/api/user") {
 			if (method === "GET") {
 				const params = url.searchParams;

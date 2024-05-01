@@ -60,3 +60,15 @@ export async function shareSandbox(sandboxId: string, email: string) {
   revalidatePath(`/code/${sandboxId}`)
   return { success: true, message: "Shared successfully." }
 }
+
+export async function unshareSandbox(sandboxId: string, userId: string) {
+  const res = await fetch("http://localhost:8787/api/sandbox/share", {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ sandboxId, userId }),
+  })
+
+  revalidatePath(`/code/${sandboxId}`)
+}
