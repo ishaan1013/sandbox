@@ -110,7 +110,7 @@ export default {
 								},
 							});
 							if (!sb) return;
-							return { id: sb.id, name: sb.name, type: sb.type, author: sb.author.name, sharedOn: Date.now() };
+							return { id: sb.id, name: sb.name, type: sb.type, author: sb.author.name, sharedOn: r.sharedOn };
 						})
 					);
 
@@ -128,6 +128,7 @@ export default {
 				const user = await db.query.user.findFirst({
 					where: (user, { eq }) => eq(user.email, email),
 					with: {
+						sandbox: true,
 						usersToSandboxes: true,
 					},
 				});
@@ -136,11 +137,15 @@ export default {
 					return new Response("No user associated with email.", { status: 400 });
 				}
 
+				if (user.sandbox.find((sb) => sb.id === sandboxId)) {
+					return new Response("Cannot share with yourself!", { status: 400 });
+				}
+
 				if (user.usersToSandboxes.find((uts) => uts.sandboxId === sandboxId)) {
 					return new Response("User already has access.", { status: 400 });
 				}
 
-				await db.insert(usersToSandboxes).values({ userId: user.id, sandboxId }).get();
+				await db.insert(usersToSandboxes).values({ userId: user.id, sandboxId, sharedOn: new Date() }).get();
 
 				return success;
 			} else if (method === "DELETE") {

@@ -33,7 +33,7 @@ export default function DashboardSharedWithMe({
             <TableRow className="hover:bg-background">
               <TableHead>Sandbox Name</TableHead>
               <TableHead>Shared By</TableHead>
-              <TableHead>Opened</TableHead>
+              <TableHead>Sent On</TableHead>
               <TableHead className="text-right"></TableHead>
             </TableRow>
           </TableHeader>
@@ -62,7 +62,9 @@ export default function DashboardSharedWithMe({
                     {sandbox.author}
                   </div>
                 </TableCell>
-                <TableCell>{sandbox.sharedOn.toLocaleDateString()}</TableCell>
+                <TableCell>
+                  {new Date(sandbox.sharedOn).toLocaleDateString()}
+                </TableCell>
                 <TableCell className="text-right">
                   <Button>
                     Open <ChevronRight className="w-4 h-4 ml-2" />

@@ -1,6 +1,6 @@
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { createId } from "@paralleldrive/cuid2";
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 
 export const user = sqliteTable("user", {
 	id: text("id")
@@ -49,6 +49,7 @@ export const usersToSandboxes = sqliteTable("users_to_sandboxes", {
 	sandboxId: text("sandboxId")
 		.notNull()
 		.references(() => sandbox.id),
+	sharedOn: integer("sharedOn", { mode: "timestamp_ms" }),
 });
 
 export const usersToSandboxesRelations = relations(usersToSandboxes, ({ one }) => ({

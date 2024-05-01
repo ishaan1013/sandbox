@@ -31,7 +31,6 @@ export default async function AppAuthLayout({
     console.log(res)
   } else {
     // user already exists in db
-    console.log("user exists already.", dbUserJSON)
   }
 
   return <>{children}</>
