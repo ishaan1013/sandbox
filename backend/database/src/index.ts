@@ -93,7 +93,30 @@ export default {
 				return methodNotAllowed;
 			}
 		} else if (path === "/api/sandbox/share") {
-			if (method === "POST") {
+			if (method === "GET") {
+				const params = url.searchParams;
+				if (params.has("id")) {
+					const id = params.get("id") as string;
+					const res = await db.query.usersToSandboxes.findMany({
+						where: (uts, { eq }) => eq(uts.userId, id),
+					});
+
+					const owners = await Promise.all(
+						res.map(async (r) => {
+							const sb = await db.query.sandbox.findFirst({
+								where: (sandbox, { eq }) => eq(sandbox.id, r.sandboxId),
+								with: {
+									author: true,
+								},
+							});
+							if (!sb) return;
+							return { id: sb.id, name: sb.name, type: sb.type, author: sb.author.name, sharedOn: Date.now() };
+						})
+					);
+
+					return json(owners ?? {});
+				} else return invalidRequest;
+			} else if (method === "POST") {
 				const shareSchema = z.object({
 					sandboxId: z.string(),
 					email: z.string(),

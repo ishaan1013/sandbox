@@ -3,28 +3,34 @@
 import CustomButton from "@/components/ui/customButton"
 import { Button } from "@/components/ui/button"
 import {
-  Clock,
   Code2,
-  Ellipsis,
   FolderDot,
-  Globe,
   HelpCircle,
   Plus,
   Settings,
   Users,
 } from "lucide-react"
 import { useState } from "react"
-import ProjectCard from "./projectCard"
 import { Sandbox } from "@/lib/types"
-import Image from "next/image"
-import ProjectCardDropdown from "./projectCard/dropdown"
 import DashboardProjects from "./projects"
 import DashboardSharedWithMe from "./shared"
 import NewProjectModal from "./newProject"
 
 type TScreen = "projects" | "shared" | "settings" | "search"
 
-export default function Dashboard({ sandboxes }: { sandboxes: Sandbox[] }) {
+export default function Dashboard({
+  sandboxes,
+  shared,
+}: {
+  sandboxes: Sandbox[]
+  shared: {
+    id: string
+    name: string
+    type: "react" | "node"
+    author: string
+    sharedOn: Date
+  }[]
+}) {
   const [screen, setScreen] = useState<TScreen>("projects")
 
   const [newProjectModalOpen, setNewProjectModalOpen] = useState(false)
@@ -95,7 +101,7 @@ export default function Dashboard({ sandboxes }: { sandboxes: Sandbox[] }) {
         {screen === "projects" ? (
           <DashboardProjects sandboxes={sandboxes} />
         ) : screen === "shared" ? (
-          <DashboardSharedWithMe sandboxes={sandboxes} />
+          <DashboardSharedWithMe shared={shared} />
         ) : screen === "settings" ? null : null}
       </div>
     </>

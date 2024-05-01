@@ -14,9 +14,15 @@ import { ChevronRight } from "lucide-react"
 import Avatar from "../ui/avatar"
 
 export default function DashboardSharedWithMe({
-  sandboxes,
+  shared,
 }: {
-  sandboxes: Sandbox[]
+  shared: {
+    id: string
+    name: string
+    type: "react" | "node"
+    author: string
+    sharedOn: Date
+  }[]
 }) {
   return (
     <div className="grow p-4 flex flex-col">
@@ -32,7 +38,7 @@ export default function DashboardSharedWithMe({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sandboxes.map((sandbox) => (
+            {shared.map((sandbox) => (
               <TableRow>
                 <TableCell>
                   <div className="font-medium flex items-center">
@@ -52,11 +58,11 @@ export default function DashboardSharedWithMe({
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center">
-                    <Avatar name="Ishaan Dey" className="mr-2" />
-                    Ishaan Dey
+                    <Avatar name={sandbox.author} className="mr-2" />
+                    {sandbox.author}
                   </div>
                 </TableCell>
-                <TableCell>{new Date().toLocaleDateString()}</TableCell>
+                <TableCell>{sandbox.sharedOn.toLocaleDateString()}</TableCell>
                 <TableCell className="text-right">
                   <Button>
                     Open <ChevronRight className="w-4 h-4 ml-2" />
