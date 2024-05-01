@@ -8,9 +8,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import Image from "next/image"
-import { useState } from "react"
-import { set, z } from "zod"
+import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 
@@ -31,95 +29,50 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { useUser } from "@clerk/nextjs"
-import { createSandbox } from "@/lib/actions"
-import { useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
-import { Button } from "../ui/button"
-
-type TOptions = "react" | "node"
-
-const data: {
-  id: TOptions
-  name: string
-  icon: string
-  description: string
-}[] = [
-  {
-    id: "react",
-    name: "React",
-    icon: "/project-icons/react.svg",
-    description: "A JavaScript library for building user interfaces",
-  },
-  {
-    id: "node",
-    name: "Node",
-    icon: "/project-icons/node.svg",
-    description: "A JavaScript runtime built on the V8 JavaScript engine",
-  },
-]
+import { useState } from "react"
+import { Sandbox } from "@/lib/types"
+import { Button } from "@/components/ui/button"
 
 const formSchema = z.object({
   name: z.string().min(1).max(16),
   visibility: z.enum(["public", "private"]),
 })
 
-export default function NewProjectModal({
+export default function EditSandboxModal({
   open,
   setOpen,
+  data,
 }: {
   open: boolean
   setOpen: (open: boolean) => void
+  data: Sandbox
 }) {
-  const [selected, setSelected] = useState<TOptions>("react")
   const [loading, setLoading] = useState(false)
-  const router = useRouter()
-
-  const user = useUser()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      visibility: "public",
+      name: data.name,
+      visibility: data.visibility,
     },
   })
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!user.isSignedIn) return
+    // if (!user.isSignedIn) return
+    // const sandboxData = { type: selected, userId: user.user.id, ...values }
+    // setLoading(true)
+    // const id = await createSandbox(sandboxData)
 
-    const sandboxData = { type: selected, userId: user.user.id, ...values }
-    setLoading(true)
-
-    const id = await createSandbox(sandboxData)
-    router.push(`/code/${id}`)
+    console.log(values)
   }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create A Sandbox</DialogTitle>
+          <DialogTitle>Edit Sandbox Info</DialogTitle>
         </DialogHeader>
-        <div className="grid grid-cols-2 w-full gap-2 mt-2">
-          {data.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setSelected(item.id)}
-              className={`${
-                selected === item.id ? "border-foreground" : "border-border"
-              } rounded-md border bg-card text-card-foreground shadow text-left p-4 flex flex-col transition-all focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:ring-2 focus-visible:ring-ring`}
-            >
-              <div className="space-x-2 flex items-center justify-start w-full">
-                <Image alt="" src={item.icon} width={20} height={20} />
-                <div className="font-medium">{item.name}</div>
-              </div>
-              <div className="mt-2 text-muted-foreground text-sm">
-                {item.description}
-              </div>
-            </button>
-          ))}
-        </div>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>

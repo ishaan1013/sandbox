@@ -6,6 +6,7 @@ import "./xterm.css"
 
 import { useEffect, useRef, useState } from "react"
 import { Socket } from "socket.io-client"
+import { Loader2 } from "lucide-react"
 
 export default function EditorTerminal({ socket }: { socket: Socket }) {
   const terminalRef = useRef(null)
@@ -32,9 +33,8 @@ export default function EditorTerminal({ socket }: { socket: Socket }) {
     if (!term) return
 
     const onConnect = () => {
-      console.log("Connected to server", socket.connected)
+      // console.log("Connected to server", socket.connected)
       setTimeout(() => {
-        console.log("sending createTerminal")
         socket.emit("createTerminal", { id: "testId" })
       }, 500)
     }
@@ -42,7 +42,6 @@ export default function EditorTerminal({ socket }: { socket: Socket }) {
     const onTerminalResponse = (response: { data: string }) => {
       // const res = Buffer.from(response.data, "base64").toString("utf-8")
       const res = response.data
-      console.log("terminal response", res)
       term.write(res)
     }
 
@@ -71,5 +70,17 @@ export default function EditorTerminal({ socket }: { socket: Socket }) {
     }
   }, [term, terminalRef.current])
 
-  return <div ref={terminalRef} className="w-full h-full text-left"></div>
+  return (
+    <div
+      ref={terminalRef}
+      className="w-full font-mono text-sm h-full text-left"
+    >
+      {term === null ? (
+        <div className="flex items-center text-muted-foreground p-2">
+          <Loader2 className="animate-spin mr-2 h-4 w-4" />
+          <span>Connecting to terminal...</span>
+        </div>
+      ) : null}
+    </div>
+  )
 }

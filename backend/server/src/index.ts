@@ -187,6 +187,8 @@ io.on("connection", async (socket) => {
 
     const onExit = pty.onExit((code) => console.log("exit :(", code))
 
+    pty.write("clear\r")
+
     terminals[id] = {
       terminal: pty,
       onData,
