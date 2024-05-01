@@ -33,6 +33,7 @@ import { Loader2, UserPlus, X } from "lucide-react"
 import { useState } from "react"
 import { Sandbox } from "@/lib/types"
 import { Button } from "@/components/ui/button"
+import Avatar from "@/components/ui/avatar"
 
 const formSchema = z.object({
   email: z.string().email(),
@@ -107,12 +108,12 @@ export default function ShareSandboxModal({
         <div className="w-full h-[1px] bg-border" />
         <div className="p-6 pt-3">
           <DialogHeader className="mb-6">
-            <DialogTitle>Share Sandbox</DialogTitle>
+            <DialogTitle>Manage Access</DialogTitle>
           </DialogHeader>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
-                <div className="h-5 w-5 bg-red-500 rounded-full mr-2" />
+                <Avatar name="Ishaan Dey" className="mr-2" />
                 Ishaan Dey
               </div>
               <Button variant="ghost" size="smIcon">

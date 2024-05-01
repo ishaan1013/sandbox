@@ -11,6 +11,7 @@ import {
 import Image from "next/image"
 import Button from "../ui/customButton"
 import { ChevronRight } from "lucide-react"
+import Avatar from "../ui/avatar"
 
 export default function DashboardSharedWithMe({
   sandboxes,
@@ -51,7 +52,7 @@ export default function DashboardSharedWithMe({
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center">
-                    <div className="h-5 w-5 bg-red-500 rounded-full mr-2" />
+                    <Avatar name="Ishaan Dey" className="mr-2" />
                     Ishaan Dey
                   </div>
                 </TableCell>
