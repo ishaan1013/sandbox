@@ -33,6 +33,8 @@ import { Loader2 } from "lucide-react"
 import { useState } from "react"
 import { Sandbox } from "@/lib/types"
 import { Button } from "@/components/ui/button"
+import { deleteSandbox, updateSandbox } from "@/lib/actions"
+import { useRouter } from "next/navigation"
 
 const formSchema = z.object({
   name: z.string().min(1).max(16),
@@ -49,6 +51,9 @@ export default function EditSandboxModal({
   data: Sandbox
 }) {
   const [loading, setLoading] = useState(false)
+  const [loadingDelete, setLoadingDelete] = useState(false)
+
+  const router = useRouter()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -59,12 +64,19 @@ export default function EditSandboxModal({
   })
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    // if (!user.isSignedIn) return
-    // const sandboxData = { type: selected, userId: user.user.id, ...values }
-    // setLoading(true)
-    // const id = await createSandbox(sandboxData)
-
     console.log(values)
+
+    setLoading(true)
+    await updateSandbox({ id: data.id, ...values })
+
+    setLoading(false)
+  }
+
+  async function onDelete() {
+    setLoadingDelete(true)
+    await deleteSandbox(data.id)
+
+    router.push("/dashboard")
   }
 
   return (
@@ -119,11 +131,25 @@ export default function EditSandboxModal({
                   <Loader2 className="animate-spin mr-2 h-4 w-4" /> Loading...
                 </>
               ) : (
-                "Submit"
+                "Update Sandbox"
               )}
             </Button>
           </form>
         </Form>
+        <Button
+          disabled={loadingDelete}
+          onClick={onDelete}
+          className="w-full"
+          variant="destructive"
+        >
+          {loadingDelete ? (
+            <>
+              <Loader2 className="animate-spin mr-2 h-4 w-4" /> Loading...
+            </>
+          ) : (
+            "Delete Sandbox"
+          )}
+        </Button>
       </DialogContent>
     </Dialog>
   )

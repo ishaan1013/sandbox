@@ -49,7 +49,8 @@ export default {
 				const params = url.searchParams;
 				if (params.has("id")) {
 					const id = params.get("id") as string;
-					const res = await db.delete(sandbox).where(eq(sandbox.id, id)).get();
+					await db.delete(usersToSandboxes).where(eq(usersToSandboxes.sandboxId, id));
+					await db.delete(sandbox).where(eq(sandbox.id, id));
 					return success;
 				} else {
 					return invalidRequest;
