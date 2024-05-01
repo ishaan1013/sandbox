@@ -5,6 +5,7 @@ export type User = {
   name: string
   email: string
   sandbox: Sandbox[]
+  usersToSandboxes: UsersToSandboxes[]
 }
 
 export type Sandbox = {
@@ -13,6 +14,12 @@ export type Sandbox = {
   type: "react" | "node"
   visibility: "public" | "private"
   userId: string
+  usersToSandboxes: UsersToSandboxes[]
+}
+
+export type UsersToSandboxes = {
+  userId: string
+  sandboxId: string
 }
 
 export type R2Files = {

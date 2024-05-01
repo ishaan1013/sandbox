@@ -36,6 +36,9 @@ export default {
 					const id = params.get("id") as string;
 					const res = await db.query.sandbox.findFirst({
 						where: (sandbox, { eq }) => eq(sandbox.id, id),
+						with: {
+							usersToSandboxes: true,
+						},
 					});
 					return json(res ?? {});
 				} else {
@@ -99,9 +102,18 @@ export default {
 
 			const user = await db.query.user.findFirst({
 				where: (user, { eq }) => eq(user.email, email),
+				with: {
+					usersToSandboxes: true,
+				},
 			});
 
-			if (!user) return invalidRequest;
+			if (!user) {
+				return new Response("No user associated with email.", { status: 400 });
+			}
+
+			if (user.usersToSandboxes.find((uts) => uts.sandboxId === sandboxId)) {
+				return new Response("User already has access.", { status: 400 });
+			}
 
 			await db.insert(usersToSandboxes).values({ userId: user.id, sandboxId }).get();
 

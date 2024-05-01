@@ -44,18 +44,19 @@ export async function deleteSandbox(id: string) {
 }
 
 export async function shareSandbox(sandboxId: string, email: string) {
-  try {
-    const res = await fetch("http://localhost:8787/api/sandbox/share", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ sandboxId, email }),
-    })
+  const res = await fetch("http://localhost:8787/api/sandbox/share", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ sandboxId, email }),
+  })
+  const text = await res.text()
 
-    revalidatePath(`/code/${sandboxId}`)
-    return true
-  } catch (err) {
-    return false
+  if (res.status !== 200) {
+    return { success: false, message: text }
   }
+
+  revalidatePath(`/code/${sandboxId}`)
+  return { success: true, message: "Shared successfully." }
 }

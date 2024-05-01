@@ -5,6 +5,10 @@ export type User = {
   name: string
   email: string
   sandbox: Sandbox[]
+  usersToSandboxes: {
+    userId: string
+    sandboxId: string
+  }[]
 }
 
 export type Sandbox = {
@@ -13,6 +17,10 @@ export type Sandbox = {
   type: "react" | "node"
   visibility: "public" | "private"
   userId: string
+  usersToSandboxes: {
+    userId: string
+    sandboxId: string
+  }[]
 }
 
 export type TFolder = {

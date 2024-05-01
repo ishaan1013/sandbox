@@ -14,9 +14,14 @@ import ShareSandboxModal from "./share"
 export default function Navbar({
   userData,
   sandboxData,
+  shared,
 }: {
   userData: User
   sandboxData: Sandbox
+  shared: {
+    id: string
+    name: string
+  }[]
 }) {
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [isShareOpen, setIsShareOpen] = useState(false)
@@ -32,6 +37,7 @@ export default function Navbar({
         open={isShareOpen}
         setOpen={setIsShareOpen}
         data={sandboxData}
+        shared={shared}
       />
       <div className="h-14 px-2 w-full flex items-center justify-between border-b border-border">
         <div className="flex items-center space-x-4">

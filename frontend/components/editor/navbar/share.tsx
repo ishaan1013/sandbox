@@ -30,8 +30,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Loader2, UserPlus, X } from "lucide-react"
-import { useState, useTransition } from "react"
-import { Sandbox } from "@/lib/types"
+import { useEffect, useState, useTransition } from "react"
+import { Sandbox, User } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import Avatar from "@/components/ui/avatar"
 import { shareSandbox } from "@/lib/actions"
@@ -45,10 +45,15 @@ export default function ShareSandboxModal({
   open,
   setOpen,
   data,
+  shared,
 }: {
   open: boolean
   setOpen: (open: boolean) => void
   data: Sandbox
+  shared: {
+    id: string
+    name: string
+  }[]
 }) {
   const [loading, setLoading] = useState(false)
 
@@ -60,17 +65,12 @@ export default function ShareSandboxModal({
   })
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    // if (!user.isSignedIn) return
-    // const sandboxData = { type: selected, userId: user.user.id, ...values }
-    // setLoading(true)
-    // const id = await createSandbox(sandboxData)
-
-    console.log(values)
-
     setLoading(true)
     const res = await shareSandbox(data.id, values.email)
-    if (!res) {
-      toast.error("Failed to share.")
+    if (!res.success) {
+      toast.error(res.message)
+    } else {
+      toast.success("Shared successfully.")
     }
 
     setLoading(false)
@@ -121,15 +121,17 @@ export default function ShareSandboxModal({
             <DialogTitle>Manage Access</DialogTitle>
           </DialogHeader>
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <Avatar name="Ishaan Dey" className="mr-2" />
-                Ishaan Dey
+            {shared.map((user) => (
+              <div key={user.id} className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <Avatar name={user.name} className="mr-2" />
+                  {user.name}
+                </div>
+                <Button variant="ghost" size="smIcon">
+                  <X className="w-4 h-4" />
+                </Button>
               </div>
-              <Button variant="ghost" size="smIcon">
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
+            ))}
           </div>
         </div>
       </DialogContent>

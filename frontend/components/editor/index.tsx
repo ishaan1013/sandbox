@@ -30,12 +30,13 @@ import { processFileType, validateName } from "@/lib/utils"
 import { toast } from "sonner"
 import EditorTerminal from "./terminal"
 import { Button } from "../ui/button"
+import { User } from "@/lib/types"
 
 export default function CodeEditor({
-  userId,
+  userData,
   sandboxId,
 }: {
-  userId: string
+  userData: User
   sandboxId: string
 }) {
   const clerk = useClerk()
@@ -54,7 +55,7 @@ export default function CodeEditor({
   const [terminals, setTerminals] = useState<string[]>([])
 
   const socket = io(
-    `http://localhost:4000?userId=${userId}&sandboxId=${sandboxId}`
+    `http://localhost:4000?userId=${userData.id}&sandboxId=${sandboxId}`
   )
 
   useEffect(() => {
