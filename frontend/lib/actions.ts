@@ -42,3 +42,20 @@ export async function deleteSandbox(id: string) {
 
   revalidatePath("/dashboard")
 }
+
+export async function shareSandbox(sandboxId: string, email: string) {
+  try {
+    const res = await fetch("http://localhost:8787/api/sandbox/share", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ sandboxId, email }),
+    })
+
+    revalidatePath(`/code/${sandboxId}`)
+    return true
+  } catch (err) {
+    return false
+  }
+}

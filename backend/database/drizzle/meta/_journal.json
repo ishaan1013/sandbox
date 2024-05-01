@@ -5,50 +5,29 @@
     {
       "idx": 0,
       "version": "5",
-      "when": 1713849093097,
-      "tag": "0000_blushing_surge",
+      "when": 1714540200800,
+      "tag": "0000_big_rogue",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "5",
-      "when": 1713937589365,
-      "tag": "0001_magenta_tenebrous",
+      "when": 1714541190588,
+      "tag": "0001_empty_black_knight",
       "breakpoints": true
     },
     {
       "idx": 2,
       "version": "5",
-      "when": 1714247208074,
-      "tag": "0002_rare_beyonder",
+      "when": 1714541209173,
+      "tag": "0002_sour_ego",
       "breakpoints": true
     },
     {
       "idx": 3,
       "version": "5",
-      "when": 1714247272878,
-      "tag": "0003_silky_talos",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "5",
-      "when": 1714535843677,
-      "tag": "0004_curved_shadow_king",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "5",
-      "when": 1714536021138,
-      "tag": "0005_light_komodo",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "5",
-      "when": 1714536446137,
-      "tag": "0006_clear_blue_shield",
+      "when": 1714541233589,
+      "tag": "0003_pale_overlord",
       "breakpoints": true
     }
   ]

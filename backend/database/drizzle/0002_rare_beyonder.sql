@@ -1,1 +1,0 @@
-ALTER TABLE sandbox ADD `visibility` text;

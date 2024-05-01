@@ -30,10 +30,12 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Loader2, UserPlus, X } from "lucide-react"
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { Sandbox } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import Avatar from "@/components/ui/avatar"
+import { shareSandbox } from "@/lib/actions"
+import { toast } from "sonner"
 
 const formSchema = z.object({
   email: z.string().email(),
@@ -64,6 +66,14 @@ export default function ShareSandboxModal({
     // const id = await createSandbox(sandboxData)
 
     console.log(values)
+
+    setLoading(true)
+    const res = await shareSandbox(data.id, values.email)
+    if (!res) {
+      toast.error("Failed to share.")
+    }
+
+    setLoading(false)
   }
 
   return (

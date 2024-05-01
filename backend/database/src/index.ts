@@ -3,7 +3,7 @@ import { drizzle } from "drizzle-orm/d1";
 import { json } from "itty-router-extras";
 import { ZodError, z } from "zod";
 
-import { user, sandbox } from "./schema";
+import { user, sandbox, usersToSandboxes } from "./schema";
 import * as schema from "./schema";
 import { eq } from "drizzle-orm";
 
@@ -88,6 +88,24 @@ export default {
 				console.log(method);
 				return methodNotAllowed;
 			}
+		} else if (path === "/api/sandbox/share" && method === "POST") {
+			const shareSchema = z.object({
+				sandboxId: z.string(),
+				email: z.string(),
+			});
+
+			const body = await request.json();
+			const { sandboxId, email } = shareSchema.parse(body);
+
+			const user = await db.query.user.findFirst({
+				where: (user, { eq }) => eq(user.email, email),
+			});
+
+			if (!user) return invalidRequest;
+
+			await db.insert(usersToSandboxes).values({ userId: user.id, sandboxId }).get();
+
+			return success;
 		} else if (path === "/api/user") {
 			if (method === "GET") {
 				const params = url.searchParams;
@@ -98,6 +116,7 @@ export default {
 						where: (user, { eq }) => eq(user.id, id),
 						with: {
 							sandbox: true,
+							usersToSandboxes: true,
 						},
 					});
 					return json(res ?? {});

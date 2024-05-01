@@ -1,8 +1,8 @@
 {
   "version": "5",
   "dialect": "sqlite",
-  "id": "739c5df4-de1b-408b-bc8c-5783688c5297",
-  "prevId": "9c09f493-3a05-496c-997e-b527c8f17cf9",
+  "id": "9f64104a-4954-40c0-8155-17755ea0a243",
+  "prevId": "6570ba20-a672-400c-8147-7ba533784918",
   "tables": {
     "sandbox": {
       "name": "sandbox",
@@ -26,6 +26,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true,
+          "autoincrement": false
+        },
+        "visibility": {
+          "name": "visibility",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
           "autoincrement": false
         },
         "user_id": {
@@ -86,6 +93,13 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
+        },
+        "image": {
+          "name": "image",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         }
       },
       "indexes": {
@@ -98,6 +112,56 @@
         }
       },
       "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "users_to_sandboxes": {
+      "name": "users_to_sandboxes",
+      "columns": {
+        "userId": {
+          "name": "userId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "sandboxId": {
+          "name": "sandboxId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "users_to_sandboxes_userId_user_id_fk": {
+          "name": "users_to_sandboxes_userId_user_id_fk",
+          "tableFrom": "users_to_sandboxes",
+          "tableTo": "user",
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "users_to_sandboxes_sandboxId_sandbox_id_fk": {
+          "name": "users_to_sandboxes_sandboxId_sandbox_id_fk",
+          "tableFrom": "users_to_sandboxes",
+          "tableTo": "sandbox",
+          "columnsFrom": [
+            "sandboxId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     }

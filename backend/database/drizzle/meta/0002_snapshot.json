@@ -1,8 +1,8 @@
 {
   "version": "5",
   "dialect": "sqlite",
-  "id": "a2239d60-e4b8-4375-979f-bbca5539a825",
-  "prevId": "739c5df4-de1b-408b-bc8c-5783688c5297",
+  "id": "5baf10d6-7697-42ba-a11a-ee4c7bd7e91e",
+  "prevId": "9f64104a-4954-40c0-8155-17755ea0a243",
   "tables": {
     "sandbox": {
       "name": "sandbox",
@@ -32,7 +32,7 @@
           "name": "visibility",
           "type": "text",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
         },
         "user_id": {
@@ -105,6 +105,56 @@
         }
       },
       "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "users_to_sandboxes": {
+      "name": "users_to_sandboxes",
+      "columns": {
+        "userId": {
+          "name": "userId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "sandboxId": {
+          "name": "sandboxId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "users_to_sandboxes_userId_user_id_fk": {
+          "name": "users_to_sandboxes_userId_user_id_fk",
+          "tableFrom": "users_to_sandboxes",
+          "tableTo": "user",
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "users_to_sandboxes_sandboxId_sandbox_id_fk": {
+          "name": "users_to_sandboxes_sandboxId_sandbox_id_fk",
+          "tableFrom": "users_to_sandboxes",
+          "tableTo": "sandbox",
+          "columnsFrom": [
+            "sandboxId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     }

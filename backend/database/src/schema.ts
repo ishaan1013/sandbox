@@ -9,17 +9,14 @@ export const user = sqliteTable("user", {
 		.unique(),
 	name: text("name").notNull(),
 	email: text("email").notNull(),
+	image: text("image"),
 });
 
 export type User = typeof user.$inferSelect;
 
 export const userRelations = relations(user, ({ many }) => ({
-	sandbox: many(sandbox, {
-		relationName: "author",
-	}),
-	sharedSandbox: many(sandbox, {
-		relationName: "sharedTo",
-	}),
+	sandbox: many(sandbox),
+	usersToSandboxes: many(usersToSandboxes),
 }));
 
 export const sandbox = sqliteTable("sandbox", {
@@ -41,18 +38,15 @@ export const sandboxRelations = relations(sandbox, ({ one, many }) => ({
 	author: one(user, {
 		fields: [sandbox.userId],
 		references: [user.id],
-		relationName: "sandbox",
 	}),
-	sharedTo: many(user, {
-		relationName: "sharedSandbox",
-	}),
+	usersToSandboxes: many(usersToSandboxes),
 }));
 
 export const usersToSandboxes = sqliteTable("users_to_sandboxes", {
-	userId: integer("userId")
+	userId: text("userId")
 		.notNull()
 		.references(() => user.id),
-	sandboxId: integer("sandboxId")
+	sandboxId: text("sandboxId")
 		.notNull()
 		.references(() => sandbox.id),
 });
