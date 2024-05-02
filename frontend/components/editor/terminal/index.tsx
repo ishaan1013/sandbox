@@ -33,10 +33,10 @@ export default function EditorTerminal({ socket }: { socket: Socket }) {
     if (!term) return
 
     const onConnect = () => {
-      // console.log("Connected to server", socket.connected)
+      console.log("Connected to server", socket.connected)
       setTimeout(() => {
         socket.emit("createTerminal", { id: "testId" })
-      }, 500)
+      }, 2000)
     }
 
     const onTerminalResponse = (response: { data: string }) => {

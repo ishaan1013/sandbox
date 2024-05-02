@@ -1,8 +1,8 @@
 "use client"
 
-import Editor, { OnMount } from "@monaco-editor/react"
+import Editor, { BeforeMount, OnMount } from "@monaco-editor/react"
 import monaco from "monaco-editor"
-import { useEffect, useRef, useState } from "react"
+import { use, useEffect, useRef, useState } from "react"
 // import theme from "./theme.json"
 
 import {
@@ -39,20 +39,69 @@ export default function CodeEditor({
   userData: User
   sandboxId: string
 }) {
-  const clerk = useClerk()
-
-  const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
-
-  const handleEditorMount: OnMount = (editor, monaco) => {
-    editorRef.current = editor
-  }
-
   const [files, setFiles] = useState<(TFolder | TFile)[]>([])
   const [editorLanguage, setEditorLanguage] = useState("plaintext")
   const [activeFile, setActiveFile] = useState<string | null>(null)
   const [tabs, setTabs] = useState<TTab[]>([])
   const [activeId, setActiveId] = useState<string | null>(null)
   const [terminals, setTerminals] = useState<string[]>([])
+  const [showGenerate, setShowGenerate] = useState(false)
+  const [generateId, setGenerateId] = useState<string>("")
+  const [cursorLine, setCursorLine] = useState(0)
+
+  const clerk = useClerk()
+
+  const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
+  const monacoRef = useRef<typeof monaco | null>(null)
+  const generateRef = useRef<HTMLDivElement>(null)
+
+  const handleEditorWillMount: BeforeMount = (monaco) => {
+    monaco.editor.addKeybindingRules([
+      {
+        keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyG,
+        command: "null",
+        // when: "textInputFocus",
+      },
+    ])
+  }
+
+  const handleEditorMount: OnMount = (editor, monaco) => {
+    editorRef.current = editor
+    monacoRef.current = monaco
+
+    editor.onDidChangeCursorPosition((e) => {
+      setCursorLine(e.position.lineNumber)
+    })
+
+    editor.addAction({
+      id: "generate",
+      label: "Generate",
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyG],
+      precondition:
+        "editorTextFocus && !suggestWidgetVisible && !renameInputVisible && !inSnippetMode && !quickFixWidgetVisible",
+      run: () => setShowGenerate((prev) => !prev),
+    })
+  }
+
+  useEffect(() => {
+    if (showGenerate) {
+      editorRef.current?.changeViewZones(function (changeAccessor) {
+        if (!generateRef.current) return
+        const id = changeAccessor.addZone({
+          afterLineNumber: cursorLine,
+          heightInLines: 3,
+          domNode: generateRef.current,
+        })
+        setGenerateId(id)
+      })
+    } else {
+      editorRef.current?.changeViewZones(function (changeAccessor) {
+        if (!generateRef.current) return
+        changeAccessor.removeZone(generateId)
+        setGenerateId("")
+      })
+    }
+  }, [showGenerate])
 
   const socket = io(
     `http://localhost:4000?userId=${userData.id}&sandboxId=${sandboxId}`
@@ -191,6 +240,9 @@ export default function CodeEditor({
 
   return (
     <>
+      <div className="bg-blue-500" ref={generateRef}>
+        {showGenerate ? "HELLO" : null}
+      </div>
       <Sidebar
         files={files}
         selectFile={selectFile}
@@ -246,6 +298,7 @@ export default function CodeEditor({
                 height="100%"
                 // defaultLanguage="typescript"
                 language={editorLanguage}
+                beforeMount={handleEditorWillMount}
                 onMount={handleEditorMount}
                 onChange={(value) => {
                   setTabs((prev) =>
