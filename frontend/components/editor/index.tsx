@@ -44,10 +44,13 @@ export default function CodeEditor({
   const [activeFile, setActiveFile] = useState<string | null>(null)
   const [tabs, setTabs] = useState<TTab[]>([])
   const [activeId, setActiveId] = useState<string | null>(null)
-  const [terminals, setTerminals] = useState<string[]>([])
-  const [showGenerate, setShowGenerate] = useState(false)
-  const [generateId, setGenerateId] = useState<string>("")
   const [cursorLine, setCursorLine] = useState(0)
+  const [generate, setGenerate] = useState({ show: false, id: "" })
+  const [decorations, setDecorations] = useState<{
+    options: monaco.editor.IModelDeltaDecoration[]
+    instance: monaco.editor.IEditorDecorationsCollection | undefined
+  }>({ options: [], instance: undefined })
+  const [terminals, setTerminals] = useState<string[]>([])
 
   const clerk = useClerk()
 
@@ -70,7 +73,31 @@ export default function CodeEditor({
     monacoRef.current = monaco
 
     editor.onDidChangeCursorPosition((e) => {
-      setCursorLine(e.position.lineNumber)
+      const { column, lineNumber } = e.position
+      if (lineNumber === cursorLine) return
+      setCursorLine(lineNumber)
+
+      const model = editor.getModel()
+      const endColumn = model?.getLineContent(lineNumber).length || 0
+
+      setDecorations((prev) => {
+        return {
+          ...prev,
+          options: [
+            {
+              range: new monaco.Range(
+                lineNumber,
+                column,
+                lineNumber,
+                endColumn
+              ),
+              options: {
+                afterContentClassName: "inline-decoration",
+              },
+            },
+          ],
+        }
+      })
     })
 
     editor.addAction({
@@ -79,12 +106,16 @@ export default function CodeEditor({
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyG],
       precondition:
         "editorTextFocus && !suggestWidgetVisible && !renameInputVisible && !inSnippetMode && !quickFixWidgetVisible",
-      run: () => setShowGenerate((prev) => !prev),
+      run: () => {
+        setGenerate((prev) => {
+          return { ...prev, show: !prev.show }
+        })
+      },
     })
   }
 
   useEffect(() => {
-    if (showGenerate) {
+    if (generate.show) {
       editorRef.current?.changeViewZones(function (changeAccessor) {
         if (!generateRef.current) return
         const id = changeAccessor.addZone({
@@ -92,16 +123,41 @@ export default function CodeEditor({
           heightInLines: 3,
           domNode: generateRef.current,
         })
-        setGenerateId(id)
+        setGenerate((prev) => {
+          return { ...prev, id }
+        })
       })
     } else {
       editorRef.current?.changeViewZones(function (changeAccessor) {
         if (!generateRef.current) return
-        changeAccessor.removeZone(generateId)
-        setGenerateId("")
+        changeAccessor.removeZone(generate.id)
+        setGenerate((prev) => {
+          return { ...prev, id: "" }
+        })
       })
     }
-  }, [showGenerate])
+  }, [generate.show])
+
+  useEffect(() => {
+    if (decorations.options.length === 0) return
+
+    if (decorations.instance) {
+      console.log("setting decorations")
+      // decorations.instance.clear()
+      decorations.instance.set(decorations.options)
+    } else {
+      console.log("creating decorations")
+      const instance = editorRef.current?.createDecorationsCollection()
+      instance?.set(decorations.options)
+
+      setDecorations((prev) => {
+        return {
+          ...prev,
+          instance,
+        }
+      })
+    }
+  }, [decorations.options])
 
   const socket = io(
     `http://localhost:4000?userId=${userData.id}&sandboxId=${sandboxId}`
@@ -241,7 +297,7 @@ export default function CodeEditor({
   return (
     <>
       <div className="bg-blue-500" ref={generateRef}>
-        {showGenerate ? "HELLO" : null}
+        {generate.show ? "HELLO" : null}
       </div>
       <Sidebar
         files={files}
@@ -296,7 +352,6 @@ export default function CodeEditor({
             ) : clerk.loaded ? (
               <Editor
                 height="100%"
-                // defaultLanguage="typescript"
                 language={editorLanguage}
                 beforeMount={handleEditorWillMount}
                 onMount={handleEditorMount}
@@ -317,6 +372,7 @@ export default function CodeEditor({
                   },
                   scrollBeyondLastLine: false,
                   fixedOverflowWidgets: true,
+                  fontFamily: "var(--font-geist-mono)",
                 }}
                 theme="vs-dark"
                 value={activeFile ?? ""}

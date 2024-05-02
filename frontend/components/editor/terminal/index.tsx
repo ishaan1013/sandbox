@@ -20,6 +20,8 @@ export default function EditorTerminal({ socket }: { socket: Socket }) {
       theme: {
         background: "#262626",
       },
+      fontFamily: "var(--font-geist-mono)",
+      fontSize: 14,
     })
 
     setTerm(terminal)
@@ -71,10 +73,7 @@ export default function EditorTerminal({ socket }: { socket: Socket }) {
   }, [term, terminalRef.current])
 
   return (
-    <div
-      ref={terminalRef}
-      className="w-full font-mono text-sm h-full text-left"
-    >
+    <div ref={terminalRef} className="w-full h-full text-left">
       {term === null ? (
         <div className="flex items-center text-muted-foreground p-2">
           <Loader2 className="animate-spin mr-2 h-4 w-4" />
