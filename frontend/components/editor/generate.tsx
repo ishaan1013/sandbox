@@ -1,33 +1,41 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { Input } from "../ui/input"
 import { Button } from "../ui/button"
 import { Check, Loader2, RotateCw, Sparkles, X } from "lucide-react"
+import { Socket } from "socket.io-client"
+import { Editor } from "@monaco-editor/react"
+// import monaco from "monaco-editor"
 
 export default function GenerateInput({
-  cancel,
-  submit,
+  socket,
   width,
+  data,
+  editor,
   onExpand,
   onAccept,
 }: {
-  cancel: () => void
-  submit: (input: string) => void
+  socket: Socket
   width: number
+  data: {
+    fileName: string
+    code: string
+    line: number
+  }
+  editor: {
+    language: string
+  }
   onExpand: () => void
   onAccept: (code: string) => void
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const [code, setCode] = useState(`function add(a: number, b: number): number {
-    return a + b;
-  }
-  
-  const result = add(2, 3);
-  console.log(result);`)
+  const [code, setCode] = useState("")
   const [expanded, setExpanded] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState({
+    generate: false,
+    regenerate: false,
+  })
   const [input, setInput] = useState("")
   const [currentPrompt, setCurrentPrompt] = useState("")
 
@@ -37,16 +45,44 @@ export default function GenerateInput({
     }, 0)
   }, [])
 
-  const handleGenerate = async () => {
-    setLoading(true)
+  const handleGenerate = async ({
+    regenerate = false,
+  }: {
+    regenerate?: boolean
+  }) => {
+    setLoading({ generate: !regenerate, regenerate })
     setCurrentPrompt(input)
-    // const res = await generateCode()
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    socket.emit(
+      "generateCode",
+      data.fileName,
+      data.code,
+      data.line,
+      regenerate ? currentPrompt : input,
+      (res: {
+        result: {
+          response: string
+        }
+        success: boolean
+        errors: any[]
+        messages: any[]
+      }) => {
+        if (!res.success) {
+          console.error(res.errors)
+          return
+        }
 
-    setExpanded(true)
-    onExpand()
-    setLoading(false)
+        setCode(res.result.response)
+      }
+    )
   }
+
+  useEffect(() => {
+    if (code) {
+      setExpanded(true)
+      onExpand()
+      setLoading({ generate: false, regenerate: false })
+    }
+  }, [code])
 
   return (
     <div className="w-full pr-4 space-y-2">
@@ -64,10 +100,10 @@ export default function GenerateInput({
 
         <Button
           size="sm"
-          disabled={loading || input === ""}
-          onClick={handleGenerate}
+          disabled={loading.generate || loading.regenerate || input === ""}
+          onClick={() => handleGenerate({})}
         >
-          {loading ? (
+          {loading.generate ? (
             <>
               <Loader2 className="animate-spin h-3 w-3 mr-2" />
               Generating...
@@ -83,20 +119,55 @@ export default function GenerateInput({
       {expanded ? (
         <>
           <div className="rounded-md border border-muted-foreground w-full h-28 overflow-y-scroll p-2">
-            <pre>{code}</pre>
+            <Editor
+              height="100%"
+              defaultLanguage={editor.language}
+              value={code}
+              options={{
+                minimap: {
+                  enabled: false,
+                },
+                scrollBeyondLastLine: false,
+                fontFamily: "var(--font-geist-mono)",
+                domReadOnly: true,
+                readOnly: true,
+                lineNumbers: "off",
+                glyphMargin: false,
+                folding: false,
+                // Undocumented see https://github.com/Microsoft/vscode/issues/30795#issuecomment-410998882
+                lineDecorationsWidth: 0,
+                lineNumbersMinChars: 0,
+              }}
+              theme="vs-dark"
+            />
           </div>
-          <div className="flex space-x-2">
-            <Button onClick={() => onAccept(code)} size="sm">
+          <div className="flex space-x-2 font-sans">
+            <Button
+              disabled={loading.generate || loading.regenerate}
+              onClick={() => onAccept(code)}
+              size="sm"
+            >
               <Check className="h-3 w-3 mr-2" />
               Accept
             </Button>
             <Button
+              onClick={() => handleGenerate({ regenerate: true })}
+              disabled={loading.generate || loading.regenerate}
               variant="outline"
               size="sm"
               className="bg-transparent border-muted-foreground"
             >
-              <RotateCw className="h-3 w-3 mr-2" />
-              Re-Generate
+              {loading.regenerate ? (
+                <>
+                  <Loader2 className="animate-spin h-3 w-3 mr-2" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <RotateCw className="h-3 w-3 mr-2" />
+                  Re-Generate
+                </>
+              )}
             </Button>
           </div>
         </>

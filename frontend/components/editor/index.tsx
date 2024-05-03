@@ -2,7 +2,7 @@
 
 import Editor, { BeforeMount, OnMount } from "@monaco-editor/react"
 import monaco from "monaco-editor"
-import { use, useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 // import theme from "./theme.json"
 
 import {
@@ -372,9 +372,16 @@ export default function CodeEditor({
       <div className="z-50 p-1" ref={generateWidgetRef}>
         {generate.show ? (
           <GenerateInput
-            cancel={() => {}}
-            submit={(str: string) => {}}
+            socket={socket}
             width={generate.width - 90}
+            data={{
+              fileName: tabs.find((t) => t.id === activeId)?.name ?? "",
+              code: editorRef.current?.getValue() ?? "",
+              line: generate.line,
+            }}
+            editor={{
+              language: editorLanguage,
+            }}
             onExpand={() => {
               editorRef.current?.changeViewZones(function (changeAccessor) {
                 changeAccessor.removeZone(generate.id)
@@ -391,13 +398,19 @@ export default function CodeEditor({
               })
             }}
             onAccept={(code: string) => {
+              const line = generate.line
               setGenerate((prev) => {
                 return {
                   ...prev,
                   show: !prev.show,
                 }
               })
-              console.log("accepted:", code)
+              const file = editorRef.current?.getValue()
+
+              const lines = file?.split("\n") || []
+              lines.splice(line - 1, 0, code)
+              const updatedFile = lines.join("\n")
+              editorRef.current?.setValue(updatedFile)
             }}
           />
         ) : null}

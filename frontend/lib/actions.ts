@@ -24,7 +24,7 @@ export async function updateSandbox(body: {
   name?: string
   visibility?: "public" | "private"
 }) {
-  const res = await fetch("http://localhost:8787/api/sandbox", {
+  await fetch("http://localhost:8787/api/sandbox", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -36,7 +36,7 @@ export async function updateSandbox(body: {
 }
 
 export async function deleteSandbox(id: string) {
-  const res = await fetch(`http://localhost:8787/api/sandbox?id=${id}`, {
+  await fetch(`http://localhost:8787/api/sandbox?id=${id}`, {
     method: "DELETE",
   })
 
@@ -62,7 +62,7 @@ export async function shareSandbox(sandboxId: string, email: string) {
 }
 
 export async function unshareSandbox(sandboxId: string, userId: string) {
-  const res = await fetch("http://localhost:8787/api/sandbox/share", {
+  await fetch("http://localhost:8787/api/sandbox/share", {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
@@ -71,30 +71,4 @@ export async function unshareSandbox(sandboxId: string, userId: string) {
   })
 
   revalidatePath(`/code/${sandboxId}`)
-}
-
-export async function generateCode(code: string, line: number) {
-  const res = await fetch(
-    "https://api.cloudflare.com/client/v4/accounts/d18f2f848da38e37adc9a34eab3d5ae2/ai/run/@cf/meta/llama-3-8b-instruct",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.CF_API_TOKEN}`,
-      },
-      body: JSON.stringify({
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are an expert coding assistant who reads from an existing code file, and suggests code to add to the file.",
-          },
-          {
-            role: "user",
-            content: "", //todo
-          },
-        ],
-      }),
-    }
-  )
 }

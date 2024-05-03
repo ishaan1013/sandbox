@@ -116,7 +116,6 @@ io.on("connection", async (socket) => {
 
   socket.on("createFile", async (name: string) => {
     const id = `projects/${data.id}/${name}`
-    console.log("create file", id, name)
 
     fs.writeFile(path.join(dirName, id), "", function (err) {
       if (err) throw err
@@ -170,7 +169,6 @@ io.on("connection", async (socket) => {
   })
 
   socket.on("createTerminal", ({ id }: { id: string }) => {
-    console.log("creating terminal, id=" + id)
     const pty = spawn(os.platform() === "win32" ? "cmd.exe" : "bash", [], {
       name: "xterm",
       cols: 100,
@@ -178,7 +176,6 @@ io.on("connection", async (socket) => {
     })
 
     const onData = pty.onData((data) => {
-      console.log(data)
       socket.emit("terminalResponse", {
         // data: Buffer.from(data, "utf-8").toString("base64"),
         data,
@@ -197,12 +194,7 @@ io.on("connection", async (socket) => {
   })
 
   socket.on("terminalData", (id: string, data: string) => {
-    // socket.on("terminalData", (data: string) => {
-    console.log(`Received data for terminal ${id}: ${data}`)
-    // pty.write(data)
-
     if (!terminals[id]) {
-      console.log("terminal not found")
       console.log("terminals", terminals)
       return
     }
@@ -213,6 +205,49 @@ io.on("connection", async (socket) => {
       console.log("Error writing to terminal", e)
     }
   })
+
+  socket.on(
+    "generateCode",
+    async (
+      fileName: string,
+      code: string,
+      line: number,
+      instructions: string,
+      callback
+    ) => {
+      console.log("Generating code...")
+      const res = await fetch(
+        `https://api.cloudflare.com/client/v4/accounts/${process.env.CF_USER_ID}/ai/run/@cf/meta/llama-3-8b-instruct`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${process.env.CF_API_TOKEN}`,
+          },
+          body: JSON.stringify({
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You are an expert coding assistant. You read code from a file, and you suggest new code to add to the file. You may be given instructions on what to generate, which you should follow. You should generate code that is correct, efficient, and follows best practices. You should also generate code that is clear and easy to read.",
+              },
+              {
+                role: "user",
+                content: `The file is called ${fileName}. Here are my instructions on what to generate: ${instructions}. Suggest me code to insert at line ${line} in my file.
+
+My code file content: ${code}
+
+Return only the code, and nothing else. Do not include backticks.`,
+              },
+            ],
+          }),
+        }
+      )
+
+      const json = await res.json()
+      callback(json)
+    }
+  )
 
   socket.on("disconnect", () => {
     Object.entries(terminals).forEach((t) => {
