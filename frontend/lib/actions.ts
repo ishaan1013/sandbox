@@ -72,3 +72,29 @@ export async function unshareSandbox(sandboxId: string, userId: string) {
 
   revalidatePath(`/code/${sandboxId}`)
 }
+
+export async function generateCode(code: string, line: number) {
+  const res = await fetch(
+    "https://api.cloudflare.com/client/v4/accounts/d18f2f848da38e37adc9a34eab3d5ae2/ai/run/@cf/meta/llama-3-8b-instruct",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.CF_API_TOKEN}`,
+      },
+      body: JSON.stringify({
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are an expert coding assistant who reads from an existing code file, and suggests code to add to the file.",
+          },
+          {
+            role: "user",
+            content: "", //todo
+          },
+        ],
+      }),
+    }
+  )
+}

@@ -50,10 +50,11 @@ export default function CodeEditor({
   const [generate, setGenerate] = useState<{
     show: boolean
     id: string
+    line: number
     widget: monaco.editor.IContentWidget | undefined
     pref: monaco.editor.ContentWidgetPositionPreference[]
     width: number
-  }>({ show: false, id: "", widget: undefined, pref: [], width: 0 })
+  }>({ show: false, line: 0, id: "", widget: undefined, pref: [], width: 0 })
   const [decorations, setDecorations] = useState<{
     options: monaco.editor.IModelDeltaDecoration[]
     instance: monaco.editor.IEditorDecorationsCollection | undefined
@@ -147,7 +148,7 @@ export default function CodeEditor({
           domNode: generateRef.current,
         })
         setGenerate((prev) => {
-          return { ...prev, id }
+          return { ...prev, id, line: cursorLine }
         })
       })
 
@@ -388,6 +389,15 @@ export default function CodeEditor({
                   return { ...prev, id }
                 })
               })
+            }}
+            onAccept={(code: string) => {
+              setGenerate((prev) => {
+                return {
+                  ...prev,
+                  show: !prev.show,
+                }
+              })
+              console.log("accepted:", code)
             }}
           />
         ) : null}
