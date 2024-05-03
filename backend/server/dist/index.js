@@ -185,15 +185,21 @@ io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
                 messages: [
                     {
                         role: "system",
-                        content: "You are an expert coding assistant. You read code from a file, and you suggest new code to add to the file. You may be given instructions on what to generate, which you should follow. You should generate code that is correct, efficient, and follows best practices. You should also generate code that is clear and easy to read.",
+                        content: "You are an expert coding assistant. You read code from a file, and you suggest new code to add to the file. You may be given instructions on what to generate, which you should follow. You should generate code that is correct, efficient, and follows best practices. You should also generate code that is clear and easy to read. When you generate code, you should only return the code, and nothing else. You should not include backticks in the code you generate.",
                     },
                     {
                         role: "user",
-                        content: `The file is called ${fileName}. Here are my instructions on what to generate: ${instructions}. Suggest me code to insert at line ${line} in my file.
-
-My code file content: ${code}
-
-Return only the code, and nothing else. Do not include backticks.`,
+                        content: `The file is called ${fileName}.`,
+                    },
+                    {
+                        role: "user",
+                        content: `Here are my instructions on what to generate: ${instructions}.`,
+                    },
+                    {
+                        role: "user",
+                        content: `Suggest me code to insert at line ${line} in my file. Give only the code, and NOTHING else. DO NOT include backticks in your response. My code file content is as follows 
+                
+${code}`,
                     },
                 ],
             }),
