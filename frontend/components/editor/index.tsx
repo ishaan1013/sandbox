@@ -1,9 +1,17 @@
 "use client"
 
-import Editor, { BeforeMount, OnMount } from "@monaco-editor/react"
-import monaco from "monaco-editor"
 import { useEffect, useRef, useState } from "react"
-// import theme from "./theme.json"
+import monaco from "monaco-editor"
+import Editor, { BeforeMount, OnMount } from "@monaco-editor/react"
+import { io } from "socket.io-client"
+import { toast } from "sonner"
+import { useClerk } from "@clerk/nextjs"
+
+import * as Y from "yjs"
+import LiveblocksProvider from "@liveblocks/yjs"
+import { MonacoBinding } from "y-monaco"
+import { Awareness } from "y-protocols/awareness"
+import { useRoom } from "@/liveblocks.config"
 
 import {
   ResizableHandle,
@@ -22,17 +30,12 @@ import {
 } from "lucide-react"
 import Tab from "../ui/tab"
 import Sidebar from "./sidebar"
-import { useClerk } from "@clerk/nextjs"
-import { TFile, TFileData, TFolder, TTab } from "./sidebar/types"
-
-import { io } from "socket.io-client"
-import { processFileType, validateName } from "@/lib/utils"
-import { toast } from "sonner"
 import EditorTerminal from "./terminal"
 import { Button } from "../ui/button"
-import { User } from "@/lib/types"
-import { Input } from "../ui/input"
 import GenerateInput from "./generate"
+import { TFile, TFileData, TFolder, TTab } from "./sidebar/types"
+import { User } from "@/lib/types"
+import { processFileType, validateName } from "@/lib/utils"
 
 export default function CodeEditor({
   userData,
@@ -62,6 +65,7 @@ export default function CodeEditor({
   const [terminals, setTerminals] = useState<string[]>([])
 
   const clerk = useClerk()
+  const room = useRoom()
 
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
   const editorContainerRef = useRef<HTMLDivElement>(null)
@@ -230,7 +234,7 @@ export default function CodeEditor({
       if (e.key === "s" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault()
 
-        const activeTab = tabs.find((t) => t.id === activeId)
+        // const activeTab = tabs.find((t) => t.id === activeId)
         // console.log("saving:", activeTab?.name, editorRef.current?.getValue())
 
         setTabs((prev) =>
@@ -257,6 +261,27 @@ export default function CodeEditor({
       })
     }
   })
+
+  useEffect(() => {
+    if (!editorRef.current) return
+
+    const yDoc = new Y.Doc()
+    const yText = yDoc.getText("monaco")
+    const yProvider: any = new LiveblocksProvider(room, yDoc)
+
+    const binding = new MonacoBinding(
+      yText,
+      editorRef.current.getModel() as monaco.editor.ITextModel,
+      new Set([editorRef.current]),
+      yProvider.awareness as Awareness
+    )
+
+    return () => {
+      yDoc.destroy()
+      yProvider.destroy()
+      binding.destroy()
+    }
+  }, [editorRef, room])
 
   // connection/disconnection effect + resizeobserver
   useEffect(() => {

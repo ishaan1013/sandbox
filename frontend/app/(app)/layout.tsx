@@ -1,3 +1,4 @@
+import { User } from "@/lib/types"
 import { currentUser } from "@clerk/nextjs"
 import { redirect } from "next/navigation"
 
@@ -13,9 +14,9 @@ export default async function AppAuthLayout({
   }
 
   const dbUser = await fetch(`http://localhost:8787/api/user?id=${user.id}`)
-  const dbUserJSON = await dbUser.json()
+  const dbUserJSON = (await dbUser.json()) as User
 
-  if (!dbUserJSON?.id) {
+  if (!dbUserJSON.id) {
     const res = await fetch("http://localhost:8787/api/user", {
       method: "POST",
       headers: {

@@ -1,4 +1,5 @@
 import Navbar from "@/components/editor/navbar"
+import { Room } from "@/components/editor/room"
 import { Sandbox, User, UsersToSandboxes } from "@/lib/types"
 import { currentUser } from "@clerk/nextjs"
 import dynamic from "next/dynamic"
@@ -48,10 +49,12 @@ export default async function CodePage({ params }: { params: { id: string } }) {
 
   return (
     <div className="overflow-hidden overscroll-none w-screen flex flex-col h-screen bg-background">
+      {/* <Room> */}
       <Navbar userData={userData} sandboxData={sandboxData} shared={shared} />
       <div className="w-screen flex grow">
         <CodeEditor userData={userData} sandboxId={sandboxId} />
       </div>
+      {/* </Room> */}
     </div>
   )
 }
