@@ -42,7 +42,6 @@ import { TFile, TFileData, TFolder, TTab } from "./sidebar/types"
 import { User } from "@/lib/types"
 import { processFileType, validateName } from "@/lib/utils"
 import { Cursors } from "./live/cursors"
-import { Avatars } from "./live/avatars"
 
 export default function CodeEditor({
   userData,
@@ -271,26 +270,31 @@ export default function CodeEditor({
   })
 
   useEffect(() => {
-    if (!editorRef.current) return
+    let yProvider: any
+    let yDoc: Y.Doc
+    let binding: MonacoBinding
 
-    const yDoc = new Y.Doc()
-    const yText = yDoc.getText("monaco")
-    const yProvider: any = new LiveblocksProvider(room, yDoc)
-    setProvider(yProvider)
+    if (editorRef.current) {
+      yDoc = new Y.Doc()
+      const yText = yDoc.getText("monaco")
+      yProvider = new LiveblocksProvider(room, yDoc)
+      setProvider(yProvider)
 
-    const binding = new MonacoBinding(
-      yText,
-      editorRef.current.getModel() as monaco.editor.ITextModel,
-      new Set([editorRef.current]),
-      yProvider.awareness as Awareness
-    )
+      // Attach Yjs to Monaco
+      binding = new MonacoBinding(
+        yText,
+        editorRef.current.getModel() as monaco.editor.ITextModel,
+        new Set([editorRef.current]),
+        yProvider.awareness as Awareness
+      )
+    }
 
     return () => {
-      yDoc.destroy()
-      yProvider.destroy()
-      binding.destroy()
+      yDoc?.destroy()
+      yProvider?.destroy()
+      binding?.destroy()
     }
-  }, [editorRef, room])
+  }, [editorRef.current, room])
 
   // connection/disconnection effect + resizeobserver
   useEffect(() => {
@@ -490,7 +494,6 @@ export default function CodeEditor({
                 {tab.name}
               </Tab>
             ))}
-            <Avatars />
           </div>
           <div
             ref={editorContainerRef}

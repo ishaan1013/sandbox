@@ -19,6 +19,7 @@ export function Cursors({ yProvider }: { yProvider: TypedLiveblocksProvider }) {
 
     // On changes, update `awarenessUsers`
     function setUsers() {
+      console.log("SET USERS")
       setAwarenessUsers(
         Array.from(yProvider.awareness.getStates()) as AwarenessList
       )

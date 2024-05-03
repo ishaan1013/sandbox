@@ -57,7 +57,8 @@ io.use((socket, next) => __awaiter(void 0, void 0, void 0, function* () {
         return;
     }
     const sandbox = dbUserJSON.sandbox.find((s) => s.id === sandboxId);
-    if (!sandbox) {
+    const sharedSandboxes = dbUserJSON.usersToSandboxes.find((uts) => uts.sandboxId === sandboxId);
+    if (!sandbox && !sharedSandboxes) {
         console.log("Invalid credentials.");
         next(new Error("Invalid credentials."));
         return;

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { useState } from "react"
 import EditSandboxModal from "./edit"
 import ShareSandboxModal from "./share"
+import { Avatars } from "../live/avatars"
 
 export default function Navbar({
   userData,
@@ -58,6 +59,8 @@ export default function Navbar({
           </div>
         </div>
         <div className="flex items-center space-x-4">
+          <Avatars />
+
           <Button variant="outline" onClick={() => setIsShareOpen(true)}>
             <Users className="w-4 h-4 mr-2" />
             Share

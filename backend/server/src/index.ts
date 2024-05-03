@@ -63,8 +63,11 @@ io.use(async (socket, next) => {
   }
 
   const sandbox = dbUserJSON.sandbox.find((s) => s.id === sandboxId)
+  const sharedSandboxes = dbUserJSON.usersToSandboxes.find(
+    (uts) => uts.sandboxId === sandboxId
+  )
 
-  if (!sandbox) {
+  if (!sandbox && !sharedSandboxes) {
     console.log("Invalid credentials.")
     next(new Error("Invalid credentials."))
     return
