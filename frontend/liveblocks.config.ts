@@ -69,8 +69,11 @@ type Storage = {
 // provided by your own custom auth back end (if used). Useful for data that
 // will not change during a session, like a user's name or avatar.
 type UserMeta = {
-  // id?: string,  // Accessible through `user.id`
-  // info?: Json,  // Accessible through `user.info`
+  id: string
+  info: {
+    name: string
+    email: string
+  }
 }
 
 // Optionally, the type of custom events broadcast and listened to in this
@@ -87,6 +90,12 @@ export type ThreadMetadata = {
   // quote: string;
   // time: number;
 }
+
+export type UserAwareness = {
+  user?: UserMeta["info"]
+}
+
+export type AwarenessList = [number, UserAwareness][]
 
 // Room-level hooks, use inside `RoomProvider`
 export const {
@@ -131,8 +140,8 @@ export const {
     useUpdateRoomNotificationSettings,
 
     // These hooks can be exported from either context
-    // useUser,
-    // useRoomInfo
+    useUser,
+    useRoomInfo,
   },
 } = createRoomContext<Presence, Storage, UserMeta, RoomEvent, ThreadMetadata>(
   client
@@ -146,10 +155,6 @@ export const {
     useMarkAllInboxNotificationsAsRead,
     useInboxNotifications,
     useUnreadInboxNotificationsCount,
-
-    // These hooks can be exported from either context
-    useUser,
-    useRoomInfo,
   },
 } = createLiveblocksContext<UserMeta, ThreadMetadata>(client)
 

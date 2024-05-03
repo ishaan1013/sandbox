@@ -23,7 +23,6 @@ export async function POST(request: NextRequest) {
   // userInfo is made available in Liveblocks presence hooks, e.g. useOthers
   const session = liveblocks.prepareSession(user.id, {
     userInfo: {
-      id: user.id,
       name: user.name,
       email: user.email,
     },

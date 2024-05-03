@@ -1,15 +1,18 @@
 "use client"
 
 import { RoomProvider } from "@/liveblocks.config"
-import { useSearchParams } from "next/navigation"
 import { ClientSideSuspense } from "@liveblocks/react"
 
-export function Room({ children }: { children: React.ReactNode }) {
-  // const roomId = useExampleRoomId("liveblocks:examples:nextjs-yjs-monaco");
-
+export function Room({
+  id,
+  children,
+}: {
+  id: string
+  children: React.ReactNode
+}) {
   return (
     <RoomProvider
-      id={"roomId"}
+      id={id}
       initialPresence={{
         cursor: null,
       }}

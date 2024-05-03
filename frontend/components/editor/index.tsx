@@ -11,7 +11,12 @@ import * as Y from "yjs"
 import LiveblocksProvider from "@liveblocks/yjs"
 import { MonacoBinding } from "y-monaco"
 import { Awareness } from "y-protocols/awareness"
-import { useRoom } from "@/liveblocks.config"
+import {
+  TypedLiveblocksProvider,
+  useRoom,
+  AwarenessList,
+  useSelf,
+} from "@/liveblocks.config"
 
 import {
   ResizableHandle,
@@ -36,6 +41,8 @@ import GenerateInput from "./generate"
 import { TFile, TFileData, TFolder, TTab } from "./sidebar/types"
 import { User } from "@/lib/types"
 import { processFileType, validateName } from "@/lib/utils"
+import { Cursors } from "./live/cursors"
+import { Avatars } from "./live/avatars"
 
 export default function CodeEditor({
   userData,
@@ -63,6 +70,7 @@ export default function CodeEditor({
     instance: monaco.editor.IEditorDecorationsCollection | undefined
   }>({ options: [], instance: undefined })
   const [terminals, setTerminals] = useState<string[]>([])
+  const [provider, setProvider] = useState<TypedLiveblocksProvider>()
 
   const clerk = useClerk()
   const room = useRoom()
@@ -268,6 +276,7 @@ export default function CodeEditor({
     const yDoc = new Y.Doc()
     const yText = yDoc.getText("monaco")
     const yProvider: any = new LiveblocksProvider(room, yDoc)
+    setProvider(yProvider)
 
     const binding = new MonacoBinding(
       yText,
@@ -481,10 +490,11 @@ export default function CodeEditor({
                 {tab.name}
               </Tab>
             ))}
+            <Avatars />
           </div>
           <div
             ref={editorContainerRef}
-            className="grow w-full overflow-hidden rounded-md"
+            className="grow w-full overflow-hidden rounded-md relative"
           >
             {activeId === null ? (
               <>
@@ -494,33 +504,36 @@ export default function CodeEditor({
                 </div>
               </>
             ) : clerk.loaded ? (
-              <Editor
-                height="100%"
-                language={editorLanguage}
-                beforeMount={handleEditorWillMount}
-                onMount={handleEditorMount}
-                onChange={(value) => {
-                  setTabs((prev) =>
-                    prev.map((tab) =>
-                      tab.id === activeId ? { ...tab, saved: false } : tab
+              <>
+                {provider ? <Cursors yProvider={provider} /> : null}
+                <Editor
+                  height="100%"
+                  language={editorLanguage}
+                  beforeMount={handleEditorWillMount}
+                  onMount={handleEditorMount}
+                  onChange={(value) => {
+                    setTabs((prev) =>
+                      prev.map((tab) =>
+                        tab.id === activeId ? { ...tab, saved: false } : tab
+                      )
                     )
-                  )
-                }}
-                options={{
-                  minimap: {
-                    enabled: false,
-                  },
-                  padding: {
-                    bottom: 4,
-                    top: 4,
-                  },
-                  scrollBeyondLastLine: false,
-                  fixedOverflowWidgets: true,
-                  fontFamily: "var(--font-geist-mono)",
-                }}
-                theme="vs-dark"
-                value={activeFile ?? ""}
-              />
+                  }}
+                  options={{
+                    minimap: {
+                      enabled: false,
+                    },
+                    padding: {
+                      bottom: 4,
+                      top: 4,
+                    },
+                    scrollBeyondLastLine: false,
+                    fixedOverflowWidgets: true,
+                    fontFamily: "var(--font-geist-mono)",
+                  }}
+                  theme="vs-dark"
+                  value={activeFile ?? ""}
+                />
+              </>
             ) : null}
           </div>
         </ResizablePanel>
