@@ -31,6 +31,8 @@ import { toast } from "sonner"
 import EditorTerminal from "./terminal"
 import { Button } from "../ui/button"
 import { User } from "@/lib/types"
+import { Input } from "../ui/input"
+import GenerateInput from "./generate"
 
 export default function CodeEditor({
   userData,
@@ -45,7 +47,13 @@ export default function CodeEditor({
   const [tabs, setTabs] = useState<TTab[]>([])
   const [activeId, setActiveId] = useState<string | null>(null)
   const [cursorLine, setCursorLine] = useState(0)
-  const [generate, setGenerate] = useState({ show: false, id: "" })
+  const [generate, setGenerate] = useState<{
+    show: boolean
+    id: string
+    widget: monaco.editor.IContentWidget | undefined
+    pref: monaco.editor.ContentWidgetPositionPreference[]
+    width: number
+  }>({ show: false, id: "", widget: undefined, pref: [], width: 0 })
   const [decorations, setDecorations] = useState<{
     options: monaco.editor.IModelDeltaDecoration[]
     instance: monaco.editor.IEditorDecorationsCollection | undefined
@@ -55,8 +63,10 @@ export default function CodeEditor({
   const clerk = useClerk()
 
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
+  const editorContainerRef = useRef<HTMLDivElement>(null)
   const monacoRef = useRef<typeof monaco | null>(null)
   const generateRef = useRef<HTMLDivElement>(null)
+  const generateWidgetRef = useRef<HTMLDivElement>(null)
 
   const handleEditorWillMount: BeforeMount = (monaco) => {
     monaco.editor.addKeybindingRules([
@@ -100,6 +110,15 @@ export default function CodeEditor({
       })
     })
 
+    editor.onDidBlurEditorText((e) => {
+      setDecorations((prev) => {
+        return {
+          ...prev,
+          options: [],
+        }
+      })
+    })
+
     editor.addAction({
       id: "generate",
       label: "Generate",
@@ -108,7 +127,11 @@ export default function CodeEditor({
         "editorTextFocus && !suggestWidgetVisible && !renameInputVisible && !inSnippetMode && !quickFixWidgetVisible",
       run: () => {
         setGenerate((prev) => {
-          return { ...prev, show: !prev.show }
+          return {
+            ...prev,
+            show: !prev.show,
+            pref: [monaco.editor.ContentWidgetPositionPreference.BELOW],
+          }
         })
       },
     })
@@ -127,26 +150,64 @@ export default function CodeEditor({
           return { ...prev, id }
         })
       })
+
+      if (!generateWidgetRef.current) return
+      const widgetElement = generateWidgetRef.current
+
+      const contentWidget = {
+        getDomNode: () => {
+          return widgetElement
+        },
+        getId: () => {
+          return "generate.widget"
+        },
+        getPosition: () => {
+          return {
+            position: {
+              lineNumber: cursorLine,
+              column: 1,
+            },
+            preference: generate.pref,
+          }
+        },
+      }
+
+      setGenerate((prev) => {
+        return { ...prev, widget: contentWidget }
+      })
+      editorRef.current?.addContentWidget(contentWidget)
+
+      if (generateRef.current && generateWidgetRef.current) {
+        editorRef.current?.applyFontInfo(generateRef.current)
+        editorRef.current?.applyFontInfo(generateWidgetRef.current)
+      }
     } else {
       editorRef.current?.changeViewZones(function (changeAccessor) {
-        if (!generateRef.current) return
         changeAccessor.removeZone(generate.id)
         setGenerate((prev) => {
           return { ...prev, id: "" }
         })
       })
+
+      if (!generate.widget) return
+      editorRef.current?.removeContentWidget(generate.widget)
+      setGenerate((prev) => {
+        return {
+          ...prev,
+          widget: undefined,
+        }
+      })
     }
   }, [generate.show])
 
   useEffect(() => {
-    if (decorations.options.length === 0) return
+    if (decorations.options.length === 0) {
+      decorations.instance?.clear()
+    }
 
     if (decorations.instance) {
-      console.log("setting decorations")
-      // decorations.instance.clear()
       decorations.instance.set(decorations.options)
     } else {
-      console.log("creating decorations")
       const instance = editorRef.current?.createDecorationsCollection()
       instance?.set(decorations.options)
 
@@ -169,7 +230,7 @@ export default function CodeEditor({
         e.preventDefault()
 
         const activeTab = tabs.find((t) => t.id === activeId)
-        console.log("saving:", activeTab?.name, editorRef.current?.getValue())
+        // console.log("saving:", activeTab?.name, editorRef.current?.getValue())
 
         setTabs((prev) =>
           prev.map((tab) =>
@@ -187,14 +248,27 @@ export default function CodeEditor({
     }
   }, [tabs, activeId])
 
-  // WS event handlers:
+  const resizeObserver = new ResizeObserver((entries) => {
+    for (const entry of entries) {
+      const { width } = entry.contentRect
+      setGenerate((prev) => {
+        return { ...prev, width }
+      })
+    }
+  })
 
-  // connection/disconnection effect
+  // connection/disconnection effect + resizeobserver
   useEffect(() => {
     socket.connect()
 
+    if (editorContainerRef.current) {
+      resizeObserver.observe(editorContainerRef.current)
+    }
+
     return () => {
       socket.disconnect()
+
+      resizeObserver.disconnect()
     }
   }, [])
 
@@ -205,7 +279,6 @@ export default function CodeEditor({
     const onDisconnect = () => {}
 
     const onLoadedEvent = (files: (TFolder | TFile)[]) => {
-      console.log("onLoadedEvent")
       setFiles(files)
     }
 
@@ -227,7 +300,6 @@ export default function CodeEditor({
     setTabs((prev) => {
       const exists = prev.find((t) => t.id === tab.id)
       if (exists) {
-        // console.log("exists")
         setActiveId(exists.id)
         return prev
       }
@@ -269,7 +341,6 @@ export default function CodeEditor({
   ) => {
     if (!validateName(newName, oldName, type)) {
       toast.error("Invalid file name.")
-      console.log("invalid name")
       return false
     }
 
@@ -296,9 +367,32 @@ export default function CodeEditor({
 
   return (
     <>
-      <div className="bg-blue-500" ref={generateRef}>
-        {generate.show ? "HELLO" : null}
+      <div ref={generateRef} />
+      <div className="z-50 p-1" ref={generateWidgetRef}>
+        {generate.show ? (
+          <GenerateInput
+            cancel={() => {}}
+            submit={(str: string) => {}}
+            width={generate.width - 90}
+            onExpand={() => {
+              editorRef.current?.changeViewZones(function (changeAccessor) {
+                changeAccessor.removeZone(generate.id)
+
+                if (!generateRef.current) return
+                const id = changeAccessor.addZone({
+                  afterLineNumber: cursorLine,
+                  heightInLines: 12,
+                  domNode: generateRef.current,
+                })
+                setGenerate((prev) => {
+                  return { ...prev, id }
+                })
+              })
+            }}
+          />
+        ) : null}
       </div>
+
       <Sidebar
         files={files}
         selectFile={selectFile}
@@ -308,7 +402,6 @@ export default function CodeEditor({
         socket={socket}
         addNew={(name, type) => {
           if (type === "file") {
-            console.log("adding file")
             setFiles((prev) => [
               ...prev,
               { id: `projects/${sandboxId}/${name}`, name, type: "file" },
@@ -341,7 +434,10 @@ export default function CodeEditor({
               </Tab>
             ))}
           </div>
-          <div className="grow w-full overflow-hidden rounded-md">
+          <div
+            ref={editorContainerRef}
+            className="grow w-full overflow-hidden rounded-md"
+          >
             {activeId === null ? (
               <>
                 <div className="w-full h-full flex items-center justify-center text-xl font-medium text-secondary select-none">
