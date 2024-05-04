@@ -70,6 +70,7 @@ export default function CodeEditor({
   }>({ options: [], instance: undefined })
   const [terminals, setTerminals] = useState<string[]>([])
   const [provider, setProvider] = useState<TypedLiveblocksProvider>()
+  const [ai, setAi] = useState(false)
 
   const clerk = useClerk()
   const room = useRoom()
@@ -150,6 +151,15 @@ export default function CodeEditor({
   }
 
   useEffect(() => {
+    if (!ai) {
+      setGenerate((prev) => {
+        return {
+          ...prev,
+          show: false,
+        }
+      })
+      return
+    }
     if (generate.show) {
       editorRef.current?.changeViewZones(function (changeAccessor) {
         if (!generateRef.current) return
@@ -216,6 +226,8 @@ export default function CodeEditor({
     if (decorations.options.length === 0) {
       decorations.instance?.clear()
     }
+
+    if (!ai) return
 
     if (decorations.instance) {
       decorations.instance.set(decorations.options)
@@ -426,7 +438,7 @@ export default function CodeEditor({
     <>
       <div ref={generateRef} />
       <div className="z-50 p-1" ref={generateWidgetRef}>
-        {generate.show ? (
+        {generate.show && ai ? (
           <GenerateInput
             socket={socket}
             width={generate.width - 90}
@@ -490,6 +502,8 @@ export default function CodeEditor({
             // setFiles(prev => [...prev, { id, name, type: "folder", children: [] }])
           }
         }}
+        ai={ai}
+        setAi={setAi}
       />
       <ResizablePanelGroup direction="horizontal">
         <ResizablePanel
