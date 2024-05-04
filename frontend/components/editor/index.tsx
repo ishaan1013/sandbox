@@ -51,10 +51,10 @@ export default function CodeEditor({
   sandboxId: string
 }) {
   const [files, setFiles] = useState<(TFolder | TFile)[]>([])
-  const [editorLanguage, setEditorLanguage] = useState("plaintext")
-  const [activeFile, setActiveFile] = useState<string | null>(null)
   const [tabs, setTabs] = useState<TTab[]>([])
-  const [activeId, setActiveId] = useState<string | null>(null)
+  const [editorLanguage, setEditorLanguage] = useState("plaintext")
+  const [activeId, setActiveId] = useState<string>("")
+  const [activeFile, setActiveFile] = useState<string | null>(null)
   const [cursorLine, setCursorLine] = useState(0)
   const [generate, setGenerate] = useState<{
     show: boolean
@@ -269,32 +269,36 @@ export default function CodeEditor({
     }
   })
 
-  useEffect(() => {
-    let yProvider: any
-    let yDoc: Y.Doc
-    let binding: MonacoBinding
+  // useEffect(() => {
+  //   let yProvider: any
+  //   let yDoc: Y.Doc
+  //   let binding: MonacoBinding
 
-    if (editorRef.current) {
-      yDoc = new Y.Doc()
-      const yText = yDoc.getText("monaco")
-      yProvider = new LiveblocksProvider(room, yDoc)
-      setProvider(yProvider)
+  //   const tab = tabs.find((t) => t.id === activeId)
 
-      // Attach Yjs to Monaco
-      binding = new MonacoBinding(
-        yText,
-        editorRef.current.getModel() as monaco.editor.ITextModel,
-        new Set([editorRef.current]),
-        yProvider.awareness as Awareness
-      )
-    }
+  //   if (editorRef.current && tab) {
+  //     yDoc = new Y.Doc()
+  //     const yText = yDoc.getText(tab.id)
+  //     yProvider = new LiveblocksProvider(room, yDoc)
+  //     setProvider(yProvider)
 
-    return () => {
-      yDoc?.destroy()
-      yProvider?.destroy()
-      binding?.destroy()
-    }
-  }, [editorRef.current, room])
+  //     yDoc?.getText(tab.id)?.insert(0, editorRef.current?.getValue() ?? "")
+
+  //     // Attach Yjs to Monaco
+  //     binding = new MonacoBinding(
+  //       yText,
+  //       editorRef.current.getModel() as monaco.editor.ITextModel,
+  //       new Set([editorRef.current]),
+  //       yProvider.awareness as Awareness
+  //     )
+  //   }
+
+  //   return () => {
+  //     yDoc?.destroy()
+  //     yProvider?.destroy()
+  //     binding?.destroy()
+  //   }
+  // }, [editorRef.current, room, activeId])
 
   // connection/disconnection effect + resizeobserver
   useEffect(() => {
@@ -336,14 +340,16 @@ export default function CodeEditor({
   // Helper functions:
 
   const selectFile = (tab: TTab) => {
+    if (tab.id === activeId) return
+    const exists = tabs.find((t) => t.id === tab.id)
     setTabs((prev) => {
-      const exists = prev.find((t) => t.id === tab.id)
       if (exists) {
         setActiveId(exists.id)
         return prev
       }
       return [...prev, tab]
     })
+
     socket.emit("getFile", tab.id, (response: string) => {
       setActiveFile(response)
     })
@@ -365,11 +371,19 @@ export default function CodeEditor({
           ? tabs[index + 1].id
           : tabs[index - 1].id
         : activeId
-    const nextTab = tabs.find((t) => t.id === nextId)
 
-    if (nextTab) selectFile(nextTab)
-    else setActiveId(null)
     setTabs((prev) => prev.filter((t) => t.id !== tab.id))
+
+    if (!nextId) {
+      console.log("no next id")
+      setActiveId("")
+    } else {
+      const nextTab = tabs.find((t) => t.id === nextId)
+      if (nextTab) {
+        console.log("next tab:", nextTab.name)
+        selectFile(nextTab)
+      }
+    }
   }
 
   const handleRename = (
@@ -403,6 +417,10 @@ export default function CodeEditor({
     //   setFiles(response)
     // })
   }
+
+  useEffect(() => {
+    console.log("activeId CHANGED:", activeId)
+  }, [activeId])
 
   return (
     <>
@@ -486,7 +504,7 @@ export default function CodeEditor({
                 key={tab.id}
                 saved={tab.saved}
                 selected={activeId === tab.id}
-                onClick={() => {
+                onClick={(e) => {
                   selectFile(tab)
                 }}
                 onClose={() => closeTab(tab)}
@@ -499,7 +517,7 @@ export default function CodeEditor({
             ref={editorContainerRef}
             className="grow w-full overflow-hidden rounded-md relative"
           >
-            {activeId === null ? (
+            {!activeId ? (
               <>
                 <div className="w-full h-full flex items-center justify-center text-xl font-medium text-secondary select-none">
                   <FileJson className="w-6 h-6 mr-3" />
