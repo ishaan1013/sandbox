@@ -12,6 +12,7 @@ import Image from "next/image"
 import Button from "../ui/customButton"
 import { ChevronRight } from "lucide-react"
 import Avatar from "../ui/avatar"
+import Link from "next/link"
 
 export default function DashboardSharedWithMe({
   shared,
@@ -66,9 +67,11 @@ export default function DashboardSharedWithMe({
                   {new Date(sandbox.sharedOn).toLocaleDateString()}
                 </TableCell>
                 <TableCell className="text-right">
-                  <Button>
-                    Open <ChevronRight className="w-4 h-4 ml-2" />
-                  </Button>
+                  <Link href={`/code/${sandbox.id}`}>
+                    <Button>
+                      Open <ChevronRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </Link>
                 </TableCell>
               </TableRow>
             ))}

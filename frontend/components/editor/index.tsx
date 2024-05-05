@@ -39,16 +39,16 @@ import EditorTerminal from "./terminal"
 import { Button } from "../ui/button"
 import GenerateInput from "./generate"
 import { TFile, TFileData, TFolder, TTab } from "./sidebar/types"
-import { User } from "@/lib/types"
+import { Sandbox, User } from "@/lib/types"
 import { processFileType, validateName } from "@/lib/utils"
 import { Cursors } from "./live/cursors"
 
 export default function CodeEditor({
   userData,
-  sandboxId,
+  sandboxData,
 }: {
   userData: User
-  sandboxId: string
+  sandboxData: Sandbox
 }) {
   const [files, setFiles] = useState<(TFolder | TFile)[]>([])
   const [tabs, setTabs] = useState<TTab[]>([])
@@ -72,6 +72,7 @@ export default function CodeEditor({
   const [provider, setProvider] = useState<TypedLiveblocksProvider>()
   const [ai, setAi] = useState(false)
 
+  const isOwner = sandboxData.userId === userData.id
   const clerk = useClerk()
   const room = useRoom()
 
@@ -247,7 +248,7 @@ export default function CodeEditor({
   }, [decorations.options])
 
   const socket = io(
-    `http://localhost:4000?userId=${userData.id}&sandboxId=${sandboxId}`
+    `http://localhost:4000?userId=${userData.id}&sandboxId=${sandboxData.id}`
   )
 
   useEffect(() => {
@@ -506,7 +507,7 @@ export default function CodeEditor({
           if (type === "file") {
             setFiles((prev) => [
               ...prev,
-              { id: `projects/${sandboxId}/${name}`, name, type: "file" },
+              { id: `projects/${sandboxData.id}/${name}`, name, type: "file" },
             ])
           } else {
             console.log("adding folder")

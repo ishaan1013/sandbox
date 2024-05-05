@@ -52,7 +52,7 @@ export default async function CodePage({ params }: { params: { id: string } }) {
       <Room id={sandboxId}>
         <Navbar userData={userData} sandboxData={sandboxData} shared={shared} />
         <div className="w-screen flex grow">
-          <CodeEditor userData={userData} sandboxId={sandboxId} />
+          <CodeEditor userData={userData} sandboxData={sandboxData} />
         </div>
       </Room>
     </div>

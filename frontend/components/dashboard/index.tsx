@@ -17,6 +17,7 @@ import DashboardSharedWithMe from "./shared"
 import NewProjectModal from "./newProject"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
+import AboutModal from "./about"
 
 type TScreen = "projects" | "shared" | "settings" | "search"
 
@@ -36,6 +37,7 @@ export default function Dashboard({
   const [screen, setScreen] = useState<TScreen>("projects")
 
   const [newProjectModalOpen, setNewProjectModalOpen] = useState(false)
+  const [aboutModalOpen, setAboutModalOpen] = useState(false)
 
   const activeScreen = (s: TScreen) => {
     if (screen === s) return "justify-start"
@@ -51,6 +53,7 @@ export default function Dashboard({
         open={newProjectModalOpen}
         setOpen={setNewProjectModalOpen}
       />
+      <AboutModal open={aboutModalOpen} setOpen={setAboutModalOpen} />
       <div className="flex grow w-full">
         <div className="w-56 shrink-0 border-r border-border p-4 justify-between flex flex-col">
           <div className="flex flex-col">
@@ -97,6 +100,7 @@ export default function Dashboard({
               </Button>
             </Link>
             <Button
+              onClick={() => setAboutModalOpen(true)}
               variant="ghost"
               className="justify-start font-normal text-muted-foreground"
             >

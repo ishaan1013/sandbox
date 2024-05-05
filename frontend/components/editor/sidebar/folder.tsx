@@ -5,6 +5,13 @@ import { useEffect, useRef, useState } from "react"
 import { getIconForFolder, getIconForOpenFolder } from "vscode-icons-js"
 import { TFile, TFolder, TTab } from "./types"
 import SidebarFile from "./file"
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu"
+import { Pencil, Trash2 } from "lucide-react"
 
 export default function SidebarFolder({
   data,
@@ -39,12 +46,9 @@ export default function SidebarFolder({
   }, [editing])
 
   return (
-    <>
-      <div
+    <ContextMenu>
+      <ContextMenuTrigger
         onClick={() => setIsOpen((prev) => !prev)}
-        onDoubleClick={() => {
-          setEditing(true)
-        }}
         className="w-full flex items-center h-7 px-1 transition-colors hover:bg-secondary rounded-sm cursor-pointer"
       >
         <Image
@@ -74,7 +78,29 @@ export default function SidebarFolder({
             }}
           />
         </form>
-      </div>
+      </ContextMenuTrigger>
+      <ContextMenuContent>
+        <ContextMenuItem
+          onClick={() => {
+            console.log("rename")
+            setEditing(true)
+          }}
+        >
+          <Pencil className="w-4 h-4 mr-2" />
+          Rename
+        </ContextMenuItem>
+        <ContextMenuItem
+          // disabled={pendingDelete}
+          onClick={() => {
+            console.log("delete")
+            // setPendingDelete(true)
+            // handleDeleteFile(data)
+          }}
+        >
+          <Trash2 className="w-4 h-4 mr-2" />
+          Delete
+        </ContextMenuItem>
+      </ContextMenuContent>
       {isOpen ? (
         <div className="flex w-full items-stretch">
           <div className="w-[1px] bg-border mx-2 h-full"></div>
@@ -102,6 +128,6 @@ export default function SidebarFolder({
           </div>
         </div>
       ) : null}
-    </>
+    </ContextMenu>
   )
 }
