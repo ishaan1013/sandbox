@@ -17,6 +17,7 @@ import {
 } from "./utils"
 import { IDisposable, IPty, spawn } from "node-pty"
 import {
+  MAX_BODY_SIZE,
   createFileRL,
   deleteFileRL,
   renameFileRL,
@@ -115,6 +116,14 @@ io.on("connection", async (socket) => {
   socket.on("saveFile", async (fileId: string, body: string) => {
     try {
       await saveFileRL.consume(data.userId, 1)
+
+      if (Buffer.byteLength(body, "utf-8") > MAX_BODY_SIZE) {
+        socket.emit(
+          "rateLimit",
+          "Rate limited: file size too large. Please reduce the file size."
+        )
+        return
+      }
 
       const file = sandboxFiles.fileData.find((f) => f.id === fileId)
       if (!file) return
