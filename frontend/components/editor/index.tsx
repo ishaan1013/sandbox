@@ -372,6 +372,7 @@ export default function CodeEditor({
   const selectFile = (tab: TTab) => {
     if (tab.id === activeId) return
     const exists = tabs.find((t) => t.id === tab.id)
+
     setTabs((prev) => {
       if (exists) {
         setActiveId(exists.id)
@@ -420,8 +421,9 @@ export default function CodeEditor({
     oldName: string,
     type: "file" | "folder"
   ) => {
-    if (!validateName(newName, oldName, type)) {
-      toast.error("Invalid file name.")
+    const valid = validateName(newName, oldName, type)
+    if (!valid.status) {
+      if (valid.message) toast.error("Invalid file name.")
       return false
     }
 
@@ -633,6 +635,11 @@ export default function CodeEditor({
                   Shell
                 </Tab>
                 <Button
+                  onClick={() => {
+                    if (terminals.length >= 4) {
+                      toast.error("You reached the maximum # of terminals.")
+                    }
+                  }}
                   size="smIcon"
                   variant={"secondary"}
                   className={`font-normal select-none text-muted-foreground`}

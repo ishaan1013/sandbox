@@ -21,16 +21,17 @@ export function validateName(
   oldName: string,
   type: "file" | "folder"
 ) {
+  if (newName === oldName || newName.length === 0) {
+    return { status: false, message: "" }
+  }
   if (
-    newName === oldName ||
-    newName.length === 0 ||
     newName.includes("/") ||
     newName.includes("\\") ||
     newName.includes(" ") ||
     (type === "file" && !newName.includes(".")) ||
     (type === "folder" && newName.includes("."))
   ) {
-    return false
+    return { status: false, message: "Invalid file name." }
   }
-  return true
+  return { status: true, message: "" }
 }

@@ -20,13 +20,15 @@ export default function New({
 
   const createNew = () => {
     const name = inputRef.current?.value
-    // console.log("Create:", name, type)
 
-    if (name && validateName(name, "", type)) {
-      if (type === "file") {
-        socket.emit("createFile", name)
+    if (name) {
+      const valid = validateName(name, "", type)
+      if (valid.status) {
+        if (type === "file") {
+          socket.emit("createFile", name)
+        }
+        addNew(name, type)
       }
-      addNew(name, type)
     }
     stopEditing()
   }

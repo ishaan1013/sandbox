@@ -18,6 +18,7 @@ import NewProjectModal from "./newProject"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import AboutModal from "./about"
+import { toast } from "sonner"
 
 type TScreen = "projects" | "shared" | "settings" | "search"
 
@@ -58,7 +59,13 @@ export default function Dashboard({
         <div className="w-56 shrink-0 border-r border-border p-4 justify-between flex flex-col">
           <div className="flex flex-col">
             <CustomButton
-              onClick={() => setNewProjectModalOpen(true)}
+              onClick={() => {
+                if (sandboxes.length >= 8) {
+                  toast.error("You reached the maximum # of sandboxes.")
+                  return
+                }
+                setNewProjectModalOpen(true)
+              }}
               className="mb-4"
             >
               <Plus className="w-4 h-4 mr-2" />

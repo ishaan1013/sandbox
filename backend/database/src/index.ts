@@ -9,6 +9,7 @@ import { and, eq } from "drizzle-orm";
 
 export interface Env {
 	DB: D1Database;
+	RL: any;
 }
 
 // https://github.com/drizzle-team/drizzle-orm/tree/main/examples/cloudflare-d1
@@ -77,6 +78,11 @@ export default {
 
 				const body = await request.json();
 				const { type, name, userId, visibility } = initSchema.parse(body);
+
+				const allSandboxes = await db.select().from(sandbox).all();
+				if (allSandboxes.length >= 8) {
+					return new Response("You reached the maximum # of sandboxes.", { status: 400 });
+				}
 
 				const sb = await db.insert(sandbox).values({ type, name, userId, visibility }).returning().get();
 

@@ -15,6 +15,7 @@
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "node-pty": "^1.0.0",
+    "rate-limiter-flexible": "^5.0.3",
     "socket.io": "^4.7.5",
     "zod": "^3.22.4"
   },

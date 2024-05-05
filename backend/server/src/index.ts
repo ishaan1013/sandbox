@@ -16,6 +16,12 @@ import {
   saveFile,
 } from "./utils"
 import { IDisposable, IPty, spawn } from "node-pty"
+import {
+  createFileRL,
+  deleteFileRL,
+  renameFileRL,
+  saveFileRL,
+} from "./ratelimit"
 
 dotenv.config()
 
@@ -107,71 +113,107 @@ io.on("connection", async (socket) => {
 
   // todo: send diffs + debounce for efficiency
   socket.on("saveFile", async (fileId: string, body: string) => {
-    const file = sandboxFiles.fileData.find((f) => f.id === fileId)
-    if (!file) return
-    file.data = body
+    try {
+      await saveFileRL.consume(data.userId, 1)
 
-    fs.writeFile(path.join(dirName, file.id), body, function (err) {
-      if (err) throw err
-    })
-    await saveFile(fileId, body)
+      const file = sandboxFiles.fileData.find((f) => f.id === fileId)
+      if (!file) return
+      file.data = body
+
+      fs.writeFile(path.join(dirName, file.id), body, function (err) {
+        if (err) throw err
+      })
+      await saveFile(fileId, body)
+    } catch (e) {
+      socket.emit("rateLimit", "Rate limited: file saving. Please slow down.")
+    }
   })
 
   socket.on("createFile", async (name: string) => {
-    const id = `projects/${data.id}/${name}`
+    try {
+      await createFileRL.consume(data.userId, 1)
 
-    fs.writeFile(path.join(dirName, id), "", function (err) {
-      if (err) throw err
-    })
+      const id = `projects/${data.id}/${name}`
 
-    sandboxFiles.files.push({
-      id,
-      name,
-      type: "file",
-    })
+      fs.writeFile(path.join(dirName, id), "", function (err) {
+        if (err) throw err
+      })
 
-    sandboxFiles.fileData.push({
-      id,
-      data: "",
-    })
+      sandboxFiles.files.push({
+        id,
+        name,
+        type: "file",
+      })
 
-    await createFile(id)
+      sandboxFiles.fileData.push({
+        id,
+        data: "",
+      })
+
+      await createFile(id)
+    } catch (e) {
+      socket.emit("rateLimit", "Rate limited: file creation. Please slow down.")
+    }
   })
 
   socket.on("renameFile", async (fileId: string, newName: string) => {
-    const file = sandboxFiles.fileData.find((f) => f.id === fileId)
-    if (!file) return
-    file.id = newName
+    try {
+      await renameFileRL.consume(data.userId, 1)
 
-    const parts = fileId.split("/")
-    const newFileId = parts.slice(0, parts.length - 1).join("/") + "/" + newName
+      const file = sandboxFiles.fileData.find((f) => f.id === fileId)
+      if (!file) return
+      file.id = newName
 
-    fs.rename(
-      path.join(dirName, fileId),
-      path.join(dirName, newFileId),
-      function (err) {
-        if (err) throw err
-      }
-    )
-    await renameFile(fileId, newFileId, file.data)
+      const parts = fileId.split("/")
+      const newFileId =
+        parts.slice(0, parts.length - 1).join("/") + "/" + newName
+
+      fs.rename(
+        path.join(dirName, fileId),
+        path.join(dirName, newFileId),
+        function (err) {
+          if (err) throw err
+        }
+      )
+      await renameFile(fileId, newFileId, file.data)
+    } catch (e) {
+      socket.emit("rateLimit", "Rate limited: file renaming. Please slow down.")
+      return
+    }
   })
 
   socket.on("deleteFile", async (fileId: string, callback) => {
-    const file = sandboxFiles.fileData.find((f) => f.id === fileId)
-    if (!file) return
+    try {
+      await deleteFileRL.consume(data.userId, 1)
+      const file = sandboxFiles.fileData.find((f) => f.id === fileId)
+      if (!file) return
 
-    fs.unlink(path.join(dirName, fileId), function (err) {
-      if (err) throw err
-    })
-    sandboxFiles.fileData = sandboxFiles.fileData.filter((f) => f.id !== fileId)
+      fs.unlink(path.join(dirName, fileId), function (err) {
+        if (err) throw err
+      })
+      sandboxFiles.fileData = sandboxFiles.fileData.filter(
+        (f) => f.id !== fileId
+      )
 
-    await deleteFile(fileId)
+      await deleteFile(fileId)
 
-    const newFiles = await getSandboxFiles(data.id)
-    callback(newFiles.files)
+      const newFiles = await getSandboxFiles(data.id)
+      callback(newFiles.files)
+    } catch (e) {
+      socket.emit("rateLimit", "Rate limited: file deletion. Please slow down.")
+    }
   })
 
   socket.on("createTerminal", ({ id }: { id: string }) => {
+    if (terminals[id]) {
+      console.log("Terminal already exists.")
+      return
+    }
+    if (Object.keys(terminals).length >= 4) {
+      console.log("Too many terminals.")
+      return
+    }
+
     const pty = spawn(os.platform() === "win32" ? "cmd.exe" : "bash", [], {
       name: "xterm",
       cols: 100,
