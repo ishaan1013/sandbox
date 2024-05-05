@@ -75,7 +75,9 @@ export default function CodeEditor({
   const clerk = useClerk()
   const room = useRoom()
 
-  const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
+  // const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
+  const [editorRef, setEditorRef] =
+    useState<monaco.editor.IStandaloneCodeEditor>()
   const editorContainerRef = useRef<HTMLDivElement>(null)
   const monacoRef = useRef<typeof monaco | null>(null)
   const generateRef = useRef<HTMLDivElement>(null)
@@ -92,7 +94,7 @@ export default function CodeEditor({
   }
 
   const handleEditorMount: OnMount = (editor, monaco) => {
-    editorRef.current = editor
+    setEditorRef(editor)
     monacoRef.current = monaco
 
     editor.onDidChangeCursorPosition((e) => {
@@ -161,7 +163,7 @@ export default function CodeEditor({
       return
     }
     if (generate.show) {
-      editorRef.current?.changeViewZones(function (changeAccessor) {
+      editorRef?.changeViewZones(function (changeAccessor) {
         if (!generateRef.current) return
         const id = changeAccessor.addZone({
           afterLineNumber: cursorLine,
@@ -197,14 +199,14 @@ export default function CodeEditor({
       setGenerate((prev) => {
         return { ...prev, widget: contentWidget }
       })
-      editorRef.current?.addContentWidget(contentWidget)
+      editorRef?.addContentWidget(contentWidget)
 
       if (generateRef.current && generateWidgetRef.current) {
-        editorRef.current?.applyFontInfo(generateRef.current)
-        editorRef.current?.applyFontInfo(generateWidgetRef.current)
+        editorRef?.applyFontInfo(generateRef.current)
+        editorRef?.applyFontInfo(generateWidgetRef.current)
       }
     } else {
-      editorRef.current?.changeViewZones(function (changeAccessor) {
+      editorRef?.changeViewZones(function (changeAccessor) {
         changeAccessor.removeZone(generate.id)
         setGenerate((prev) => {
           return { ...prev, id: "" }
@@ -212,7 +214,7 @@ export default function CodeEditor({
       })
 
       if (!generate.widget) return
-      editorRef.current?.removeContentWidget(generate.widget)
+      editorRef?.removeContentWidget(generate.widget)
       setGenerate((prev) => {
         return {
           ...prev,
@@ -232,7 +234,7 @@ export default function CodeEditor({
     if (decorations.instance) {
       decorations.instance.set(decorations.options)
     } else {
-      const instance = editorRef.current?.createDecorationsCollection()
+      const instance = editorRef?.createDecorationsCollection()
       instance?.set(decorations.options)
 
       setDecorations((prev) => {
@@ -254,7 +256,7 @@ export default function CodeEditor({
         e.preventDefault()
 
         // const activeTab = tabs.find((t) => t.id === activeId)
-        // console.log("saving:", activeTab?.name, editorRef.current?.getValue())
+        // console.log("saving:", activeTab?.name, editorRef?.getValue())
 
         setTabs((prev) =>
           prev.map((tab) =>
@@ -262,7 +264,7 @@ export default function CodeEditor({
           )
         )
 
-        socket.emit("saveFile", activeId, editorRef.current?.getValue())
+        socket.emit("saveFile", activeId, editorRef?.getValue())
       }
     }
     document.addEventListener("keydown", down)
@@ -281,36 +283,51 @@ export default function CodeEditor({
     }
   })
 
-  // useEffect(() => {
-  //   let yProvider: any
-  //   let yDoc: Y.Doc
-  //   let binding: MonacoBinding
+  useEffect(() => {
+    const tab = tabs.find((t) => t.id === activeId)
+    const model = editorRef?.getModel()
 
-  //   const tab = tabs.find((t) => t.id === activeId)
+    if (!editorRef || !tab || !model) return
 
-  //   if (editorRef.current && tab) {
-  //     yDoc = new Y.Doc()
-  //     const yText = yDoc.getText(tab.id)
-  //     yProvider = new LiveblocksProvider(room, yDoc)
-  //     setProvider(yProvider)
+    const yDoc = new Y.Doc()
+    const yText = yDoc.getText(tab.id)
+    const yProvider: any = new LiveblocksProvider(room, yDoc)
 
-  //     yDoc?.getText(tab.id)?.insert(0, editorRef.current?.getValue() ?? "")
+    const onSync = (isSynced: boolean) => {
+      if (isSynced) {
+        const text = yText.toString()
+        if (text === "") {
+          if (activeFile) {
+            yText.insert(0, activeFile)
+          } else {
+            setTimeout(() => {
+              yText.insert(0, editorRef.getValue())
+            }, 0)
+          }
+        }
+      } else {
+        // Yjs content is not synchronized
+      }
+    }
 
-  //     // Attach Yjs to Monaco
-  //     binding = new MonacoBinding(
-  //       yText,
-  //       editorRef.current.getModel() as monaco.editor.ITextModel,
-  //       new Set([editorRef.current]),
-  //       yProvider.awareness as Awareness
-  //     )
-  //   }
+    yProvider.on("sync", onSync)
 
-  //   return () => {
-  //     yDoc?.destroy()
-  //     yProvider?.destroy()
-  //     binding?.destroy()
-  //   }
-  // }, [editorRef.current, room, activeId])
+    setProvider(yProvider)
+
+    const binding = new MonacoBinding(
+      yText,
+      model,
+      new Set([editorRef]),
+      yProvider.awareness as Awareness
+    )
+
+    return () => {
+      yDoc.destroy()
+      yProvider.destroy()
+      binding.destroy()
+      yProvider.off("sync", onSync)
+    }
+  }, [editorRef, room, activeFile])
 
   // connection/disconnection effect + resizeobserver
   useEffect(() => {
@@ -387,12 +404,10 @@ export default function CodeEditor({
     setTabs((prev) => prev.filter((t) => t.id !== tab.id))
 
     if (!nextId) {
-      console.log("no next id")
       setActiveId("")
     } else {
       const nextTab = tabs.find((t) => t.id === nextId)
       if (nextTab) {
-        console.log("next tab:", nextTab.name)
         selectFile(nextTab)
       }
     }
@@ -430,10 +445,6 @@ export default function CodeEditor({
     // })
   }
 
-  useEffect(() => {
-    console.log("activeId CHANGED:", activeId)
-  }, [activeId])
-
   return (
     <>
       <div ref={generateRef} />
@@ -444,14 +455,14 @@ export default function CodeEditor({
             width={generate.width - 90}
             data={{
               fileName: tabs.find((t) => t.id === activeId)?.name ?? "",
-              code: editorRef.current?.getValue() ?? "",
+              code: editorRef?.getValue() ?? "",
               line: generate.line,
             }}
             editor={{
               language: editorLanguage,
             }}
             onExpand={() => {
-              editorRef.current?.changeViewZones(function (changeAccessor) {
+              editorRef?.changeViewZones(function (changeAccessor) {
                 changeAccessor.removeZone(generate.id)
 
                 if (!generateRef.current) return
@@ -473,12 +484,12 @@ export default function CodeEditor({
                   show: !prev.show,
                 }
               })
-              const file = editorRef.current?.getValue()
+              const file = editorRef?.getValue()
 
               const lines = file?.split("\n") || []
               lines.splice(line - 1, 0, code)
               const updatedFile = lines.join("\n")
-              editorRef.current?.setValue(updatedFile)
+              editorRef?.setValue(updatedFile)
             }}
           />
         ) : null}
@@ -547,11 +558,19 @@ export default function CodeEditor({
                   beforeMount={handleEditorWillMount}
                   onMount={handleEditorMount}
                   onChange={(value) => {
-                    setTabs((prev) =>
-                      prev.map((tab) =>
-                        tab.id === activeId ? { ...tab, saved: false } : tab
+                    if (value === activeFile) {
+                      setTabs((prev) =>
+                        prev.map((tab) =>
+                          tab.id === activeId ? { ...tab, saved: true } : tab
+                        )
                       )
-                    )
+                    } else {
+                      setTabs((prev) =>
+                        prev.map((tab) =>
+                          tab.id === activeId ? { ...tab, saved: false } : tab
+                        )
+                      )
+                    }
                   }}
                   options={{
                     minimap: {
