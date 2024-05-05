@@ -22,6 +22,7 @@ const socket_io_1 = require("socket.io");
 const zod_1 = require("zod");
 const utils_1 = require("./utils");
 const node_pty_1 = require("node-pty");
+const ratelimit_1 = require("./ratelimit");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const port = process.env.PORT || 4000;
@@ -89,60 +90,97 @@ io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
     });
     // todo: send diffs + debounce for efficiency
     socket.on("saveFile", (fileId, body) => __awaiter(void 0, void 0, void 0, function* () {
-        const file = sandboxFiles.fileData.find((f) => f.id === fileId);
-        if (!file)
-            return;
-        file.data = body;
-        fs_1.default.writeFile(path_1.default.join(dirName, file.id), body, function (err) {
-            if (err)
-                throw err;
-        });
-        yield (0, utils_1.saveFile)(fileId, body);
+        try {
+            yield ratelimit_1.saveFileRL.consume(data.userId, 1);
+            if (Buffer.byteLength(body, "utf-8") > ratelimit_1.MAX_BODY_SIZE) {
+                socket.emit("rateLimit", "Rate limited: file size too large. Please reduce the file size.");
+                return;
+            }
+            const file = sandboxFiles.fileData.find((f) => f.id === fileId);
+            if (!file)
+                return;
+            file.data = body;
+            fs_1.default.writeFile(path_1.default.join(dirName, file.id), body, function (err) {
+                if (err)
+                    throw err;
+            });
+            yield (0, utils_1.saveFile)(fileId, body);
+        }
+        catch (e) {
+            socket.emit("rateLimit", "Rate limited: file saving. Please slow down.");
+        }
     }));
     socket.on("createFile", (name) => __awaiter(void 0, void 0, void 0, function* () {
-        const id = `projects/${data.id}/${name}`;
-        fs_1.default.writeFile(path_1.default.join(dirName, id), "", function (err) {
-            if (err)
-                throw err;
-        });
-        sandboxFiles.files.push({
-            id,
-            name,
-            type: "file",
-        });
-        sandboxFiles.fileData.push({
-            id,
-            data: "",
-        });
-        yield (0, utils_1.createFile)(id);
+        try {
+            yield ratelimit_1.createFileRL.consume(data.userId, 1);
+            const id = `projects/${data.id}/${name}`;
+            fs_1.default.writeFile(path_1.default.join(dirName, id), "", function (err) {
+                if (err)
+                    throw err;
+            });
+            sandboxFiles.files.push({
+                id,
+                name,
+                type: "file",
+            });
+            sandboxFiles.fileData.push({
+                id,
+                data: "",
+            });
+            yield (0, utils_1.createFile)(id);
+        }
+        catch (e) {
+            socket.emit("rateLimit", "Rate limited: file creation. Please slow down.");
+        }
     }));
     socket.on("renameFile", (fileId, newName) => __awaiter(void 0, void 0, void 0, function* () {
-        const file = sandboxFiles.fileData.find((f) => f.id === fileId);
-        if (!file)
+        try {
+            yield ratelimit_1.renameFileRL.consume(data.userId, 1);
+            const file = sandboxFiles.fileData.find((f) => f.id === fileId);
+            if (!file)
+                return;
+            file.id = newName;
+            const parts = fileId.split("/");
+            const newFileId = parts.slice(0, parts.length - 1).join("/") + "/" + newName;
+            fs_1.default.rename(path_1.default.join(dirName, fileId), path_1.default.join(dirName, newFileId), function (err) {
+                if (err)
+                    throw err;
+            });
+            yield (0, utils_1.renameFile)(fileId, newFileId, file.data);
+        }
+        catch (e) {
+            socket.emit("rateLimit", "Rate limited: file renaming. Please slow down.");
             return;
-        file.id = newName;
-        const parts = fileId.split("/");
-        const newFileId = parts.slice(0, parts.length - 1).join("/") + "/" + newName;
-        fs_1.default.rename(path_1.default.join(dirName, fileId), path_1.default.join(dirName, newFileId), function (err) {
-            if (err)
-                throw err;
-        });
-        yield (0, utils_1.renameFile)(fileId, newFileId, file.data);
+        }
     }));
     socket.on("deleteFile", (fileId, callback) => __awaiter(void 0, void 0, void 0, function* () {
-        const file = sandboxFiles.fileData.find((f) => f.id === fileId);
-        if (!file)
-            return;
-        fs_1.default.unlink(path_1.default.join(dirName, fileId), function (err) {
-            if (err)
-                throw err;
-        });
-        sandboxFiles.fileData = sandboxFiles.fileData.filter((f) => f.id !== fileId);
-        yield (0, utils_1.deleteFile)(fileId);
-        const newFiles = yield (0, utils_1.getSandboxFiles)(data.id);
-        callback(newFiles.files);
+        try {
+            yield ratelimit_1.deleteFileRL.consume(data.userId, 1);
+            const file = sandboxFiles.fileData.find((f) => f.id === fileId);
+            if (!file)
+                return;
+            fs_1.default.unlink(path_1.default.join(dirName, fileId), function (err) {
+                if (err)
+                    throw err;
+            });
+            sandboxFiles.fileData = sandboxFiles.fileData.filter((f) => f.id !== fileId);
+            yield (0, utils_1.deleteFile)(fileId);
+            const newFiles = yield (0, utils_1.getSandboxFiles)(data.id);
+            callback(newFiles.files);
+        }
+        catch (e) {
+            socket.emit("rateLimit", "Rate limited: file deletion. Please slow down.");
+        }
     }));
     socket.on("createTerminal", ({ id }) => {
+        if (terminals[id]) {
+            console.log("Terminal already exists.");
+            return;
+        }
+        if (Object.keys(terminals).length >= 4) {
+            console.log("Too many terminals.");
+            return;
+        }
         const pty = (0, node_pty_1.spawn)(os_1.default.platform() === "win32" ? "cmd.exe" : "bash", [], {
             name: "xterm",
             cols: 100,

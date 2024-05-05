@@ -99,13 +99,23 @@
   background: radial-gradient(circle at bottom right, #312e81 -75%, hsl(0 0% 3.9%) 60%); /* violet 900 -> bg */
 }
 
+.inline-decoration::before {
+  content: 'Generate';
+  color: #525252;
+  /* border: 1px solid #525252; */
+  /* padding: 2px 4px; */
+  /* border-radius: 4px; */
+  margin-left: 36px;
+}
 .inline-decoration::after {
-  content: 'Generate ⌘G';
+  content: '⌘G';
   color: #525252;
   border: 1px solid #525252;
-  padding: 2px 4px;
+  border-bottom-width: 2px;
+  padding: 0 4px;
   border-radius: 4px;
-  margin-left: 56px;
+  margin-left: 6px;
+  line-height: 0;
 }
 
 .yRemoteSelection {

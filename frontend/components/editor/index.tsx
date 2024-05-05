@@ -11,12 +11,7 @@ import * as Y from "yjs"
 import LiveblocksProvider from "@liveblocks/yjs"
 import { MonacoBinding } from "y-monaco"
 import { Awareness } from "y-protocols/awareness"
-import {
-  TypedLiveblocksProvider,
-  useRoom,
-  AwarenessList,
-  useSelf,
-} from "@/liveblocks.config"
+import { TypedLiveblocksProvider, useRoom } from "@/liveblocks.config"
 
 import {
   ResizableHandle,
@@ -27,6 +22,7 @@ import {
   ChevronLeft,
   ChevronRight,
   FileJson,
+  Loader2,
   Plus,
   RotateCw,
   Shell,
@@ -355,15 +351,20 @@ export default function CodeEditor({
       setFiles(files)
     }
 
-    socket.on("connect", onConnect)
+    const onRateLimit = (message: string) => {
+      toast.error(message)
+    }
 
+    socket.on("connect", onConnect)
     socket.on("disconnect", onDisconnect)
     socket.on("loaded", onLoadedEvent)
+    socket.on("rateLimit", onRateLimit)
 
     return () => {
       socket.off("connect", onConnect)
       socket.off("disconnect", onDisconnect)
       socket.off("loaded", onLoadedEvent)
+      socket.off("rateLimit", onRateLimit)
     }
   }, [])
 
@@ -547,7 +548,7 @@ export default function CodeEditor({
           >
             {!activeId ? (
               <>
-                <div className="w-full h-full flex items-center justify-center text-xl font-medium text-secondary select-none">
+                <div className="w-full h-full flex items-center justify-center text-xl font-medium text-muted-foreground/50 select-none">
                   <FileJson className="w-6 h-6 mr-3" />
                   No file selected.
                 </div>
@@ -591,7 +592,12 @@ export default function CodeEditor({
                   value={activeFile ?? ""}
                 />
               </>
-            ) : null}
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-xl font-medium text-muted-foreground/50 select-none">
+                <Loader2 className="animate-spin w-6 h-6 mr-3" />
+                Waiting for Clerk to load...
+              </div>
+            )}
           </div>
         </ResizablePanel>
         <ResizableHandle />
@@ -629,27 +635,36 @@ export default function CodeEditor({
               minSize={20}
               className="p-2 flex flex-col"
             >
-              <div className="h-10 w-full flex gap-2 shrink-0">
-                <Tab selected>
-                  <SquareTerminal className="w-4 h-4 mr-2" />
-                  Shell
-                </Tab>
-                <Button
-                  onClick={() => {
-                    if (terminals.length >= 4) {
-                      toast.error("You reached the maximum # of terminals.")
-                    }
-                  }}
-                  size="smIcon"
-                  variant={"secondary"}
-                  className={`font-normal select-none text-muted-foreground`}
-                >
-                  <Plus className="w-4 h-4" />
-                </Button>
-              </div>
-              <div className="w-full relative grow h-full overflow-hidden rounded-md bg-secondary">
-                {socket ? <EditorTerminal socket={socket} /> : null}
-              </div>
+              {isOwner ? (
+                <>
+                  <div className="h-10 w-full flex gap-2 shrink-0">
+                    <Tab selected>
+                      <SquareTerminal className="w-4 h-4 mr-2" />
+                      Shell
+                    </Tab>
+                    <Button
+                      onClick={() => {
+                        if (terminals.length >= 4) {
+                          toast.error("You reached the maximum # of terminals.")
+                        }
+                      }}
+                      size="smIcon"
+                      variant={"secondary"}
+                      className={`font-normal select-none text-muted-foreground`}
+                    >
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <div className="w-full relative grow h-full overflow-hidden rounded-md bg-secondary">
+                    {socket ? <EditorTerminal socket={socket} /> : null}
+                  </div>
+                </>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-lg font-medium text-muted-foreground/50 select-none">
+                  <TerminalSquare className="w-4 h-4 mr-2" />
+                  No terminal access.
+                </div>
+              )}
             </ResizablePanel>
           </ResizablePanelGroup>
         </ResizablePanel>

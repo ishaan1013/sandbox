@@ -1,6 +1,7 @@
 import { createClient } from "@liveblocks/client"
 import { createRoomContext, createLiveblocksContext } from "@liveblocks/react"
 import YLiveblocksProvider from "@liveblocks/yjs"
+import { colors } from "./lib/colors"
 
 const client = createClient({
   // publicApiKey: process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY!,
@@ -73,6 +74,7 @@ type UserMeta = {
   info: {
     name: string
     email: string
+    color: keyof typeof colors
   }
 }
 
@@ -99,60 +101,56 @@ export type AwarenessList = [number, UserAwareness][]
 
 // Room-level hooks, use inside `RoomProvider`
 export const {
-  suspense: {
-    RoomProvider,
-    useRoom,
-    useMyPresence,
-    useUpdateMyPresence,
-    useSelf,
-    useOthers,
-    useOthersMapped,
-    useOthersListener,
-    useOthersConnectionIds,
-    useOther,
-    useBroadcastEvent,
-    useEventListener,
-    useErrorListener,
-    useStorage,
-    useBatch,
-    useHistory,
-    useUndo,
-    useRedo,
-    useCanUndo,
-    useCanRedo,
-    useMutation,
-    useStatus,
-    useLostConnectionListener,
-    useThreads,
-    useCreateThread,
-    useEditThreadMetadata,
-    useCreateComment,
-    useEditComment,
-    useDeleteComment,
-    useAddReaction,
-    useRemoveReaction,
-    useThreadSubscription,
-    useMarkThreadAsRead,
-    useRoomNotificationSettings,
-    useUpdateRoomNotificationSettings,
+  RoomProvider,
+  useRoom,
+  useMyPresence,
+  useUpdateMyPresence,
+  useSelf,
+  useOthers,
+  useOthersMapped,
+  useOthersListener,
+  useOthersConnectionIds,
+  useOther,
+  useBroadcastEvent,
+  useEventListener,
+  useErrorListener,
+  useStorage,
+  useBatch,
+  useHistory,
+  useUndo,
+  useRedo,
+  useCanUndo,
+  useCanRedo,
+  useMutation,
+  useStatus,
+  useLostConnectionListener,
+  useThreads,
+  useCreateThread,
+  useEditThreadMetadata,
+  useCreateComment,
+  useEditComment,
+  useDeleteComment,
+  useAddReaction,
+  useRemoveReaction,
+  useThreadSubscription,
+  useMarkThreadAsRead,
+  useRoomNotificationSettings,
+  useUpdateRoomNotificationSettings,
 
-    // These hooks can be exported from either context
-    useUser,
-    useRoomInfo,
-  },
+  // These hooks can be exported from either context
+  useUser,
+  useRoomInfo,
 } = createRoomContext<Presence, Storage, UserMeta, RoomEvent, ThreadMetadata>(
   client
 )
 
 // Project-level hooks, use inside `LiveblocksProvider`
 export const {
-  suspense: {
-    LiveblocksProvider,
-    useMarkInboxNotificationAsRead,
-    useMarkAllInboxNotificationsAsRead,
-    useInboxNotifications,
-    useUnreadInboxNotificationsCount,
-  },
+  LiveblocksProvider,
+  useMarkInboxNotificationAsRead,
+  useMarkAllInboxNotificationsAsRead,
+  useInboxNotifications,
+  useUnreadInboxNotificationsCount,
 } = createLiveblocksContext<UserMeta, ThreadMetadata>(client)
 
 export type TypedLiveblocksProvider = YLiveblocksProvider<

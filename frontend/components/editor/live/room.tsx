@@ -2,6 +2,7 @@
 
 import { RoomProvider } from "@/liveblocks.config"
 import { ClientSideSuspense } from "@liveblocks/react"
+import Loading from "../loading"
 
 export function Room({
   id,
@@ -17,9 +18,9 @@ export function Room({
         cursor: null,
       }}
     >
-      <ClientSideSuspense fallback={<div>Loading!!!!</div>}>
-        {() => children}
-      </ClientSideSuspense>
+      {/* <ClientSideSuspense fallback={<Loading />}> */}
+      {children}
+      {/* </ClientSideSuspense> */}
     </RoomProvider>
   )
 }

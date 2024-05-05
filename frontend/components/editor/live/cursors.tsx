@@ -5,10 +5,13 @@ import {
   UserAwareness,
   useSelf,
 } from "@/liveblocks.config"
+import { colors } from "@/lib/colors"
 
 export function Cursors({ yProvider }: { yProvider: TypedLiveblocksProvider }) {
   // Get user info from Liveblocks authentication endpoint
   const userInfo = useSelf((me) => me.info)
+
+  if (!userInfo) return null
 
   const [awarenessUsers, setAwarenessUsers] = useState<AwarenessList>([])
 
@@ -40,7 +43,7 @@ export function Cursors({ yProvider }: { yProvider: TypedLiveblocksProvider }) {
         cursorStyles += `
           .yRemoteSelection-${clientId},
           .yRemoteSelectionHead-${clientId}  {
-            --user-color: ${"#FF0000"};
+            --user-color: ${colors[client.user.color]};
           }
           
           .yRemoteSelectionHead-${clientId}::after {

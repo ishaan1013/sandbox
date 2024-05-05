@@ -1,3 +1,4 @@
+import { colors } from "@/lib/colors"
 import { User } from "@/lib/types"
 import { currentUser } from "@clerk/nextjs"
 import { Liveblocks } from "@liveblocks/node"
@@ -19,12 +20,19 @@ export async function POST(request: NextRequest) {
   const res = await fetch(`http://localhost:8787/api/user?id=${clerkUser.id}`)
   const user = (await res.json()) as User
 
+  const colorNames = Object.keys(colors)
+  const randomColor = colorNames[
+    Math.floor(Math.random() * colorNames.length)
+  ] as keyof typeof colors
+  const code = colors[randomColor]
+
   // Create a session for the current user
   // userInfo is made available in Liveblocks presence hooks, e.g. useOthers
   const session = liveblocks.prepareSession(user.id, {
     userInfo: {
       name: user.name,
       email: user.email,
+      color: randomColor,
     },
   })
 

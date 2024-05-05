@@ -8,7 +8,7 @@ import { useState } from "react"
 import New from "./new"
 import { Socket } from "socket.io-client"
 import Button from "@/components/ui/customButton"
-import Toggle from "@/components/ui/customToggle"
+import { Switch } from "@/components/ui/switch"
 
 export default function Sidebar({
   files,
@@ -104,12 +104,20 @@ export default function Sidebar({
           )}
         </div>
       </div>
-      {/* <div className="flex items-center"> */}
-      <Toggle value={ai} setValue={setAi} className="w-full">
-        <Sparkles className="h-3 w-3 mr-2" />
-        AI Copilot
-      </Toggle>
-      {/* </div> */}
+      <div className="flex items-center justify-between w-full">
+        <div className="flex items-center">
+          <Sparkles
+            className={`h-4 w-4 mr-2 ${
+              ai ? "text-indigo-500" : "text-muted-foreground"
+            }`}
+          />
+          Copilot{" "}
+          <span className="font-mono text-muted-foreground inline-block ml-1.5 text-xs leading-none border border-b-2 border-muted-foreground py-1 px-1.5 rounded-md">
+            ⌘G
+          </span>
+        </div>
+        <Switch checked={ai} onCheckedChange={setAi} />
+      </div>
     </div>
   )
 }
