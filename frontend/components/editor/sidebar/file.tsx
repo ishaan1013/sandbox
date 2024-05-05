@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import { getIconForFile } from "vscode-icons-js"
-import { TFile, TTab } from "./types"
+import { TFile, TTab } from "@/lib/types"
 import { useEffect, useRef, useState } from "react"
 import {
   ContextMenu,

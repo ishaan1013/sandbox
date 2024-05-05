@@ -3,7 +3,7 @@
 import { FilePlus, FolderPlus, Loader2, Search, Sparkles } from "lucide-react"
 import SidebarFile from "./file"
 import SidebarFolder from "./folder"
-import { TFile, TFolder, TTab } from "./types"
+import { TFile, TFolder, TTab } from "@/lib/types"
 import { useState } from "react"
 import New from "./new"
 import { Socket } from "socket.io-client"

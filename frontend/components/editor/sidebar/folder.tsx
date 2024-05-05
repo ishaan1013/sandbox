@@ -3,7 +3,7 @@
 import Image from "next/image"
 import { useEffect, useRef, useState } from "react"
 import { getIconForFolder, getIconForOpenFolder } from "vscode-icons-js"
-import { TFile, TFolder, TTab } from "./types"
+import { TFile, TFolder, TTab } from "@/lib/types"
 import SidebarFile from "./file"
 import {
   ContextMenu,

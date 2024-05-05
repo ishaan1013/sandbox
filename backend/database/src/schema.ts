@@ -10,6 +10,7 @@ export const user = sqliteTable("user", {
 	name: text("name").notNull(),
 	email: text("email").notNull(),
 	image: text("image"),
+	generations: integer("generations").default(0),
 });
 
 export type User = typeof user.$inferSelect;

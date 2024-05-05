@@ -65,14 +65,14 @@ io.use((socket, next) => __awaiter(void 0, void 0, void 0, function* () {
         return;
     }
     socket.data = {
-        id: sandboxId,
         userId,
+        sandboxId: sandboxId,
     };
     next();
 }));
 io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
     const data = socket.data;
-    const sandboxFiles = yield (0, utils_1.getSandboxFiles)(data.id);
+    const sandboxFiles = yield (0, utils_1.getSandboxFiles)(data.sandboxId);
     sandboxFiles.fileData.forEach((file) => {
         const filePath = path_1.default.join(dirName, file.id);
         fs_1.default.mkdirSync(path_1.default.dirname(filePath), { recursive: true });
@@ -113,7 +113,7 @@ io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
     socket.on("createFile", (name) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             yield ratelimit_1.createFileRL.consume(data.userId, 1);
-            const id = `projects/${data.id}/${name}`;
+            const id = `projects/${data.sandboxId}/${name}`;
             fs_1.default.writeFile(path_1.default.join(dirName, id), "", function (err) {
                 if (err)
                     throw err;
@@ -165,7 +165,7 @@ io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
             });
             sandboxFiles.fileData = sandboxFiles.fileData.filter((f) => f.id !== fileId);
             yield (0, utils_1.deleteFile)(fileId);
-            const newFiles = yield (0, utils_1.getSandboxFiles)(data.id);
+            const newFiles = yield (0, utils_1.getSandboxFiles)(data.sandboxId);
             callback(newFiles.files);
         }
         catch (e) {
@@ -184,7 +184,7 @@ io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
         const pty = (0, node_pty_1.spawn)(os_1.default.platform() === "win32" ? "cmd.exe" : "bash", [], {
             name: "xterm",
             cols: 100,
-            cwd: path_1.default.join(dirName, "projects", data.id),
+            cwd: path_1.default.join(dirName, "projects", data.sandboxId),
         });
         const onData = pty.onData((data) => {
             socket.emit("terminalResponse", {
@@ -213,37 +213,26 @@ io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
         }
     });
     socket.on("generateCode", (fileName, code, line, instructions, callback) => __awaiter(void 0, void 0, void 0, function* () {
-        console.log("Generating code...");
-        const res = yield fetch(`https://api.cloudflare.com/client/v4/accounts/${process.env.CF_USER_ID}/ai/run/@cf/meta/llama-3-8b-instruct`, {
+        const fetchPromise = fetch(`http://localhost:8787/api/sandbox/generate`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer ${process.env.CF_API_TOKEN}`,
             },
             body: JSON.stringify({
-                messages: [
-                    {
-                        role: "system",
-                        content: "You are an expert coding assistant. You read code from a file, and you suggest new code to add to the file. You may be given instructions on what to generate, which you should follow. You should generate code that is correct, efficient, and follows best practices. You should also generate code that is clear and easy to read. When you generate code, you should only return the code, and nothing else. You should not include backticks in the code you generate.",
-                    },
-                    {
-                        role: "user",
-                        content: `The file is called ${fileName}.`,
-                    },
-                    {
-                        role: "user",
-                        content: `Here are my instructions on what to generate: ${instructions}.`,
-                    },
-                    {
-                        role: "user",
-                        content: `Suggest me code to insert at line ${line} in my file. Give only the code, and NOTHING else. DO NOT include backticks in your response. My code file content is as follows 
-                
-${code}`,
-                    },
-                ],
+                userId: data.userId,
             }),
         });
-        const json = yield res.json();
+        const generateCodePromise = (0, utils_1.generateCode)({
+            fileName,
+            code,
+            line,
+            instructions,
+        });
+        const [fetchResponse, generateCodeResponse] = yield Promise.all([
+            fetchPromise,
+            generateCodePromise,
+        ]);
+        const json = yield generateCodeResponse.json();
         callback(json);
     }));
     socket.on("disconnect", () => {

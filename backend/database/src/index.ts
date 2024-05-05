@@ -5,7 +5,7 @@ import { ZodError, z } from "zod";
 
 import { user, sandbox, usersToSandboxes } from "./schema";
 import * as schema from "./schema";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 
 export interface Env {
 	DB: D1Database;
@@ -86,7 +86,6 @@ export default {
 
 				const sb = await db.insert(sandbox).values({ type, name, userId, visibility }).returning().get();
 
-				// console.log("sb:", sb);
 				await fetch("https://storage.ishaan1013.workers.dev/api/init", {
 					method: "POST",
 					body: JSON.stringify({ sandboxId: sb.id, type }),
@@ -95,7 +94,6 @@ export default {
 
 				return new Response(sb.id, { status: 200 });
 			} else {
-				console.log(method);
 				return methodNotAllowed;
 			}
 		} else if (path === "/api/sandbox/share") {
@@ -162,12 +160,35 @@ export default {
 
 				const body = await request.json();
 				const { sandboxId, userId } = deleteShareSchema.parse(body);
-				console.log("DELETE", sandboxId, userId);
 
 				await db.delete(usersToSandboxes).where(and(eq(usersToSandboxes.userId, userId), eq(usersToSandboxes.sandboxId, sandboxId)));
 
 				return success;
 			} else return methodNotAllowed;
+		} else if (path === "/api/sandbox/generate" && method === "POST") {
+			const generateSchema = z.object({
+				userId: z.string(),
+			});
+			const body = await request.json();
+			const { userId } = generateSchema.parse(body);
+
+			const dbUser = await db.query.user.findFirst({
+				where: (user, { eq }) => eq(user.id, userId),
+			});
+			if (!dbUser) {
+				return new Response("User not found.", { status: 400 });
+			}
+			if (dbUser.generations !== null && dbUser.generations >= 30) {
+				return new Response("You reached the maximum # of generations.", { status: 400 });
+			}
+
+			await db
+				.update(user)
+				.set({ generations: sql`${user.generations} + 1` })
+				.where(eq(user.id, userId))
+				.get();
+
+			return success;
 		} else if (path === "/api/user") {
 			if (method === "GET") {
 				const params = url.searchParams;

@@ -34,8 +34,7 @@ import Sidebar from "./sidebar"
 import EditorTerminal from "./terminal"
 import { Button } from "../ui/button"
 import GenerateInput from "./generate"
-import { TFile, TFileData, TFolder, TTab } from "./sidebar/types"
-import { Sandbox, User } from "@/lib/types"
+import { Sandbox, User, TFile, TFileData, TFolder, TTab } from "@/lib/types"
 import { processFileType, validateName } from "@/lib/utils"
 import { Cursors } from "./live/cursors"
 
@@ -455,6 +454,7 @@ export default function CodeEditor({
       <div className="z-50 p-1" ref={generateWidgetRef}>
         {generate.show && ai ? (
           <GenerateInput
+            user={userData}
             socket={socket}
             width={generate.width - 90}
             data={{

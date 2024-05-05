@@ -11,6 +11,7 @@ import { User } from "./types"
 import {
   createFile,
   deleteFile,
+  generateCode,
   getSandboxFiles,
   renameFile,
   saveFile,
@@ -81,8 +82,8 @@ io.use(async (socket, next) => {
   }
 
   socket.data = {
-    id: sandboxId,
     userId,
+    sandboxId: sandboxId,
   }
 
   next()
@@ -91,10 +92,10 @@ io.use(async (socket, next) => {
 io.on("connection", async (socket) => {
   const data = socket.data as {
     userId: string
-    id: string
+    sandboxId: string
   }
 
-  const sandboxFiles = await getSandboxFiles(data.id)
+  const sandboxFiles = await getSandboxFiles(data.sandboxId)
   sandboxFiles.fileData.forEach((file) => {
     const filePath = path.join(dirName, file.id)
     fs.mkdirSync(path.dirname(filePath), { recursive: true })
@@ -142,7 +143,7 @@ io.on("connection", async (socket) => {
     try {
       await createFileRL.consume(data.userId, 1)
 
-      const id = `projects/${data.id}/${name}`
+      const id = `projects/${data.sandboxId}/${name}`
 
       fs.writeFile(path.join(dirName, id), "", function (err) {
         if (err) throw err
@@ -206,7 +207,7 @@ io.on("connection", async (socket) => {
 
       await deleteFile(fileId)
 
-      const newFiles = await getSandboxFiles(data.id)
+      const newFiles = await getSandboxFiles(data.sandboxId)
       callback(newFiles.files)
     } catch (e) {
       socket.emit("rateLimit", "Rate limited: file deletion. Please slow down.")
@@ -226,7 +227,7 @@ io.on("connection", async (socket) => {
     const pty = spawn(os.platform() === "win32" ? "cmd.exe" : "bash", [], {
       name: "xterm",
       cols: 100,
-      cwd: path.join(dirName, "projects", data.id),
+      cwd: path.join(dirName, "projects", data.sandboxId),
     })
 
     const onData = pty.onData((data) => {
@@ -269,42 +270,29 @@ io.on("connection", async (socket) => {
       instructions: string,
       callback
     ) => {
-      console.log("Generating code...")
-      const res = await fetch(
-        `https://api.cloudflare.com/client/v4/accounts/${process.env.CF_USER_ID}/ai/run/@cf/meta/llama-3-8b-instruct`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${process.env.CF_API_TOKEN}`,
-          },
-          body: JSON.stringify({
-            messages: [
-              {
-                role: "system",
-                content:
-                  "You are an expert coding assistant. You read code from a file, and you suggest new code to add to the file. You may be given instructions on what to generate, which you should follow. You should generate code that is correct, efficient, and follows best practices. You should also generate code that is clear and easy to read. When you generate code, you should only return the code, and nothing else. You should not include backticks in the code you generate.",
-              },
-              {
-                role: "user",
-                content: `The file is called ${fileName}.`,
-              },
-              {
-                role: "user",
-                content: `Here are my instructions on what to generate: ${instructions}.`,
-              },
-              {
-                role: "user",
-                content: `Suggest me code to insert at line ${line} in my file. Give only the code, and NOTHING else. DO NOT include backticks in your response. My code file content is as follows 
-                
-${code}`,
-              },
-            ],
-          }),
-        }
-      )
+      const fetchPromise = fetch(`http://localhost:8787/api/sandbox/generate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: data.userId,
+        }),
+      })
 
-      const json = await res.json()
+      const generateCodePromise = generateCode({
+        fileName,
+        code,
+        line,
+        instructions,
+      })
+
+      const [fetchResponse, generateCodeResponse] = await Promise.all([
+        fetchPromise,
+        generateCodePromise,
+      ])
+
+      const json = await generateCodeResponse.json()
       callback(json)
     }
   )

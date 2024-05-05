@@ -4,6 +4,7 @@ export type User = {
   id: string
   name: string
   email: string
+  generations: number
   sandbox: Sandbox[]
   usersToSandboxes: UsersToSandboxes[]
 }
@@ -37,4 +38,26 @@ export type R2FileData = {
   size: number
   version: string
   key: string
+}
+
+export type TFolder = {
+  id: string
+  type: "folder"
+  name: string
+  children: (TFile | TFolder)[]
+}
+
+export type TFile = {
+  id: string
+  type: "file"
+  name: string
+}
+
+export type TTab = TFile & {
+  saved: boolean
+}
+
+export type TFileData = {
+  id: string
+  data: string
 }

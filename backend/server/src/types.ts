@@ -4,11 +4,9 @@ export type User = {
   id: string
   name: string
   email: string
+  generations: number
   sandbox: Sandbox[]
-  usersToSandboxes: {
-    userId: string
-    sandboxId: string
-  }[]
+  usersToSandboxes: UsersToSandboxes[]
 }
 
 export type Sandbox = {
@@ -17,10 +15,12 @@ export type Sandbox = {
   type: "react" | "node"
   visibility: "public" | "private"
   userId: string
-  usersToSandboxes: {
-    userId: string
-    sandboxId: string
-  }[]
+  usersToSandboxes: UsersToSandboxes[]
+}
+
+export type UsersToSandboxes = {
+  userId: string
+  sandboxId: string
 }
 
 export type TFolder = {

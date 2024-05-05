@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteFile = exports.saveFile = exports.renameFile = exports.createFile = exports.getSandboxFiles = void 0;
+exports.generateCode = exports.deleteFile = exports.saveFile = exports.renameFile = exports.createFile = exports.getSandboxFiles = void 0;
 const getSandboxFiles = (id) => __awaiter(void 0, void 0, void 0, function* () {
     const sandboxRes = yield fetch(`https://storage.ishaan1013.workers.dev/api?sandboxId=${id}`);
     const sandboxData = yield sandboxRes.json();
@@ -121,3 +121,35 @@ const deleteFile = (fileId) => __awaiter(void 0, void 0, void 0, function* () {
     return res.ok;
 });
 exports.deleteFile = deleteFile;
+const generateCode = (_a) => __awaiter(void 0, [_a], void 0, function* ({ fileName, code, line, instructions, }) {
+    return yield fetch(`https://api.cloudflare.com/client/v4/accounts/${process.env.CF_USER_ID}/ai/run/@cf/meta/llama-3-8b-instruct`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${process.env.CF_API_TOKEN}`,
+        },
+        body: JSON.stringify({
+            messages: [
+                {
+                    role: "system",
+                    content: "You are an expert coding assistant. You read code from a file, and you suggest new code to add to the file. You may be given instructions on what to generate, which you should follow. You should generate code that is correct, efficient, and follows best practices. You should also generate code that is clear and easy to read. When you generate code, you should only return the code, and nothing else. You should not include backticks in the code you generate.",
+                },
+                {
+                    role: "user",
+                    content: `The file is called ${fileName}.`,
+                },
+                {
+                    role: "user",
+                    content: `Here are my instructions on what to generate: ${instructions}.`,
+                },
+                {
+                    role: "user",
+                    content: `Suggest me code to insert at line ${line} in my file. Give only the code, and NOTHING else. DO NOT include backticks in your response. My code file content is as follows 
+            
+${code}`,
+                },
+            ],
+        }),
+    });
+});
+exports.generateCode = generateCode;

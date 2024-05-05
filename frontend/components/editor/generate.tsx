@@ -5,9 +5,13 @@ import { Button } from "../ui/button"
 import { Check, Loader2, RotateCw, Sparkles, X } from "lucide-react"
 import { Socket } from "socket.io-client"
 import { Editor } from "@monaco-editor/react"
+import { User } from "@/lib/types"
+import { toast } from "sonner"
+import { usePathname, useRouter } from "next/navigation"
 // import monaco from "monaco-editor"
 
 export default function GenerateInput({
+  user,
   socket,
   width,
   data,
@@ -15,6 +19,7 @@ export default function GenerateInput({
   onExpand,
   onAccept,
 }: {
+  user: User
   socket: Socket
   width: number
   data: {
@@ -28,6 +33,8 @@ export default function GenerateInput({
   onExpand: () => void
   onAccept: (code: string) => void
 }) {
+  const pathname = usePathname()
+  const router = useRouter()
   const inputRef = useRef<HTMLInputElement>(null)
 
   const [code, setCode] = useState("")
@@ -50,6 +57,12 @@ export default function GenerateInput({
   }: {
     regenerate?: boolean
   }) => {
+    if (user.generations >= 30) {
+      toast.error(
+        "You reached the maximum # of generations. Contact @ishaandey_ on X/Twitter to reset :)"
+      )
+    }
+
     setLoading({ generate: !regenerate, regenerate })
     setCurrentPrompt(input)
     socket.emit(
@@ -72,6 +85,7 @@ export default function GenerateInput({
         }
 
         setCode(res.result.response)
+        router.refresh()
       }
     )
   }
