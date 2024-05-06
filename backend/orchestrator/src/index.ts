@@ -1,5 +1,5 @@
 import express, { Express, Request, Response } from "express"
-// import dotenv from "dotenv"
+import dotenv from "dotenv"
 
 import fs from "fs"
 import yaml from "yaml"
@@ -17,6 +17,7 @@ const app = express()
 const port = process.env.PORT || 4001
 app.use(express.json())
 app.use(cors())
+dotenv.config()
 
 const kubeconfig = new KubeConfig()
 kubeconfig.loadFromDefault()
@@ -24,14 +25,31 @@ const coreV1Api = kubeconfig.makeApiClient(CoreV1Api)
 const appsV1Api = kubeconfig.makeApiClient(AppsV1Api)
 const networkingV1Api = kubeconfig.makeApiClient(NetworkingV1Api)
 
-// Updated utility function to handle multi-document YAML files
-const readAndParseKubeYaml = (filePath: string, replId: string): Array<any> => {
+const readAndParseKubeYaml = (
+  filePath: string,
+  sandboxId: string
+): Array<any> => {
   const fileContent = fs.readFileSync(filePath, "utf8")
   const docs = yaml.parseAllDocuments(fileContent).map((doc) => {
     let docString = doc.toString()
-    const regex = new RegExp(`service_name`, "g")
-    docString = docString.replace(regex, replId)
-    console.log(docString)
+
+    const regex = new RegExp(`<SANDBOX>`, "g")
+    docString = docString.replace(regex, sandboxId)
+
+    // replace <CF_API_TOKEN> with process.env.CF_API_TOKEN
+    if (!process.env.CF_API_TOKEN) {
+      throw new Error("CF_API_TOKEN is not defined")
+    }
+    const regexEnv1 = new RegExp(`<CF_API_TOKEN>`, "g")
+    docString = docString.replace(regexEnv1, process.env.CF_API_TOKEN)
+
+    // replace <CF_USER_ID> with process.env.CF_USER_ID
+    if (!process.env.CF_USER_ID) {
+      throw new Error("CF_USER_ID is not defined")
+    }
+    const regexEnv2 = new RegExp(`<CF_USER_ID>`, "g")
+    docString = docString.replace(regexEnv2, process.env.CF_USER_ID)
+
     return yaml.parse(docString)
   })
   return docs

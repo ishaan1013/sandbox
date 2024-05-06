@@ -17,7 +17,9 @@ export async function POST(request: NextRequest) {
     return new Response("Unauthorized", { status: 401 })
   }
 
-  const res = await fetch(`http://localhost:8787/api/user?id=${clerkUser.id}`)
+  const res = await fetch(
+    `https://database.ishaan1013.workers.dev/api/user?id=${clerkUser.id}`
+  )
   const user = (await res.json()) as User
 
   const colorNames = Object.keys(colors)

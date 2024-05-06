@@ -13,21 +13,26 @@ export default async function AppAuthLayout({
     redirect("/")
   }
 
-  const dbUser = await fetch(`http://localhost:8787/api/user?id=${user.id}`)
+  const dbUser = await fetch(
+    `https://database.ishaan1013.workers.dev/api/user?id=${user.id}`
+  )
   const dbUserJSON = (await dbUser.json()) as User
 
   if (!dbUserJSON.id) {
-    const res = await fetch("http://localhost:8787/api/user", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        id: user.id,
-        name: user.firstName + " " + user.lastName,
-        email: user.emailAddresses[0].emailAddress,
-      }),
-    })
+    const res = await fetch(
+      "https://database.ishaan1013.workers.dev/api/user",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: user.id,
+          name: user.firstName + " " + user.lastName,
+          email: user.emailAddresses[0].emailAddress,
+        }),
+      }
+    )
 
     console.log(res)
   } else {

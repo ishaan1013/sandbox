@@ -62,7 +62,7 @@ io.use(async (socket, next) => {
   }
 
   const { sandboxId, userId } = parseQuery.data
-  const dbUser = await fetch(`http://localhost:8787/api/user?id=${userId}`)
+  const dbUser = await fetch(`https://database.ishaan1013.workers.dev/api/user?id=${userId}`)
   const dbUserJSON = (await dbUser.json()) as User
 
   if (!dbUserJSON) {
@@ -271,7 +271,7 @@ io.on("connection", async (socket) => {
       instructions: string,
       callback
     ) => {
-      const fetchPromise = fetch(`http://localhost:8787/api/sandbox/generate`, {
+      const fetchPromise = fetch(`https://database.ishaan1013.workers.dev/api/sandbox/generate`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -1,18 +1,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: service_name
+  name: <SANDBOX>
   labels:
-    app: service_name
+    app: <SANDBOX>
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: service_name
+      app: <SANDBOX>
   template:
     metadata:
       labels:
-        app: service_name
+        app: <SANDBOX>
     spec:
       volumes:
         - name: workspace-volume
@@ -33,15 +33,20 @@ spec:
             limits:
               cpu: "1"
               memory: "1Gi"
+            env:
+              - name: CF_API_TOKEN
+                value: <CF_API_TOKEN>
+              - name: CF_USER_ID
+                value: <CF_USER_ID>
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: service_name
+  name: <SANDBOX>
 spec:
   selector:
-    app: service_name
+    app: <SANDBOX>
   ports:
     - protocol: TCP
       name: ws
@@ -55,27 +60,27 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: service_name
+  name: <SANDBOX>
 spec:
   ingressClassName: nginx
   rules:
-    - host: service_name.ws.ishaand.com
+    - host: <SANDBOX>.ws.ishaand.com
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: service_name
+                name: <SANDBOX>
                 port:
                   number: 4000
-    - host: service_name.s.ishaand.com
+    - host: <SANDBOX>.s.ishaand.com
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: service_name
+                name: <SANDBOX>
                 port:
                   number: 3000

@@ -11,11 +11,13 @@ export default async function DashboardPage() {
     redirect("/")
   }
 
-  const userRes = await fetch(`http://localhost:8787/api/user?id=${user.id}`)
+  const userRes = await fetch(
+    `https://database.ishaan1013.workers.dev/api/user?id=${user.id}`
+  )
   const userData = (await userRes.json()) as User
 
   const sharedRes = await fetch(
-    `http://localhost:8787/api/sandbox/share?id=${user.id}`
+    `https://database.ishaan1013.workers.dev/api/sandbox/share?id=${user.id}`
   )
   const shared = (await sharedRes.json()) as {
     id: string

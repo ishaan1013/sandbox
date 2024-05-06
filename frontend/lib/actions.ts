@@ -8,13 +8,16 @@ export async function createSandbox(body: {
   userId: string
   visibility: string
 }) {
-  const res = await fetch("http://localhost:8787/api/sandbox", {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  })
+  const res = await fetch(
+    "https://database.ishaan1013.workers.dev/api/sandbox",
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    }
+  )
 
   return await res.text()
 }
@@ -24,7 +27,7 @@ export async function updateSandbox(body: {
   name?: string
   visibility?: "public" | "private"
 }) {
-  await fetch("http://localhost:8787/api/sandbox", {
+  await fetch("https://database.ishaan1013.workers.dev/api/sandbox", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -36,7 +39,7 @@ export async function updateSandbox(body: {
 }
 
 export async function deleteSandbox(id: string) {
-  await fetch(`http://localhost:8787/api/sandbox?id=${id}`, {
+  await fetch(`https://database.ishaan1013.workers.dev/api/sandbox?id=${id}`, {
     method: "DELETE",
   })
 
@@ -44,13 +47,16 @@ export async function deleteSandbox(id: string) {
 }
 
 export async function shareSandbox(sandboxId: string, email: string) {
-  const res = await fetch("http://localhost:8787/api/sandbox/share", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ sandboxId, email }),
-  })
+  const res = await fetch(
+    "https://database.ishaan1013.workers.dev/api/sandbox/share",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ sandboxId, email }),
+    }
+  )
   const text = await res.text()
 
   if (res.status !== 200) {
@@ -62,7 +68,7 @@ export async function shareSandbox(sandboxId: string, email: string) {
 }
 
 export async function unshareSandbox(sandboxId: string, userId: string) {
-  await fetch("http://localhost:8787/api/sandbox/share", {
+  await fetch("https://database.ishaan1013.workers.dev/api/sandbox/share", {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",

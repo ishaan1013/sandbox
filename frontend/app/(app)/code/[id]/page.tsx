@@ -10,13 +10,17 @@ const CodeEditor = dynamic(() => import("@/components/editor"), {
 })
 
 const getUserData = async (id: string) => {
-  const userRes = await fetch(`http://localhost:8787/api/user?id=${id}`)
+  const userRes = await fetch(
+    `https://database.ishaan1013.workers.dev/api/user?id=${id}`
+  )
   const userData: User = await userRes.json()
   return userData
 }
 
 const getSandboxData = async (id: string) => {
-  const sandboxRes = await fetch(`http://localhost:8787/api/sandbox?id=${id}`)
+  const sandboxRes = await fetch(
+    `https://database.ishaan1013.workers.dev/api/sandbox?id=${id}`
+  )
   const sandboxData: Sandbox = await sandboxRes.json()
   return sandboxData
 }
@@ -25,7 +29,7 @@ const getSharedUsers = async (usersToSandboxes: UsersToSandboxes[]) => {
   const shared = await Promise.all(
     usersToSandboxes.map(async (user) => {
       const userRes = await fetch(
-        `http://localhost:8787/api/user?id=${user.userId}`
+        `https://database.ishaan1013.workers.dev/api/user?id=${user.userId}`
       )
       const userData: User = await userRes.json()
       return { id: userData.id, name: userData.name }
