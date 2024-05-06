@@ -1,6 +1,7 @@
 import fs from "fs"
 import os from "os"
 import path from "path"
+import cors from "cors"
 import express, { Express } from "express"
 import dotenv from "dotenv"
 import { createServer } from "http"
@@ -29,7 +30,7 @@ dotenv.config()
 
 const app: Express = express()
 const port = process.env.PORT || 4000
-// app.use(cors())
+app.use(cors())
 const httpServer = createServer(app)
 const io = new Server(httpServer, {
   cors: {

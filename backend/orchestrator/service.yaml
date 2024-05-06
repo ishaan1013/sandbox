@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service_name
+  labels:
+    app: service_name
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: service_name
+  template:
+    metadata:
+      labels:
+        app: service_name
+    spec:
+      volumes:
+        - name: workspace-volume
+          emptyDir: {}
+      containers:
+        - name: runner
+          image: ishaan1013/sandbox:latest
+          ports:
+            - containerPort: 4000
+            - containerPort: 3000
+          volumeMounts:
+            - name: workspace-volume
+              mountPath: /workspace
+          resources:
+            requests:
+              cpu: "1"
+              memory: "1Gi"
+            limits:
+              cpu: "1"
+              memory: "1Gi"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service_name
+spec:
+  selector:
+    app: service_name
+  ports:
+    - protocol: TCP
+      name: ws
+      port: 4000
+      targetPort: 4000
+    - protocol: TCP
+      name: user
+      port: 3000
+      targetPort: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: service_name
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: service_name.ws.ishaand.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: service_name
+                port:
+                  number: 4000
+    - host: service_name.s.ishaand.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: service_name
+                port:
+                  number: 3000
