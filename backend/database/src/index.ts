@@ -9,7 +9,7 @@ import { and, eq, sql } from "drizzle-orm";
 
 export interface Env {
 	DB: D1Database;
-	RL: any;
+	STORAGE: any;
 }
 
 // https://github.com/drizzle-team/drizzle-orm/tree/main/examples/cloudflare-d1
@@ -86,11 +86,15 @@ export default {
 
 				const sb = await db.insert(sandbox).values({ type, name, userId, visibility }).returning().get();
 
-				await fetch("https://storage.ishaan1013.workers.dev/api/init", {
+				const initStorageRequest = new Request("https://storage.ishaan1013.workers.dev/api/init", {
 					method: "POST",
 					body: JSON.stringify({ sandboxId: sb.id, type }),
 					headers: { "Content-Type": "application/json" },
 				});
+				const initStorageRes = await env.STORAGE.fetch(initStorageRequest);
+
+				const initStorage = await initStorageRes.text();
+				console.log("initStorage: ", initStorage);
 
 				return new Response(sb.id, { status: 200 });
 			} else {

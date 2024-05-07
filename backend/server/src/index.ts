@@ -38,6 +38,8 @@ const io = new Server(httpServer, {
   },
 })
 
+let inactivityTimeout: NodeJS.Timeout | null = null;
+
 const terminals: {
   [id: string]: { terminal: IPty; onData: IDisposable; onExit: IDisposable }
 } = {}
@@ -85,15 +87,20 @@ io.use(async (socket, next) => {
   socket.data = {
     userId,
     sandboxId: sandboxId,
+    isOwner: sandbox !== undefined,
   }
 
   next()
 })
 
 io.on("connection", async (socket) => {
+
+  if (inactivityTimeout) clearTimeout(inactivityTimeout);
+
   const data = socket.data as {
     userId: string
     sandboxId: string
+    isOwner: boolean
   }
 
   const sandboxFiles = await getSandboxFiles(data.sandboxId)
@@ -298,14 +305,37 @@ io.on("connection", async (socket) => {
     }
   )
 
-  socket.on("disconnect", () => {
-    Object.entries(terminals).forEach((t) => {
+  socket.on("disconnect", async () => {
+    if (data.isOwner) {
+      Object.entries(terminals).forEach((t) => {
       const { terminal, onData, onExit } = t[1]
       if (os.platform() !== "win32") terminal.kill()
-      onData.dispose()
-      onExit.dispose()
-      delete terminals[t[0]]
-    })
+        onData.dispose()
+        onExit.dispose()
+        delete terminals[t[0]]
+      })
+
+      console.log("The owner disconnected.")
+      socket.broadcast.emit("ownerDisconnected")
+    }
+    else {
+      console.log("A shared user disconnected.")
+    }
+
+    const sockets = await io.fetchSockets()
+    if (inactivityTimeout) {
+      clearTimeout(inactivityTimeout)
+    };
+    if (sockets.length === 0) {
+      inactivityTimeout = setTimeout(() => {
+        io.fetchSockets().then(sockets => {
+          if (sockets.length === 0) {
+              console.log("No users have been connected for 15 seconds.");
+          }
+      });
+      }, 15000);
+    }
+
   })
 })
 

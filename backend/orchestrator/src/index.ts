@@ -36,14 +36,12 @@ const readAndParseKubeYaml = (
     const regex = new RegExp(`<SANDBOX>`, "g")
     docString = docString.replace(regex, sandboxId)
 
-    // replace <CF_API_TOKEN> with process.env.CF_API_TOKEN
     if (!process.env.CF_API_TOKEN) {
       throw new Error("CF_API_TOKEN is not defined")
     }
     const regexEnv1 = new RegExp(`<CF_API_TOKEN>`, "g")
     docString = docString.replace(regexEnv1, process.env.CF_API_TOKEN)
 
-    // replace <CF_USER_ID> with process.env.CF_USER_ID
     if (!process.env.CF_USER_ID) {
       throw new Error("CF_USER_ID is not defined")
     }
@@ -55,12 +53,13 @@ const readAndParseKubeYaml = (
   return docs
 }
 
+const dataSchema = z.object({
+  userId: z.string(),
+  sandboxId: z.string(),
+})
+
 app.post("/start", async (req, res) => {
-  const initSchema = z.object({
-    userId: z.string(),
-    sandboxId: z.string(),
-  })
-  const { userId, sandboxId } = initSchema.parse(req.body)
+  const { userId, sandboxId } = dataSchema.parse(req.body)
   const namespace = "default"
 
   try {
@@ -80,6 +79,39 @@ app.post("/start", async (req, res) => {
   } catch (error) {
     console.log("Failed to create resources", error)
     res.status(500).send({ message: "Failed to create resources." })
+  }
+})
+
+app.post("/stop", async (req, res) => {
+  const { userId, sandboxId } = dataSchema.parse(req.body)
+  const namespace = "default"
+
+  try {
+    const kubeManifests = readAndParseKubeYaml(
+      path.join(__dirname, "../service.yaml"),
+      sandboxId
+    )
+    kubeManifests.forEach(async (manifest) => {
+      if (manifest.kind === "Deployment")
+        await appsV1Api.deleteNamespacedDeployment(
+          manifest.metadata?.name || "",
+          namespace
+        )
+      else if (manifest.kind === "Service")
+        await coreV1Api.deleteNamespacedService(
+          manifest.metadata?.name || "",
+          namespace
+        )
+      else if (manifest.kind === "Ingress")
+        await networkingV1Api.deleteNamespacedIngress(
+          manifest.metadata?.name || "",
+          namespace
+        )
+    })
+    res.status(200).send({ message: "Resources deleted." })
+  } catch (error) {
+    console.log("Failed to delete resources", error)
+    res.status(500).send({ message: "Failed to delete resources." })
   }
 })
 

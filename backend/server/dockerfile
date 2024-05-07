@@ -1,5 +1,5 @@
-ARG cf_api_token
-ARG cf_user_id
+ARG CF_API_TOKEN
+ARG CF_USER_ID
 
 FROM node:20
 
@@ -15,7 +15,7 @@ RUN npm run build
 
 EXPOSE 3000
 
-ENV cf_api_token=$cf_api_token
-ENV cf_user_id=$cf_user_id
+ENV CF_API_TOKEN=$CF_API_TOKEN
+ENV CF_USER_ID=$CF_USER_ID
 
 CMD [ "node", "dist/index.js" ]

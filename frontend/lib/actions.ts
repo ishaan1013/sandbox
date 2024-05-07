@@ -8,6 +8,7 @@ export async function createSandbox(body: {
   userId: string
   visibility: string
 }) {
+  console.log("creating. body:", body)
   const res = await fetch(
     "https://database.ishaan1013.workers.dev/api/sandbox",
     {

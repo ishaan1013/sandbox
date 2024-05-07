@@ -60,7 +60,8 @@ const data: {
 ]
 
 const formSchema = z.object({
-  name: z.string().min(1).max(16),
+  name: z.string().min(1).max(16)
+    .refine((value) => /^[a-zA-Z0-9_]+$/.test(value), "Name must be alphanumeric and can contain underscores"),
   visibility: z.enum(["public", "private"]),
 })
 
