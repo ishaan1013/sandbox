@@ -223,6 +223,7 @@ io.on("connection", async (socket) => {
   })
 
   socket.on("createTerminal", ({ id }: { id: string }) => {
+    console.log("creating terminal", id)
     if (terminals[id]) {
       console.log("Terminal already exists.")
       return
@@ -239,6 +240,7 @@ io.on("connection", async (socket) => {
     })
 
     const onData = pty.onData((data) => {
+      console.log("ondata")
       socket.emit("terminalResponse", {
         // data: Buffer.from(data, "utf-8").toString("base64"),
         data,
@@ -315,11 +317,11 @@ io.on("connection", async (socket) => {
         delete terminals[t[0]]
       })
 
-      console.log("The owner disconnected.")
+      // console.log("The owner disconnected.")
       socket.broadcast.emit("ownerDisconnected")
     }
     else {
-      console.log("A shared user disconnected.")
+      // console.log("A shared user disconnected.")
     }
 
     const sockets = await io.fetchSockets()

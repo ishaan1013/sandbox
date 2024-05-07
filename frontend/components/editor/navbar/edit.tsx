@@ -35,6 +35,7 @@ import { Sandbox } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { deleteSandbox, updateSandbox } from "@/lib/actions"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 const formSchema = z.object({
   name: z.string().min(1).max(16),
@@ -68,6 +69,8 @@ export default function EditSandboxModal({
 
     setLoading(true)
     await updateSandbox({ id: data.id, ...values })
+
+    toast.success("Sandbox updated successfully")
 
     setLoading(false)
   }

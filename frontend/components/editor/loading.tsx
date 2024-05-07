@@ -1,7 +1,7 @@
-import Image from "next/image"
-import Logo from "@/assets/logo.svg"
-import { Skeleton } from "../ui/skeleton"
-import { Loader, Loader2 } from "lucide-react"
+import Image from "next/image";
+import Logo from "@/assets/logo.svg";
+import { Skeleton } from "../ui/skeleton";
+import { Loader, Loader2 } from "lucide-react";
 
 export default function Loading() {
   return (
@@ -31,11 +31,15 @@ export default function Loading() {
             </div>
           </div>
         </div>
-        <div className="w-full h-full flex items-center justify-center text-xl font-medium text-secondary select-none">
-          <Loader2 className="w-6 h-6 mr-3 animate-spin" />
-          Loading...
-        </div>{" "}
+        <div className="w-full h-full grid grid-cols-5 grid-rows-2 gap-4 p-2">
+          <div className="w-full h-full col-span-3 row-span-2 flex items-center justify-center text-xl font-medium text-secondary select-none">
+            <Loader2 className="w-6 h-6 mr-3 animate-spin" />
+            Loading...
+          </div>
+          <Skeleton className="w-full h-full col-span-2 rounded-md" />
+          <Skeleton className="w-full h-full col-span-2 rounded-md" />
+        </div>
       </div>
     </div>
-  )
+  );
 }

@@ -1,19 +1,26 @@
-"use client"
+"use client";
 
-import { Terminal } from "@xterm/xterm"
-import { FitAddon } from "@xterm/addon-fit"
-import "./xterm.css"
+import { Terminal } from "@xterm/xterm";
+import { FitAddon } from "@xterm/addon-fit";
+import "./xterm.css";
 
-import { useEffect, useRef, useState } from "react"
-import { Socket } from "socket.io-client"
-import { Loader2 } from "lucide-react"
+import { useEffect, useRef, useState } from "react";
+import { Socket } from "socket.io-client";
+import { Loader2 } from "lucide-react";
 
-export default function EditorTerminal({ socket }: { socket: Socket }) {
-  const terminalRef = useRef(null)
-  const [term, setTerm] = useState<Terminal | null>(null)
+export default function EditorTerminal({
+  socket,
+  term,
+  setTerm,
+}: {
+  socket: Socket;
+  term: Terminal | null;
+  setTerm: (term: Terminal) => void;
+}) {
+  const terminalRef = useRef(null);
 
   useEffect(() => {
-    if (!terminalRef.current) return
+    if (!terminalRef.current) return;
 
     const terminal = new Terminal({
       cursorBlink: true,
@@ -22,55 +29,43 @@ export default function EditorTerminal({ socket }: { socket: Socket }) {
       },
       fontFamily: "var(--font-geist-mono)",
       fontSize: 14,
-    })
+    });
 
-    setTerm(terminal)
+    setTerm(terminal);
 
     return () => {
-      if (terminal) terminal.dispose()
-    }
-  }, [])
+      if (terminal) terminal.dispose();
+    };
+  }, []);
 
   useEffect(() => {
-    if (!term) return
+    if (!term) return;
 
-    const onConnect = () => {
-      console.log("Connected to server", socket.connected)
-      setTimeout(() => {
-        socket.emit("createTerminal", { id: "testId" })
-      }, 2000)
-    }
-
-    const onTerminalResponse = (response: { data: string }) => {
-      // const res = Buffer.from(response.data, "base64").toString("utf-8")
-      const res = response.data
-      term.write(res)
-    }
-
-    socket.on("connect", onConnect)
+    // const onTerminalResponse = (response: { data: string }) => {
+    //   const res = response.data;
+    //   term.write(res);
+    // };
 
     if (terminalRef.current) {
-      socket.on("terminalResponse", onTerminalResponse)
+      // socket.on("terminalResponse", onTerminalResponse);
 
-      const fitAddon = new FitAddon()
-      term.loadAddon(fitAddon)
-      term.open(terminalRef.current)
-      fitAddon.fit()
-      setTerm(term)
+      const fitAddon = new FitAddon();
+      term.loadAddon(fitAddon);
+      term.open(terminalRef.current);
+      fitAddon.fit();
+      setTerm(term);
     }
     const disposable = term.onData((data) => {
-      console.log("sending data", data)
-      socket.emit("terminalData", "testId", data)
-    })
+      console.log("sending data", data);
+      socket.emit("terminalData", "testId", data);
+    });
 
-    socket.emit("terminalData", "\n")
+    // socket.emit("terminalData", "\n");
 
     return () => {
-      socket.off("connect", onConnect)
-      socket.off("terminalResponse", onTerminalResponse)
-      disposable.dispose()
-    }
-  }, [term, terminalRef.current])
+      disposable.dispose();
+    };
+  }, [term, terminalRef.current]);
 
   return (
     <div ref={terminalRef} className="w-full h-full text-left">
@@ -81,5 +76,5 @@ export default function EditorTerminal({ socket }: { socket: Socket }) {
         </div>
       ) : null}
     </div>
-  )
+  );
 }

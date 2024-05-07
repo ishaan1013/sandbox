@@ -18,7 +18,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Loader2, UserPlus, X } from "lucide-react"
+import { Link, Loader2, UserPlus, X } from "lucide-react"
 import { useState } from "react"
 import { Sandbox } from "@/lib/types"
 import { Button } from "@/components/ui/button"
@@ -75,41 +75,49 @@ export default function ShareSandboxModal({
             {data.visibility === "private" ? (
               <DialogDescription className="text-sm text-muted-foreground">
                 This sandbox is private. Making it public will allow shared
-                users to view and collaborate.
+                users to view and collaborate. You can still share & manage access below.
               </DialogDescription>
             ) : null}
           </DialogHeader>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="flex">
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem className="mr-4 w-full">
-                    <FormControl>
-                      <Input
-                        placeholder="yourfriend@domain.com"
-                        {...field}
-                        className="w-full"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Button disabled={loading} type="submit" className="">
-                {loading ? (
-                  <>
-                    <Loader2 className="animate-spin mr-2 h-4 w-4" /> Loading...
-                  </>
-                ) : (
-                  <>
-                    <UserPlus className="mr-2 h-4 w-4" /> Share
-                  </>
-                )}
-              </Button>
-            </form>
-          </Form>
+          <div className="flex space-x-4 w-full">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="flex w-full">
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem className="mr-4 w-full">
+                      <FormControl>
+                        <Input
+                          placeholder="yourfriend@domain.com"
+                          {...field}
+                          className="w-full"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button disabled={loading} type="submit" className="">
+                  {loading ? (
+                    <>
+                      <Loader2 className="animate-spin mr-2 h-4 w-4" /> Loading...
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="mr-2 h-4 w-4" /> Share
+                    </>
+                  )}
+                </Button>
+              </form>
+            </Form>
+            <Button onClick={() => {
+              navigator.clipboard.writeText(`https://s.ishaand.com/code/${data.id}`)
+              toast.success("Link copied to clipboard.")
+            }} size="icon" disabled={loading} variant="outline" className="shrink-0">
+                  <Link className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
         {shared.length > 0 ? (
           <>
