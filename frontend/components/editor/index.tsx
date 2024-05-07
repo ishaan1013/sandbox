@@ -598,7 +598,7 @@ export default function CodeEditor({
           minSize={30}
           defaultSize={60}
         >
-          <div className="h-10 w-full flex gap-2">
+          <div className="h-10 w-full flex gap-2 overflow-auto tab-scroll">
             {tabs.map((tab) => (
               <Tab
                 key={tab.id}
@@ -712,7 +712,7 @@ export default function CodeEditor({
             >
               {isOwner ? (
                 <>
-                  <div className="h-10 w-full flex gap-2 shrink-0">
+                  <div className="h-10 w-full overflow-auto flex gap-2 shrink-0 tab-scroll">
                     {terminals.map((term) => (
                       <Tab
                         key={term.id}
@@ -737,7 +737,7 @@ export default function CodeEditor({
                       }}
                       size="smIcon"
                       variant={"secondary"}
-                      className={`font-normal select-none text-muted-foreground`}
+                      className={`font-normal shrink-0 select-none text-muted-foreground`}
                     >
                       {creatingTerminal ? (
                         <Loader2 className="animate-spin w-4 h-4" />

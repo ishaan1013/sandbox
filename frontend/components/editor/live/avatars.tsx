@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { useOthers } from "@/liveblocks.config"
+import { useOthers } from "@/liveblocks.config";
 
 const classNames = {
   red: "w-8 h-8 leading-none font-mono rounded-full ring-1 ring-red-700 ring-offset-2 ring-offset-background overflow-hidden bg-gradient-to-tr from-red-950 to-red-600 flex items-center justify-center text-xs font-medium",
@@ -14,10 +14,10 @@ const classNames = {
   purple:
     "w-8 h-8 leading-none font-mono rounded-full ring-1 ring-purple-700 ring-offset-2 ring-offset-background overflow-hidden bg-gradient-to-tr from-purple-950 to-purple-600 flex items-center justify-center text-xs font-medium",
   pink: "w-8 h-8 leading-none font-mono rounded-full ring-1 ring-pink-700 ring-offset-2 ring-offset-background overflow-hidden bg-gradient-to-tr from-pink-950 to-pink-600 flex items-center justify-center text-xs font-medium",
-}
+};
 
 export function Avatars() {
-  const users = useOthers()
+  const users = useOthers();
 
   return (
     <>
@@ -30,10 +30,12 @@ export function Avatars() {
                 .slice(0, 2)
                 .map((letter) => letter[0].toUpperCase())}
             </div>
-          )
+          );
         })}
       </div>
-      <div className="h-full w-[1px] bg-border mx-2" />
+      {users.length > 0 ? (
+        <div className="h-full w-[1px] bg-border mx-2" />
+      ) : null}
     </>
-  )
+  );
 }

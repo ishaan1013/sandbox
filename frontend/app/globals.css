@@ -152,3 +152,7 @@
   user-select: none;
   z-index: 1000;
 }
+
+.tab-scroll::-webkit-scrollbar {
+  display: none;
+}
