@@ -6,6 +6,7 @@ import Editor, { BeforeMount, OnMount } from "@monaco-editor/react";
 import { io } from "socket.io-client";
 import { toast } from "sonner";
 import { useClerk } from "@clerk/nextjs";
+import { createId } from "@paralleldrive/cuid2";
 
 import * as Y from "yjs";
 import LiveblocksProvider from "@liveblocks/yjs";
@@ -52,9 +53,7 @@ export default function CodeEditor({
   const [tabs, setTabs] = useState<TTab[]>([]);
   const [editorLanguage, setEditorLanguage] = useState("plaintext");
   const [activeFileId, setActiveFileId] = useState<string>("");
-  const [activeFileContent, setActiveFileContent] = useState<string | null>(
-    null
-  );
+  const [activeFileContent, setActiveFileContent] = useState("");
   const [cursorLine, setCursorLine] = useState(0);
   const [generate, setGenerate] = useState<{
     show: boolean;
@@ -74,12 +73,16 @@ export default function CodeEditor({
       terminal: Terminal | null;
     }[]
   >([]);
+  const [activeTerminalId, setActiveTerminalId] = useState("");
+  const [creatingTerminal, setCreatingTerminal] = useState(false);
   const [provider, setProvider] = useState<TypedLiveblocksProvider>();
   const [ai, setAi] = useState(false);
 
   const isOwner = sandboxData.userId === userData.id;
   const clerk = useClerk();
   const room = useRoom();
+  const activeTerminal = terminals.find((t) => t.id === activeTerminalId);
+  console.log("activeTerminal", activeTerminal ? activeTerminal.id : "none");
 
   // const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
   const [editorRef, setEditorRef] =
@@ -354,9 +357,8 @@ export default function CodeEditor({
   useEffect(() => {
     const onConnect = () => {
       console.log("connected");
-      setTimeout(() => {
-        socket.emit("createTerminal", { id: "testId" });
-      }, 1000);
+
+      createTerminal();
     };
 
     const onDisconnect = () => {};
@@ -395,9 +397,17 @@ export default function CodeEditor({
   // Helper functions:
 
   const createTerminal = () => {
-    const id = "testId";
-
-    socket.emit("createTerminal", { id });
+    setCreatingTerminal(true);
+    const id = createId();
+    setActiveTerminalId(id);
+    setTimeout(() => {
+      socket.emit("createTerminal", id, (res: boolean) => {
+        if (res) {
+          setTerminals((prev) => [...prev, { id, terminal: null }]);
+        }
+      });
+    }, 1000);
+    setCreatingTerminal(false);
   };
 
   const selectFile = (tab: TTab) => {
@@ -444,6 +454,36 @@ export default function CodeEditor({
         selectFile(nextTab);
       }
     }
+  };
+
+  const closeTerminal = (term: { id: string; terminal: Terminal | null }) => {
+    const numTerminals = terminals.length;
+    const index = terminals.findIndex((t) => t.id === term.id);
+    if (index === -1) return;
+
+    socket.emit("closeTerminal", term.id, (res: boolean) => {
+      if (res) {
+        const nextId =
+          activeTerminalId === term.id
+            ? numTerminals === 1
+              ? null
+              : index < numTerminals - 1
+              ? terminals[index + 1].id
+              : terminals[index - 1].id
+            : activeTerminalId;
+
+        setTerminals((prev) => prev.filter((t) => t.id !== term.id));
+
+        if (!nextId) {
+          setActiveTerminalId("");
+        } else {
+          const nextTerminal = terminals.find((t) => t.id === nextId);
+          if (nextTerminal) {
+            setActiveTerminalId(nextTerminal.id);
+          }
+        }
+      }
+    });
   };
 
   const handleRename = (
@@ -624,7 +664,7 @@ export default function CodeEditor({
                     fontFamily: "var(--font-geist-mono)",
                   }}
                   theme="vs-dark"
-                  value={activeFileContent ?? ""}
+                  value={activeFileContent}
                 />
               </>
             ) : (
@@ -673,29 +713,56 @@ export default function CodeEditor({
               {isOwner ? (
                 <>
                   <div className="h-10 w-full flex gap-2 shrink-0">
-                    <Tab selected>
-                      <SquareTerminal className="w-4 h-4 mr-2" />
-                      Shell
-                    </Tab>
+                    {terminals.map((term) => (
+                      <Tab
+                        key={term.id}
+                        onClick={() => setActiveTerminalId(term.id)}
+                        onClose={() => closeTerminal(term)}
+                        selected={activeTerminalId === term.id}
+                      >
+                        <SquareTerminal className="w-4 h-4 mr-2" />
+                        Shell
+                      </Tab>
+                    ))}
                     <Button
+                      disabled={creatingTerminal}
                       onClick={() => {
                         if (terminals.length >= 4) {
                           toast.error(
                             "You reached the maximum # of terminals."
                           );
+                          return;
                         }
+                        createTerminal();
                       }}
                       size="smIcon"
                       variant={"secondary"}
                       className={`font-normal select-none text-muted-foreground`}
                     >
-                      <Plus className="w-4 h-4" />
+                      {creatingTerminal ? (
+                        <Loader2 className="animate-spin w-4 h-4" />
+                      ) : (
+                        <Plus className="w-4 h-4" />
+                      )}
                     </Button>
                   </div>
                   <div className="w-full relative grow h-full overflow-hidden rounded-md bg-secondary">
-                    {/* {socket ? <EditorTerminal socket={socket} term={
-                      
-                    } /> : null} */}
+                    {socket && activeTerminal ? (
+                      <EditorTerminal
+                        socket={socket}
+                        id={activeTerminal.id}
+                        term={activeTerminal.terminal}
+                        setTerm={(t: Terminal) => {
+                          setTerminals((prev) =>
+                            prev.map((term) =>
+                              term.id === activeTerminal.id
+                                ? { ...term, terminal: t }
+                                : term
+                            )
+                          );
+                        }}
+                      />
+                    ) : null}
                   </div>
                 </>
               ) : (

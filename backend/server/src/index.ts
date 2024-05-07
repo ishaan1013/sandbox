@@ -222,7 +222,7 @@ io.on("connection", async (socket) => {
     }
   })
 
-  socket.on("createTerminal", ({ id }: { id: string }) => {
+  socket.on("createTerminal", (id: string, callback) => {
     console.log("creating terminal", id)
     if (terminals[id]) {
       console.log("Terminal already exists.")
@@ -243,6 +243,7 @@ io.on("connection", async (socket) => {
       console.log("ondata")
       socket.emit("terminalResponse", {
         // data: Buffer.from(data, "utf-8").toString("base64"),
+        id,
         data,
       })
     })
@@ -256,6 +257,8 @@ io.on("connection", async (socket) => {
       onData,
       onExit,
     }
+
+    callback(true)
   })
 
   socket.on("terminalData", (id: string, data: string) => {
@@ -269,6 +272,19 @@ io.on("connection", async (socket) => {
     } catch (e) {
       console.log("Error writing to terminal", e)
     }
+  })
+
+  socket.on("closeTerminal", (id: string, callback) => {
+    if (!terminals[id]) {
+      console.log("tried to close, but term does not exist. terminals", terminals)
+      return
+    }
+
+    terminals[id].onData.dispose()
+    terminals[id].onExit.dispose()
+    delete terminals[id]
+
+    callback(true)
   })
 
   socket.on(
@@ -311,10 +327,9 @@ io.on("connection", async (socket) => {
     if (data.isOwner) {
       Object.entries(terminals).forEach((t) => {
       const { terminal, onData, onExit } = t[1]
-      if (os.platform() !== "win32") terminal.kill()
-        onData.dispose()
-        onExit.dispose()
-        delete terminals[t[0]]
+      onData.dispose()
+      onExit.dispose()
+      delete terminals[t[0]]
       })
 
       // console.log("The owner disconnected.")

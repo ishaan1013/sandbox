@@ -10,10 +10,12 @@ import { Loader2 } from "lucide-react";
 
 export default function EditorTerminal({
   socket,
+  id,
   term,
   setTerm,
 }: {
   socket: Socket;
+  id: string;
   term: Terminal | null;
   setTerm: (term: Terminal) => void;
 }) {
@@ -41,14 +43,7 @@ export default function EditorTerminal({
   useEffect(() => {
     if (!term) return;
 
-    // const onTerminalResponse = (response: { data: string }) => {
-    //   const res = response.data;
-    //   term.write(res);
-    // };
-
     if (terminalRef.current) {
-      // socket.on("terminalResponse", onTerminalResponse);
-
       const fitAddon = new FitAddon();
       term.loadAddon(fitAddon);
       term.open(terminalRef.current);
@@ -57,7 +52,7 @@ export default function EditorTerminal({
     }
     const disposable = term.onData((data) => {
       console.log("sending data", data);
-      socket.emit("terminalData", "testId", data);
+      socket.emit("terminalData", id, data);
     });
 
     // socket.emit("terminalData", "\n");
@@ -68,13 +63,15 @@ export default function EditorTerminal({
   }, [term, terminalRef.current]);
 
   return (
-    <div ref={terminalRef} className="w-full h-full text-left">
-      {term === null ? (
-        <div className="flex items-center text-muted-foreground p-2">
-          <Loader2 className="animate-spin mr-2 h-4 w-4" />
-          <span>Connecting to terminal...</span>
-        </div>
-      ) : null}
-    </div>
+    <>
+      <div ref={terminalRef} className="w-full h-full text-left">
+        {term === null ? (
+          <div className="flex items-center text-muted-foreground p-2">
+            <Loader2 className="animate-spin mr-2 h-4 w-4" />
+            <span>Connecting to terminal...</span>
+          </div>
+        ) : null}
+      </div>
+    </>
   );
 }
