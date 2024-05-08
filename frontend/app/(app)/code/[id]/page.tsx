@@ -62,22 +62,18 @@ export default async function CodePage({ params }: { params: { id: string } }) {
 
   return (
     <div className="overflow-hidden overscroll-none w-screen flex flex-col h-screen bg-background">
-      <Suspense fallback={<Loading />}>
-        <Room id={sandboxId}>
-          <Navbar
+      {/* <Suspense fallback={<Loading />}> */}
+      <Room id={sandboxId}>
+        <Navbar userData={userData} sandboxData={sandboxData} shared={shared} />
+        <div className="w-screen flex grow">
+          <CodeEditor
             userData={userData}
             sandboxData={sandboxData}
-            shared={shared}
+            isSharedUser={isSharedUser}
           />
-          <div className="w-screen flex grow">
-            <CodeEditor
-              userData={userData}
-              sandboxData={sandboxData}
-              isSharedUser={isSharedUser}
-            />
-          </div>
-        </Room>
-      </Suspense>
+        </div>
+      </Room>
+      {/* </Suspense> */}
     </div>
   );
 }

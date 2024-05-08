@@ -39,6 +39,8 @@ import { Sandbox, User, TFile, TFileData, TFolder, TTab } from "@/lib/types";
 import { processFileType, validateName } from "@/lib/utils";
 import { Cursors } from "./live/cursors";
 import { Terminal } from "@xterm/xterm";
+import DisableAccessModal from "./live/disableModal";
+import Loading from "./loading";
 
 export default function CodeEditor({
   userData,
@@ -77,6 +79,10 @@ export default function CodeEditor({
   const [creatingTerminal, setCreatingTerminal] = useState(false);
   const [provider, setProvider] = useState<TypedLiveblocksProvider>();
   const [ai, setAi] = useState(false);
+  const [disableAccess, setDisableAccess] = useState({
+    isDisabled: false,
+    message: "",
+  });
 
   const isOwner = sandboxData.userId === userData.id;
   const clerk = useClerk();
@@ -518,6 +524,19 @@ export default function CodeEditor({
     //   setFiles(response)
     // })
   };
+
+  if (disableAccess.isDisabled) {
+    return (
+      <>
+        <DisableAccessModal
+          message={disableAccess.message}
+          open={disableAccess.isDisabled}
+          setOpen={() => {}}
+        />
+        <Loading />
+      </>
+    );
+  }
 
   return (
     <>
