@@ -39,6 +39,7 @@ const io = new Server(httpServer, {
 })
 
 let inactivityTimeout: NodeJS.Timeout | null = null;
+let isOwnerConnected = false;
 
 const terminals: {
   [id: string]: { terminal: IPty; onData: IDisposable; onExit: IDisposable }
@@ -58,7 +59,7 @@ io.use(async (socket, next) => {
   const parseQuery = handshakeSchema.safeParse(q)
 
   if (!parseQuery.success) {
-    console.log("Invalid request.")
+    ("Invalid request.")
     next(new Error("Invalid request."))
     return
   }
@@ -68,7 +69,6 @@ io.use(async (socket, next) => {
   const dbUserJSON = (await dbUser.json()) as User
 
   if (!dbUserJSON) {
-    console.log("DB error.")
     next(new Error("DB error."))
     return
   }
@@ -79,7 +79,6 @@ io.use(async (socket, next) => {
   )
 
   if (!sandbox && !sharedSandboxes) {
-    console.log("Invalid credentials.")
     next(new Error("Invalid credentials."))
     return
   }
@@ -101,6 +100,15 @@ io.on("connection", async (socket) => {
     userId: string
     sandboxId: string
     isOwner: boolean
+  }
+
+  if (data.isOwner) {
+    isOwnerConnected = true
+  } else {
+    if (!isOwnerConnected) {
+      socket.emit("disableAccess", "The sandbox owner is not connected.")
+      return
+    }
   }
 
   const sandboxFiles = await getSandboxFiles(data.sandboxId)
@@ -224,12 +232,7 @@ io.on("connection", async (socket) => {
 
   socket.on("createTerminal", (id: string, callback) => {
     console.log("creating terminal", id)
-    if (terminals[id]) {
-      console.log("Terminal already exists.")
-      return
-    }
-    if (Object.keys(terminals).length >= 4) {
-      console.log("Too many terminals.")
+    if (terminals[id] || Object.keys(terminals).length >= 4) {
       return
     }
 
@@ -240,9 +243,7 @@ io.on("connection", async (socket) => {
     })
 
     const onData = pty.onData((data) => {
-      console.log("ondata")
       socket.emit("terminalResponse", {
-        // data: Buffer.from(data, "utf-8").toString("base64"),
         id,
         data,
       })
@@ -263,7 +264,6 @@ io.on("connection", async (socket) => {
 
   socket.on("terminalData", (id: string, data: string) => {
     if (!terminals[id]) {
-      console.log("terminals", terminals)
       return
     }
 
@@ -276,7 +276,6 @@ io.on("connection", async (socket) => {
 
   socket.on("closeTerminal", (id: string, callback) => {
     if (!terminals[id]) {
-      console.log("tried to close, but term does not exist. terminals", terminals)
       return
     }
 
@@ -332,11 +331,7 @@ io.on("connection", async (socket) => {
       delete terminals[t[0]]
       })
 
-      // console.log("The owner disconnected.")
-      socket.broadcast.emit("ownerDisconnected")
-    }
-    else {
-      // console.log("A shared user disconnected.")
+      socket.broadcast.emit("disableAccess", "The sandbox owner has disconnected.")
     }
 
     const sockets = await io.fetchSockets()

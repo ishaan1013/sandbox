@@ -88,7 +88,6 @@ export default function CodeEditor({
   const clerk = useClerk();
   const room = useRoom();
   const activeTerminal = terminals.find((t) => t.id === activeTerminalId);
-  console.log("activeTerminal", activeTerminal ? activeTerminal.id : "none");
 
   // const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
   const [editorRef, setEditorRef] =
@@ -270,9 +269,6 @@ export default function CodeEditor({
       if (e.key === "s" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
 
-        // const activeTab = tabs.find((t) => t.id === activeFileId)
-        // console.log("saving:", activeTab?.name, editorRef?.getValue())
-
         setTabs((prev) =>
           prev.map((tab) =>
             tab.id === activeFileId ? { ...tab, saved: true } : tab
@@ -367,7 +363,11 @@ export default function CodeEditor({
       createTerminal();
     };
 
-    const onDisconnect = () => {};
+    const onDisconnect = () => {
+      console.log("disconnected");
+
+      closeAllTerminals();
+    };
 
     const onLoadedEvent = (files: (TFolder | TFile)[]) => {
       setFiles(files);
@@ -385,11 +385,19 @@ export default function CodeEditor({
       if (term && term.terminal) term.terminal.write(res);
     };
 
+    const onDisableAccess = (message: string) => {
+      setDisableAccess({
+        isDisabled: true,
+        message,
+      });
+    };
+
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
     socket.on("loaded", onLoadedEvent);
     socket.on("rateLimit", onRateLimit);
     socket.on("terminalResponse", onTerminalResponse);
+    socket.on("disableAccess", onDisableAccess);
 
     return () => {
       socket.off("connect", onConnect);
@@ -397,6 +405,7 @@ export default function CodeEditor({
       socket.off("loaded", onLoadedEvent);
       socket.off("rateLimit", onRateLimit);
       socket.off("terminalResponse", onTerminalResponse);
+      socket.off("disableAccess", onDisableAccess);
     };
   }, []);
 
@@ -489,6 +498,13 @@ export default function CodeEditor({
           }
         }
       }
+    });
+  };
+
+  const closeAllTerminals = () => {
+    terminals.forEach((term) => {
+      socket.emit("closeTerminal", term.id, () => {}); // no need to wait for response here
+      setTerminals((prev) => prev.filter((t) => t.id !== term.id));
     });
   };
 

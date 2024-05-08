@@ -1,17 +1,17 @@
-"use client"
+"use client";
 
-import Image from "next/image"
-import { useEffect, useRef, useState } from "react"
-import { getIconForFolder, getIconForOpenFolder } from "vscode-icons-js"
-import { TFile, TFolder, TTab } from "@/lib/types"
-import SidebarFile from "./file"
+import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
+import { getIconForFolder, getIconForOpenFolder } from "vscode-icons-js";
+import { TFile, TFolder, TTab } from "@/lib/types";
+import SidebarFile from "./file";
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
-} from "@/components/ui/context-menu"
-import { Pencil, Trash2 } from "lucide-react"
+} from "@/components/ui/context-menu";
+import { Pencil, Trash2 } from "lucide-react";
 
 export default function SidebarFolder({
   data,
@@ -20,30 +20,30 @@ export default function SidebarFolder({
   handleDeleteFile,
   handleDeleteFolder,
 }: {
-  data: TFolder
-  selectFile: (file: TTab) => void
+  data: TFolder;
+  selectFile: (file: TTab) => void;
   handleRename: (
     id: string,
     newName: string,
     oldName: string,
     type: "file" | "folder"
-  ) => boolean
-  handleDeleteFile: (file: TFile) => void
-  handleDeleteFolder: (folder: TFolder) => void
+  ) => boolean;
+  handleDeleteFile: (file: TFile) => void;
+  handleDeleteFolder: (folder: TFolder) => void;
 }) {
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(false);
   const folder = isOpen
     ? getIconForOpenFolder(data.name)
-    : getIconForFolder(data.name)
+    : getIconForFolder(data.name);
 
-  const [editing, setEditing] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const [editing, setEditing] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (editing) {
-      inputRef.current?.focus()
+      inputRef.current?.focus();
     }
-  }, [editing])
+  }, [editing]);
 
   return (
     <ContextMenu>
@@ -60,9 +60,8 @@ export default function SidebarFolder({
         />
         <form
           onSubmit={(e) => {
-            e.preventDefault()
-            console.log("file renamed")
-            setEditing(false)
+            e.preventDefault();
+            setEditing(false);
           }}
         >
           <input
@@ -73,8 +72,7 @@ export default function SidebarFolder({
             disabled={!editing}
             defaultValue={data.name}
             onBlur={() => {
-              console.log("file renamed")
-              setEditing(false)
+              setEditing(false);
             }}
           />
         </form>
@@ -82,8 +80,7 @@ export default function SidebarFolder({
       <ContextMenuContent>
         <ContextMenuItem
           onClick={() => {
-            console.log("rename")
-            setEditing(true)
+            setEditing(true);
           }}
         >
           <Pencil className="w-4 h-4 mr-2" />
@@ -92,7 +89,7 @@ export default function SidebarFolder({
         <ContextMenuItem
           // disabled={pendingDelete}
           onClick={() => {
-            console.log("delete")
+            console.log("delete");
             // setPendingDelete(true)
             // handleDeleteFile(data)
           }}
@@ -129,5 +126,5 @@ export default function SidebarFolder({
         </div>
       ) : null}
     </ContextMenu>
-  )
+  );
 }

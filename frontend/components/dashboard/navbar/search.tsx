@@ -1,26 +1,25 @@
-"use client"
+"use client";
 
-import { Input } from "../../ui/input"
-import { Search } from "lucide-react"
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { Input } from "../../ui/input";
+import { Search } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function DashboardNavbarSearch() {
-  const [search, setSearch] = useState("")
-  const router = useRouter()
+  const [search, setSearch] = useState("");
+  const router = useRouter();
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
-      console.log("SEARCH", search)
       if (search) {
-        router.push(`/dashboard?q=${search}`)
+        router.push(`/dashboard?q=${search}`);
       } else {
-        router.push(`/dashboard`)
+        router.push(`/dashboard`);
       }
-    }, 300)
+    }, 300);
 
-    return () => clearTimeout(delayDebounceFn)
-  }, [search])
+    return () => clearTimeout(delayDebounceFn);
+  }, [search]);
 
   return (
     <div className="relative h-9 w-44 flex items-center justify-start">
@@ -32,5 +31,5 @@ export default function DashboardNavbarSearch() {
         className="pl-8"
       />
     </div>
-  )
+  );
 }

@@ -1,22 +1,22 @@
-import { User } from "@/lib/types"
-import { currentUser } from "@clerk/nextjs"
-import { redirect } from "next/navigation"
+import { User } from "@/lib/types";
+import { currentUser } from "@clerk/nextjs";
+import { redirect } from "next/navigation";
 
 export default async function AppAuthLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
-  const user = await currentUser()
+  const user = await currentUser();
 
   if (!user) {
-    redirect("/")
+    redirect("/");
   }
 
   const dbUser = await fetch(
     `https://database.ishaan1013.workers.dev/api/user?id=${user.id}`
-  )
-  const dbUserJSON = (await dbUser.json()) as User
+  );
+  const dbUserJSON = (await dbUser.json()) as User;
 
   if (!dbUserJSON.id) {
     const res = await fetch(
@@ -32,12 +32,8 @@ export default async function AppAuthLayout({
           email: user.emailAddresses[0].emailAddress,
         }),
       }
-    )
-
-    console.log(res)
-  } else {
-    // user already exists in db
+    );
   }
 
-  return <>{children}</>
+  return <>{children}</>;
 }

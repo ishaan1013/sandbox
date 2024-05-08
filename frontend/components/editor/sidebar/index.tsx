@@ -1,14 +1,14 @@
-"use client"
+"use client";
 
-import { FilePlus, FolderPlus, Loader2, Search, Sparkles } from "lucide-react"
-import SidebarFile from "./file"
-import SidebarFolder from "./folder"
-import { TFile, TFolder, TTab } from "@/lib/types"
-import { useState } from "react"
-import New from "./new"
-import { Socket } from "socket.io-client"
-import Button from "@/components/ui/customButton"
-import { Switch } from "@/components/ui/switch"
+import { FilePlus, FolderPlus, Loader2, Search, Sparkles } from "lucide-react";
+import SidebarFile from "./file";
+import SidebarFolder from "./folder";
+import { TFile, TFolder, TTab } from "@/lib/types";
+import { useState } from "react";
+import New from "./new";
+import { Socket } from "socket.io-client";
+import Button from "@/components/ui/customButton";
+import { Switch } from "@/components/ui/switch";
 
 export default function Sidebar({
   files,
@@ -21,22 +21,24 @@ export default function Sidebar({
   ai,
   setAi,
 }: {
-  files: (TFile | TFolder)[]
-  selectFile: (tab: TTab) => void
+  files: (TFile | TFolder)[];
+  selectFile: (tab: TTab) => void;
   handleRename: (
     id: string,
     newName: string,
     oldName: string,
     type: "file" | "folder"
-  ) => boolean
-  handleDeleteFile: (file: TFile) => void
-  handleDeleteFolder: (folder: TFolder) => void
-  socket: Socket
-  addNew: (name: string, type: "file" | "folder") => void
-  ai: boolean
-  setAi: React.Dispatch<React.SetStateAction<boolean>>
+  ) => boolean;
+  handleDeleteFile: (file: TFile) => void;
+  handleDeleteFolder: (folder: TFolder) => void;
+  socket: Socket;
+  addNew: (name: string, type: "file" | "folder") => void;
+  ai: boolean;
+  setAi: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
-  const [creatingNew, setCreatingNew] = useState<"file" | "folder" | null>(null)
+  const [creatingNew, setCreatingNew] = useState<"file" | "folder" | null>(
+    null
+  );
 
   return (
     <div className="h-full w-56 select-none flex flex-col text-sm items-start justify-between p-2">
@@ -94,8 +96,7 @@ export default function Sidebar({
                   socket={socket}
                   type={creatingNew}
                   stopEditing={() => {
-                    console.log("stopped editing")
-                    setCreatingNew(null)
+                    setCreatingNew(null);
                   }}
                   addNew={addNew}
                 />
@@ -119,5 +120,5 @@ export default function Sidebar({
         <Switch checked={ai} onCheckedChange={setAi} />
       </div>
     </div>
-  )
+  );
 }

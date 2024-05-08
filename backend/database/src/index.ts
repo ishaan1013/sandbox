@@ -94,7 +94,6 @@ export default {
 				const initStorageRes = await env.STORAGE.fetch(initStorageRequest);
 
 				const initStorage = await initStorageRes.text();
-				console.log("initStorage: ", initStorage);
 
 				return new Response(sb.id, { status: 200 });
 			} else {

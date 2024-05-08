@@ -16,7 +16,6 @@ export const getSandboxFiles = async (id: string) => {
 
   const paths = sandboxData.objects.map((obj) => obj.key)
   const processedFiles = await processFiles(paths, id)
-  // console.log("processedFiles.fileData:", processedFiles.fileData)
   return processedFiles
 }
 
@@ -27,7 +26,6 @@ const processFiles = async (paths: string[], id: string) => {
   paths.forEach((path) => {
     const allParts = path.split("/")
     if (allParts[1] !== id) {
-      console.log("invalid path!!!!")
       return
     }
 

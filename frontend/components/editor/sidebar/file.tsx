@@ -1,16 +1,16 @@
-"use client"
+"use client";
 
-import Image from "next/image"
-import { getIconForFile } from "vscode-icons-js"
-import { TFile, TTab } from "@/lib/types"
-import { useEffect, useRef, useState } from "react"
+import Image from "next/image";
+import { getIconForFile } from "vscode-icons-js";
+import { TFile, TTab } from "@/lib/types";
+import { useEffect, useRef, useState } from "react";
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
-} from "@/components/ui/context-menu"
-import { Loader2, Pencil, Trash2 } from "lucide-react"
+} from "@/components/ui/context-menu";
+import { Loader2, Pencil, Trash2 } from "lucide-react";
 
 export default function SidebarFile({
   data,
@@ -18,29 +18,26 @@ export default function SidebarFile({
   handleRename,
   handleDeleteFile,
 }: {
-  data: TFile
-  selectFile: (file: TTab) => void
+  data: TFile;
+  selectFile: (file: TTab) => void;
   handleRename: (
     id: string,
     newName: string,
     oldName: string,
     type: "file" | "folder"
-  ) => boolean
-  handleDeleteFile: (file: TFile) => void
+  ) => boolean;
+  handleDeleteFile: (file: TFile) => void;
 }) {
-  const [imgSrc, setImgSrc] = useState(`/icons/${getIconForFile(data.name)}`)
-  const [editing, setEditing] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
-  const [pendingDelete, setPendingDelete] = useState(false)
+  const [imgSrc, setImgSrc] = useState(`/icons/${getIconForFile(data.name)}`);
+  const [editing, setEditing] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [pendingDelete, setPendingDelete] = useState(false);
 
   useEffect(() => {
     if (editing) {
-      setTimeout(() => inputRef.current?.focus(), 0)
+      setTimeout(() => inputRef.current?.focus(), 0);
     }
-    if (!inputRef.current) {
-      console.log("no input ref")
-    }
-  }, [editing, inputRef.current])
+  }, [editing, inputRef.current]);
 
   const renameFile = () => {
     const renamed = handleRename(
@@ -48,19 +45,19 @@ export default function SidebarFile({
       inputRef.current?.value ?? data.name,
       data.name,
       "file"
-    )
+    );
     if (!renamed && inputRef.current) {
-      inputRef.current.value = data.name
+      inputRef.current.value = data.name;
     }
-    setEditing(false)
-  }
+    setEditing(false);
+  };
 
   return (
     <ContextMenu>
       <ContextMenuTrigger
         disabled={pendingDelete}
         onClick={() => {
-          if (!editing && !pendingDelete) selectFile({ ...data, saved: true })
+          if (!editing && !pendingDelete) selectFile({ ...data, saved: true });
         }}
         // onDoubleClick={() => {
         //   setEditing(true)
@@ -83,8 +80,8 @@ export default function SidebarFile({
         ) : (
           <form
             onSubmit={(e) => {
-              e.preventDefault()
-              renameFile()
+              e.preventDefault();
+              renameFile();
             }}
           >
             <input
@@ -102,8 +99,8 @@ export default function SidebarFile({
       <ContextMenuContent>
         <ContextMenuItem
           onClick={() => {
-            console.log("rename")
-            setEditing(true)
+            console.log("rename");
+            setEditing(true);
           }}
         >
           <Pencil className="w-4 h-4 mr-2" />
@@ -112,9 +109,9 @@ export default function SidebarFile({
         <ContextMenuItem
           disabled={pendingDelete}
           onClick={() => {
-            console.log("delete")
-            setPendingDelete(true)
-            handleDeleteFile(data)
+            console.log("delete");
+            setPendingDelete(true);
+            handleDeleteFile(data);
           }}
         >
           <Trash2 className="w-4 h-4 mr-2" />
@@ -122,5 +119,5 @@ export default function SidebarFile({
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
-  )
+  );
 }
