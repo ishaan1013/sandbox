@@ -23,6 +23,9 @@ export default function EditorTerminal({
 
   useEffect(() => {
     if (!terminalRef.current) return;
+    console.log("new terminal", id, term ? "reusing" : "creating");
+
+    if (term) return;
 
     const terminal = new Terminal({
       cursorBlink: true,
@@ -31,31 +34,33 @@ export default function EditorTerminal({
       },
       fontFamily: "var(--font-geist-mono)",
       fontSize: 14,
+      lineHeight: 1.5,
+      letterSpacing: 0,
     });
 
     setTerm(terminal);
 
-    return () => {
-      if (terminal) terminal.dispose();
-    };
-  }, []);
+    // return () => {
+    //   if (terminal) terminal.dispose();
+    // };
+  }, [id]);
 
   useEffect(() => {
     if (!term) return;
 
+    console.log("A");
     if (terminalRef.current) {
       const fitAddon = new FitAddon();
       term.loadAddon(fitAddon);
       term.open(terminalRef.current);
+      console.log("B");
       fitAddon.fit();
-      setTerm(term);
+      // setTerm(term);
     }
     const disposable = term.onData((data) => {
       console.log("terminalData", id, data);
       socket.emit("terminalData", id, data);
     });
-
-    // socket.emit("terminalData", "\n");
 
     return () => {
       disposable.dispose();

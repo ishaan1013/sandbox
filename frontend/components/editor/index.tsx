@@ -77,6 +77,7 @@ export default function CodeEditor({
   >([]);
   const [activeTerminalId, setActiveTerminalId] = useState("");
   const [creatingTerminal, setCreatingTerminal] = useState(false);
+  const [closingTerminal, setClosingTerminal] = useState("");
   const [provider, setProvider] = useState<TypedLiveblocksProvider>();
   const [ai, setAi] = useState(false);
   const [disableAccess, setDisableAccess] = useState({
@@ -350,8 +351,13 @@ export default function CodeEditor({
 
     return () => {
       socket.disconnect();
-
       resizeObserver.disconnect();
+
+      terminals.forEach((term) => {
+        if (term.terminal) {
+          term.terminal.dispose();
+        }
+      });
     };
   }, []);
 
@@ -375,14 +381,10 @@ export default function CodeEditor({
     };
 
     const onTerminalResponse = (response: { id: string; data: string }) => {
-      console.log("terminal response:", response);
-      // console.log("activeId:", activeTerminalId);
-
-      // const term = terminals.find((t) => t.id === response.id);
-      // if (term && term.terminal) {
-      //   console.log("writing to terminal, id:", response.id);
-      //   term.terminal.write(response.data);
-      // }
+      const term = terminals.find((t) => t.id === response.id);
+      if (term && term.terminal) {
+        term.terminal.write(response.data);
+      }
     };
 
     const onDisableAccess = (message: string) => {
@@ -407,7 +409,8 @@ export default function CodeEditor({
       socket.off("terminalResponse", onTerminalResponse);
       socket.off("disableAccess", onDisableAccess);
     };
-  }, []);
+    // }, []);
+  }, [terminals]);
 
   // Helper functions:
 
@@ -415,10 +418,12 @@ export default function CodeEditor({
     setCreatingTerminal(true);
     const id = createId();
     console.log("creating terminal, id:", id);
+
+    setTerminals((prev) => [...prev, { id, terminal: null }]);
+    setActiveTerminalId(id);
+
     setTimeout(() => {
       socket.emit("createTerminal", id, () => {
-        setTerminals((prev) => [...prev, { id, terminal: null }]);
-        setActiveTerminalId(id);
         setCreatingTerminal(false);
       });
     }, 1000);
@@ -475,7 +480,11 @@ export default function CodeEditor({
     const index = terminals.findIndex((t) => t.id === term.id);
     if (index === -1) return;
 
+    setClosingTerminal(term.id);
+
     socket.emit("closeTerminal", term.id, () => {
+      setClosingTerminal("");
+
       const nextId =
         activeTerminalId === term.id
           ? numTerminals === 1
@@ -485,6 +494,8 @@ export default function CodeEditor({
             : terminals[index - 1].id
           : activeTerminalId;
 
+      if (activeTerminal && activeTerminal.terminal)
+        activeTerminal.terminal.dispose();
       setTerminals((prev) => prev.filter((t) => t.id !== term.id));
 
       if (!nextId) {
