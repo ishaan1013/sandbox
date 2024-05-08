@@ -51,6 +51,7 @@ export default function EditorTerminal({
       setTerm(term);
     }
     const disposable = term.onData((data) => {
+      console.log("terminalData", id, data);
       socket.emit("terminalData", id, data);
     });
 

@@ -151,7 +151,7 @@ io.on("connection", async (socket) => {
       })
       await saveFile(fileId, body)
     } catch (e) {
-      socket.emit("rateLimit", "Rate limited: file saving. Please slow down.")
+      io.emit("rateLimit", "Rate limited: file saving. Please slow down.")
     }
   })
 
@@ -178,7 +178,7 @@ io.on("connection", async (socket) => {
 
       await createFile(id)
     } catch (e) {
-      socket.emit("rateLimit", "Rate limited: file creation. Please slow down.")
+      io.emit("rateLimit", "Rate limited: file creation. Please slow down.")
     }
   })
 
@@ -203,7 +203,7 @@ io.on("connection", async (socket) => {
       )
       await renameFile(fileId, newFileId, file.data)
     } catch (e) {
-      socket.emit("rateLimit", "Rate limited: file renaming. Please slow down.")
+      io.emit("rateLimit", "Rate limited: file renaming. Please slow down.")
       return
     }
   })
@@ -226,7 +226,7 @@ io.on("connection", async (socket) => {
       const newFiles = await getSandboxFiles(data.sandboxId)
       callback(newFiles.files)
     } catch (e) {
-      socket.emit("rateLimit", "Rate limited: file deletion. Please slow down.")
+      io.emit("rateLimit", "Rate limited: file deletion. Please slow down.")
     }
   })
 
@@ -243,7 +243,8 @@ io.on("connection", async (socket) => {
     })
 
     const onData = pty.onData((data) => {
-      socket.emit("terminalResponse", {
+      console.log("terminalResponse", id, data)
+      io.emit("terminalResponse", {
         id,
         data,
       })
@@ -259,11 +260,13 @@ io.on("connection", async (socket) => {
       onExit,
     }
 
-    callback(true)
+    callback()
   })
 
   socket.on("terminalData", (id: string, data: string) => {
+    console.log("terminalData", id, data)
     if (!terminals[id]) {
+      console.log("terminal not found", id)
       return
     }
 
@@ -279,11 +282,14 @@ io.on("connection", async (socket) => {
       return
     }
 
+    console.log("closing terminal", id)
     terminals[id].onData.dispose()
     terminals[id].onExit.dispose()
     delete terminals[id]
 
-    callback(true)
+    console.log("terminals:", Object.keys(terminals))
+
+    callback()
   })
 
   socket.on(
@@ -324,11 +330,12 @@ io.on("connection", async (socket) => {
 
   socket.on("disconnect", async () => {
     if (data.isOwner) {
+      console.log("deleting all terminals")
       Object.entries(terminals).forEach((t) => {
-      const { terminal, onData, onExit } = t[1]
-      onData.dispose()
-      onExit.dispose()
-      delete terminals[t[0]]
+        const { terminal, onData, onExit } = t[1]
+        onData.dispose()
+        onExit.dispose()
+        delete terminals[t[0]]
       })
 
       socket.broadcast.emit("disableAccess", "The sandbox owner has disconnected.")

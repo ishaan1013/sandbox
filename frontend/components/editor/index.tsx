@@ -359,14 +359,11 @@ export default function CodeEditor({
   useEffect(() => {
     const onConnect = () => {
       console.log("connected");
-
-      createTerminal();
     };
 
     const onDisconnect = () => {
       console.log("disconnected");
-
-      closeAllTerminals();
+      setTerminals([]);
     };
 
     const onLoadedEvent = (files: (TFolder | TFile)[]) => {
@@ -378,11 +375,14 @@ export default function CodeEditor({
     };
 
     const onTerminalResponse = (response: { id: string; data: string }) => {
-      const res = response.data;
-      console.log("terminal response:", res);
+      console.log("terminal response:", response);
+      // console.log("activeId:", activeTerminalId);
 
-      const term = terminals.find((t) => t.id === response.id);
-      if (term && term.terminal) term.terminal.write(res);
+      // const term = terminals.find((t) => t.id === response.id);
+      // if (term && term.terminal) {
+      //   console.log("writing to terminal, id:", response.id);
+      //   term.terminal.write(response.data);
+      // }
     };
 
     const onDisableAccess = (message: string) => {
@@ -414,15 +414,14 @@ export default function CodeEditor({
   const createTerminal = () => {
     setCreatingTerminal(true);
     const id = createId();
-    setActiveTerminalId(id);
+    console.log("creating terminal, id:", id);
     setTimeout(() => {
-      socket.emit("createTerminal", id, (res: boolean) => {
-        if (res) {
-          setTerminals((prev) => [...prev, { id, terminal: null }]);
-        }
+      socket.emit("createTerminal", id, () => {
+        setTerminals((prev) => [...prev, { id, terminal: null }]);
+        setActiveTerminalId(id);
+        setCreatingTerminal(false);
       });
     }, 1000);
-    setCreatingTerminal(false);
   };
 
   const selectFile = (tab: TTab) => {
@@ -476,35 +475,26 @@ export default function CodeEditor({
     const index = terminals.findIndex((t) => t.id === term.id);
     if (index === -1) return;
 
-    socket.emit("closeTerminal", term.id, (res: boolean) => {
-      if (res) {
-        const nextId =
-          activeTerminalId === term.id
-            ? numTerminals === 1
-              ? null
-              : index < numTerminals - 1
-              ? terminals[index + 1].id
-              : terminals[index - 1].id
-            : activeTerminalId;
+    socket.emit("closeTerminal", term.id, () => {
+      const nextId =
+        activeTerminalId === term.id
+          ? numTerminals === 1
+            ? null
+            : index < numTerminals - 1
+            ? terminals[index + 1].id
+            : terminals[index - 1].id
+          : activeTerminalId;
 
-        setTerminals((prev) => prev.filter((t) => t.id !== term.id));
+      setTerminals((prev) => prev.filter((t) => t.id !== term.id));
 
-        if (!nextId) {
-          setActiveTerminalId("");
-        } else {
-          const nextTerminal = terminals.find((t) => t.id === nextId);
-          if (nextTerminal) {
-            setActiveTerminalId(nextTerminal.id);
-          }
+      if (!nextId) {
+        setActiveTerminalId("");
+      } else {
+        const nextTerminal = terminals.find((t) => t.id === nextId);
+        if (nextTerminal) {
+          setActiveTerminalId(nextTerminal.id);
         }
       }
-    });
-  };
-
-  const closeAllTerminals = () => {
-    terminals.forEach((term) => {
-      socket.emit("closeTerminal", term.id, () => {}); // no need to wait for response here
-      setTerminals((prev) => prev.filter((t) => t.id !== term.id));
     });
   };
 
@@ -781,24 +771,34 @@ export default function CodeEditor({
                       )}
                     </Button>
                   </div>
-                  <div className="w-full relative grow h-full overflow-hidden rounded-md bg-secondary">
-                    {socket && activeTerminal ? (
+                  {socket && activeTerminal ? (
+                    <div className="w-full relative grow h-full overflow-hidden rounded-md bg-secondary">
                       <EditorTerminal
                         socket={socket}
                         id={activeTerminal.id}
                         term={activeTerminal.terminal}
                         setTerm={(t: Terminal) => {
+                          console.log(
+                            "setting terminal",
+                            activeTerminalId,
+                            t.options
+                          );
                           setTerminals((prev) =>
                             prev.map((term) =>
-                              term.id === activeTerminal.id
+                              term.id === activeTerminalId
                                 ? { ...term, terminal: t }
                                 : term
                             )
                           );
                         }}
                       />
-                    ) : null}
-                  </div>
+                    </div>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-lg font-medium text-muted-foreground/50 select-none">
+                      <TerminalSquare className="w-4 h-4 mr-2" />
+                      No terminals open.
+                    </div>
+                  )}
                 </>
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-lg font-medium text-muted-foreground/50 select-none">
