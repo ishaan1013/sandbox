@@ -353,11 +353,11 @@ export default function CodeEditor({
       socket.disconnect();
       resizeObserver.disconnect();
 
-      terminals.forEach((term) => {
-        if (term.terminal) {
-          term.terminal.dispose();
-        }
-      });
+      // terminals.forEach((term) => {
+      //   if (term.terminal) {
+      //     term.terminal.dispose();
+      //   }
+      // });
     };
   }, []);
 
@@ -494,8 +494,8 @@ export default function CodeEditor({
             : terminals[index - 1].id
           : activeTerminalId;
 
-      if (activeTerminal && activeTerminal.terminal)
-        activeTerminal.terminal.dispose();
+      // if (activeTerminal && activeTerminal.terminal)
+      //   activeTerminal.terminal.dispose();
       setTerminals((prev) => prev.filter((t) => t.id !== term.id));
 
       if (!nextId) {
@@ -784,25 +784,29 @@ export default function CodeEditor({
                   </div>
                   {socket && activeTerminal ? (
                     <div className="w-full relative grow h-full overflow-hidden rounded-md bg-secondary">
-                      <EditorTerminal
-                        socket={socket}
-                        id={activeTerminal.id}
-                        term={activeTerminal.terminal}
-                        setTerm={(t: Terminal) => {
-                          console.log(
-                            "setting terminal",
-                            activeTerminalId,
-                            t.options
-                          );
-                          setTerminals((prev) =>
-                            prev.map((term) =>
-                              term.id === activeTerminalId
-                                ? { ...term, terminal: t }
-                                : term
-                            )
-                          );
-                        }}
-                      />
+                      {terminals.map((term) => (
+                        <EditorTerminal
+                          key={term.id}
+                          socket={socket}
+                          id={term.id}
+                          term={term.terminal}
+                          setTerm={(t: Terminal) => {
+                            // console.log(
+                            //   "setting terminal",
+                            //   activeTerminalId,
+                            //   t.options
+                            // );
+                            setTerminals((prev) =>
+                              prev.map((term) =>
+                                term.id === activeTerminalId
+                                  ? { ...term, terminal: t }
+                                  : term
+                              )
+                            );
+                          }}
+                          visible={activeTerminalId === term.id}
+                        />
+                      ))}
                     </div>
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-lg font-medium text-muted-foreground/50 select-none">
