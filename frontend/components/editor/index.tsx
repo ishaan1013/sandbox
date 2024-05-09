@@ -6,7 +6,6 @@ import Editor, { BeforeMount, OnMount } from "@monaco-editor/react";
 import { io } from "socket.io-client";
 import { toast } from "sonner";
 import { useClerk } from "@clerk/nextjs";
-import { createId } from "@paralleldrive/cuid2";
 
 import * as Y from "yjs";
 import LiveblocksProvider from "@liveblocks/yjs";
@@ -19,38 +18,32 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import {
-  ChevronLeft,
-  ChevronRight,
-  FileJson,
-  Loader2,
-  Plus,
-  RotateCw,
-  Shell,
-  SquareTerminal,
-  TerminalSquare,
-} from "lucide-react";
+import { FileJson, Loader2, TerminalSquare } from "lucide-react";
 import Tab from "../ui/tab";
 import Sidebar from "./sidebar";
-import EditorTerminal from "./terminal";
-import { Button } from "../ui/button";
 import GenerateInput from "./generate";
-import { Sandbox, User, TFile, TFileData, TFolder, TTab } from "@/lib/types";
+import { Sandbox, User, TFile, TFolder, TTab } from "@/lib/types";
 import { processFileType, validateName } from "@/lib/utils";
 import { Cursors } from "./live/cursors";
 import { Terminal } from "@xterm/xterm";
 import DisableAccessModal from "./live/disableModal";
 import Loading from "./loading";
+import PreviewWindow from "./preview";
+import Terminals from "./terminals";
 
 export default function CodeEditor({
   userData,
   sandboxData,
-  isSharedUser,
-}: {
+}: // isSharedUser,
+{
   userData: User;
   sandboxData: Sandbox;
   isSharedUser: boolean;
 }) {
+  const socket = io(
+    `http://localhost:4000?userId=${userData.id}&sandboxId=${sandboxData.id}`
+  );
+
   const [files, setFiles] = useState<(TFolder | TFile)[]>([]);
   const [tabs, setTabs] = useState<TTab[]>([]);
   const [editorLanguage, setEditorLanguage] = useState("plaintext");
@@ -90,7 +83,6 @@ export default function CodeEditor({
   const room = useRoom();
   const activeTerminal = terminals.find((t) => t.id === activeTerminalId);
 
-  // const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
   const [editorRef, setEditorRef] =
     useState<monaco.editor.IStandaloneCodeEditor>();
   const editorContainerRef = useRef<HTMLDivElement>(null);
@@ -98,16 +90,27 @@ export default function CodeEditor({
   const generateRef = useRef<HTMLDivElement>(null);
   const generateWidgetRef = useRef<HTMLDivElement>(null);
 
+  // Resize observer tracks editor width for generate widget
+  const resizeObserver = new ResizeObserver((entries) => {
+    for (const entry of entries) {
+      const { width } = entry.contentRect;
+      setGenerate((prev) => {
+        return { ...prev, width };
+      });
+    }
+  });
+
+  // Pre-mount editor keybindings
   const handleEditorWillMount: BeforeMount = (monaco) => {
     monaco.editor.addKeybindingRules([
       {
         keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyG,
         command: "null",
-        // when: "textInputFocus",
       },
     ]);
   };
 
+  // Post-mount editor keybindings and actions
   const handleEditorMount: OnMount = (editor, monaco) => {
     setEditorRef(editor);
     monacoRef.current = monaco;
@@ -167,6 +170,7 @@ export default function CodeEditor({
     });
   };
 
+  // Generate widget effect
   useEffect(() => {
     if (!ai) {
       setGenerate((prev) => {
@@ -239,6 +243,7 @@ export default function CodeEditor({
     }
   }, [generate.show]);
 
+  // Decorations effect for generate widget tips
   useEffect(() => {
     if (decorations.options.length === 0) {
       decorations.instance?.clear();
@@ -261,10 +266,7 @@ export default function CodeEditor({
     }
   }, [decorations.options]);
 
-  const socket = io(
-    `http://localhost:4000?userId=${userData.id}&sandboxId=${sandboxData.id}`
-  );
-
+  // Save file keybinding logic effect
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.key === "s" && (e.metaKey || e.ctrlKey)) {
@@ -286,15 +288,7 @@ export default function CodeEditor({
     };
   }, [tabs, activeFileId]);
 
-  const resizeObserver = new ResizeObserver((entries) => {
-    for (const entry of entries) {
-      const { width } = entry.contentRect;
-      setGenerate((prev) => {
-        return { ...prev, width };
-      });
-    }
-  });
-
+  // Liveblocks live collaboration setup effect
   useEffect(() => {
     const tab = tabs.find((t) => t.id === activeFileId);
     const model = editorRef?.getModel();
@@ -317,8 +311,6 @@ export default function CodeEditor({
             }, 0);
           }
         }
-      } else {
-        // Yjs content is not synchronized
       }
     };
 
@@ -341,7 +333,7 @@ export default function CodeEditor({
     };
   }, [editorRef, room, activeFileContent]);
 
-  // connection/disconnection effect + resizeobserver
+  // Connection/disconnection effect + resizeobserver
   useEffect(() => {
     socket.connect();
 
@@ -352,23 +344,14 @@ export default function CodeEditor({
     return () => {
       socket.disconnect();
       resizeObserver.disconnect();
-
-      // terminals.forEach((term) => {
-      //   if (term.terminal) {
-      //     term.terminal.dispose();
-      //   }
-      // });
     };
   }, []);
 
-  // event listener effect
+  // Socket event listener effect
   useEffect(() => {
-    const onConnect = () => {
-      console.log("connected");
-    };
+    const onConnect = () => {};
 
     const onDisconnect = () => {
-      console.log("disconnected");
       setTerminals([]);
     };
 
@@ -412,23 +395,9 @@ export default function CodeEditor({
     // }, []);
   }, [terminals]);
 
-  // Helper functions:
+  // Helper functions for tabs:
 
-  const createTerminal = () => {
-    setCreatingTerminal(true);
-    const id = createId();
-    console.log("creating terminal, id:", id);
-
-    setTerminals((prev) => [...prev, { id, terminal: null }]);
-    setActiveTerminalId(id);
-
-    setTimeout(() => {
-      socket.emit("createTerminal", id, () => {
-        setCreatingTerminal(false);
-      });
-    }, 1000);
-  };
-
+  // Select file and load content
   const selectFile = (tab: TTab) => {
     if (tab.id === activeFileId) return;
     const exists = tabs.find((t) => t.id === tab.id);
@@ -448,6 +417,7 @@ export default function CodeEditor({
     setActiveFileId(tab.id);
   };
 
+  // Close tab and remove from tabs
   const closeTab = (tab: TFile) => {
     const numTabs = tabs.length;
     const index = tabs.findIndex((t) => t.id === tab.id);
@@ -473,40 +443,6 @@ export default function CodeEditor({
         selectFile(nextTab);
       }
     }
-  };
-
-  const closeTerminal = (term: { id: string; terminal: Terminal | null }) => {
-    const numTerminals = terminals.length;
-    const index = terminals.findIndex((t) => t.id === term.id);
-    if (index === -1) return;
-
-    setClosingTerminal(term.id);
-
-    socket.emit("closeTerminal", term.id, () => {
-      setClosingTerminal("");
-
-      const nextId =
-        activeTerminalId === term.id
-          ? numTerminals === 1
-            ? null
-            : index < numTerminals - 1
-            ? terminals[index + 1].id
-            : terminals[index - 1].id
-          : activeTerminalId;
-
-      // if (activeTerminal && activeTerminal.terminal)
-      //   activeTerminal.terminal.dispose();
-      setTerminals((prev) => prev.filter((t) => t.id !== term.id));
-
-      if (!nextId) {
-        setActiveTerminalId("");
-      } else {
-        const nextTerminal = terminals.find((t) => t.id === nextId);
-        if (nextTerminal) {
-          setActiveTerminalId(nextTerminal.id);
-        }
-      }
-    });
   };
 
   const handleRename = (
@@ -542,7 +478,8 @@ export default function CodeEditor({
     // })
   };
 
-  if (disableAccess.isDisabled) {
+  // On disabled access for shared users, show un-interactable loading placeholder + info modal
+  if (disableAccess.isDisabled)
     return (
       <>
         <DisableAccessModal
@@ -553,10 +490,10 @@ export default function CodeEditor({
         <Loading />
       </>
     );
-  }
 
   return (
     <>
+      {/* Copilot DOM elements */}
       <div ref={generateRef} />
       <div className="z-50 p-1" ref={generateWidgetRef}>
         {generate.show && ai ? (
@@ -606,6 +543,7 @@ export default function CodeEditor({
         ) : null}
       </div>
 
+      {/* Main editor components */}
       <Sidebar
         files={files}
         selectFile={selectFile}
@@ -624,9 +562,12 @@ export default function CodeEditor({
             // setFiles(prev => [...prev, { id, name, type: "folder", children: [] }])
           }
         }}
+        // AI Copilot Toggle
         ai={ai}
         setAi={setAi}
       />
+
+      {/* Shadcn resizeable panels: https://ui.shadcn.com/docs/components/resizable */}
       <ResizablePanelGroup direction="horizontal">
         <ResizablePanel
           className="p-2 flex flex-col"
@@ -635,6 +576,7 @@ export default function CodeEditor({
           defaultSize={60}
         >
           <div className="h-10 w-full flex gap-2 overflow-auto tab-scroll">
+            {/* File tabs */}
             {tabs.map((tab) => (
               <Tab
                 key={tab.id}
@@ -649,6 +591,7 @@ export default function CodeEditor({
               </Tab>
             ))}
           </div>
+          {/* Monaco editor */}
           <div
             ref={editorContainerRef}
             className="grow w-full overflow-hidden rounded-md relative"
@@ -660,7 +603,8 @@ export default function CodeEditor({
                   No file selected.
                 </div>
               </>
-            ) : clerk.loaded ? (
+            ) : // Note clerk.loaded is required here due to a bug: https://github.com/clerk/javascript/issues/1643
+            clerk.loaded ? (
               <>
                 {provider ? <Cursors yProvider={provider} /> : null}
                 <Editor
@@ -719,26 +663,7 @@ export default function CodeEditor({
               minSize={20}
               className="p-2 flex flex-col"
             >
-              <div className="h-10 select-none w-full flex gap-2">
-                <div className="h-8 rounded-md px-3 text-xs bg-secondary flex items-center w-full justify-between">
-                  Preview
-                  <div className="flex space-x-1 translate-x-1">
-                    <div className="p-0.5 h-5 w-5 ml-0.5 flex items-center justify-center transition-colors bg-transparent hover:bg-muted-foreground/25 cursor-pointer rounded-sm">
-                      <TerminalSquare className="w-4 h-4" />
-                    </div>
-                    <div className="p-0.5 h-5 w-5 ml-0.5 flex items-center justify-center transition-colors bg-transparent hover:bg-muted-foreground/25 cursor-pointer rounded-sm">
-                      <ChevronLeft className="w-4 h-4" />
-                    </div>
-                    <div className="p-0.5 h-5 w-5 ml-0.5 flex items-center justify-center transition-colors bg-transparent hover:bg-muted-foreground/25 cursor-pointer rounded-sm">
-                      <ChevronRight className="w-4 h-4" />
-                    </div>
-                    <div className="p-0.5 h-5 w-5 ml-0.5 flex items-center justify-center transition-colors bg-transparent hover:bg-muted-foreground/25 cursor-pointer rounded-sm">
-                      <RotateCw className="w-3 h-3" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="w-full grow rounded-md bg-foreground"></div>
+              <PreviewWindow />
             </ResizablePanel>
             <ResizableHandle />
             <ResizablePanel
@@ -747,74 +672,18 @@ export default function CodeEditor({
               className="p-2 flex flex-col"
             >
               {isOwner ? (
-                <>
-                  <div className="h-10 w-full overflow-auto flex gap-2 shrink-0 tab-scroll">
-                    {terminals.map((term) => (
-                      <Tab
-                        key={term.id}
-                        onClick={() => setActiveTerminalId(term.id)}
-                        onClose={() => closeTerminal(term)}
-                        selected={activeTerminalId === term.id}
-                      >
-                        <SquareTerminal className="w-4 h-4 mr-2" />
-                        Shell
-                      </Tab>
-                    ))}
-                    <Button
-                      disabled={creatingTerminal}
-                      onClick={() => {
-                        if (terminals.length >= 4) {
-                          toast.error(
-                            "You reached the maximum # of terminals."
-                          );
-                          return;
-                        }
-                        createTerminal();
-                      }}
-                      size="smIcon"
-                      variant={"secondary"}
-                      className={`font-normal shrink-0 select-none text-muted-foreground`}
-                    >
-                      {creatingTerminal ? (
-                        <Loader2 className="animate-spin w-4 h-4" />
-                      ) : (
-                        <Plus className="w-4 h-4" />
-                      )}
-                    </Button>
-                  </div>
-                  {socket && activeTerminal ? (
-                    <div className="w-full relative grow h-full overflow-hidden rounded-md bg-secondary">
-                      {terminals.map((term) => (
-                        <EditorTerminal
-                          key={term.id}
-                          socket={socket}
-                          id={term.id}
-                          term={term.terminal}
-                          setTerm={(t: Terminal) => {
-                            // console.log(
-                            //   "setting terminal",
-                            //   activeTerminalId,
-                            //   t.options
-                            // );
-                            setTerminals((prev) =>
-                              prev.map((term) =>
-                                term.id === activeTerminalId
-                                  ? { ...term, terminal: t }
-                                  : term
-                              )
-                            );
-                          }}
-                          visible={activeTerminalId === term.id}
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-lg font-medium text-muted-foreground/50 select-none">
-                      <TerminalSquare className="w-4 h-4 mr-2" />
-                      No terminals open.
-                    </div>
-                  )}
-                </>
+                <Terminals
+                  terminals={terminals}
+                  setTerminals={setTerminals}
+                  activeTerminalId={activeTerminalId}
+                  setActiveTerminalId={setActiveTerminalId}
+                  socket={socket}
+                  activeTerminal={activeTerminal}
+                  creatingTerminal={creatingTerminal}
+                  setCreatingTerminal={setCreatingTerminal}
+                  closingTerminal={closingTerminal}
+                  setClosingTerminal={setClosingTerminal}
+                />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-lg font-medium text-muted-foreground/50 select-none">
                   <TerminalSquare className="w-4 h-4 mr-2" />
