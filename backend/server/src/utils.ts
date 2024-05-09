@@ -68,8 +68,6 @@ const processFiles = async (paths: string[], id: string) => {
     })
   )
 
-  console.log("root", root)
-  
   return {
     files: root.children,
     fileData,
