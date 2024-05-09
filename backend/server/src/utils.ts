@@ -48,7 +48,8 @@ const processFiles = async (paths: string[], id: string) => {
           fileData.push({ id: path, data: "" })
         } else {
           const folder: TFolder = {
-            id: path, // todo: wrong id. for example, folder "src" ID is: projects/a7vgttfqbgy403ratp7du3ln/src/App.css
+            // id: path, // todo: wrong id. for example, folder "src" ID is: projects/a7vgttfqbgy403ratp7du3ln/src/App.css
+            id: `projects/${id}/${parts.slice(0, i + 1).join("/")}`,
             type: "folder",
             name: part,
             children: [],
@@ -67,6 +68,8 @@ const processFiles = async (paths: string[], id: string) => {
     })
   )
 
+  console.log("root", root)
+  
   return {
     files: root.children,
     fileData,

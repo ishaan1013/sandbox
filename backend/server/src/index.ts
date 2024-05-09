@@ -243,7 +243,7 @@ io.on("connection", async (socket) => {
     })
 
     const onData = pty.onData((data) => {
-      console.log("terminalResponse", id, data)
+      // console.log("terminalResponse", id, data)
       io.emit("terminalResponse", {
         id,
         data,
