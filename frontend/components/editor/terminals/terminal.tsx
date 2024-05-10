@@ -48,19 +48,29 @@ export default function EditorTerminal({
   useEffect(() => {
     if (!term) return;
 
-    if (terminalRef.current) {
-      const fitAddon = new FitAddon();
-      term.loadAddon(fitAddon);
-      term.open(terminalRef.current);
-      fitAddon.fit();
-    }
-    const disposable = term.onData((data) => {
+    if (!terminalRef.current) return;
+    const fitAddon = new FitAddon();
+    term.loadAddon(fitAddon);
+    term.open(terminalRef.current);
+    fitAddon.fit();
+
+    const disposableOnData = term.onData((data) => {
       console.log("terminalData", id, data);
       socket.emit("terminalData", id, data);
     });
 
+    const disposableOnResize = term.onResize((dimensions) => {
+      // const terminal_size = {
+      //   width: dimensions.cols,
+      //   height: dimensions.rows,
+      // };
+      fitAddon.fit();
+      socket.emit("terminalResize", dimensions);
+    });
+
     return () => {
-      disposable.dispose();
+      disposableOnData.dispose();
+      disposableOnResize.dispose();
     };
   }, [term, terminalRef.current]);
 

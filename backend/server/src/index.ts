@@ -263,8 +263,15 @@ io.on("connection", async (socket) => {
     callback()
   })
 
+  socket.on("resizeTerminal", (dimensions: { cols: number; rows: number }) => {
+    console.log("resizeTerminal", dimensions)
+    Object.values(terminals).forEach((t) => {
+      t.terminal.resize(dimensions.cols, dimensions.rows)
+    })
+  
+  })
+
   socket.on("terminalData", (id: string, data: string) => {
-    console.log("terminalData", id, data)
     if (!terminals[id]) {
       console.log("terminal not found", id)
       return
@@ -282,12 +289,9 @@ io.on("connection", async (socket) => {
       return
     }
 
-    console.log("closing terminal", id)
     terminals[id].onData.dispose()
     terminals[id].onExit.dispose()
     delete terminals[id]
-
-    console.log("terminals:", Object.keys(terminals))
 
     callback()
   })
@@ -330,7 +334,7 @@ io.on("connection", async (socket) => {
 
   socket.on("disconnect", async () => {
     if (data.isOwner) {
-      console.log("deleting all terminals")
+      // console.log("deleting all terminals")
       Object.entries(terminals).forEach((t) => {
         const { terminal, onData, onExit } = t[1]
         onData.dispose()

@@ -6,6 +6,7 @@ import { MouseEvent, MouseEventHandler, useEffect } from "react";
 
 export default function Tab({
   children,
+  creating = false,
   saved = true,
   selected = false,
   onClick,
@@ -13,6 +14,7 @@ export default function Tab({
   closing = false,
 }: {
   children: React.ReactNode;
+  creating?: boolean;
   saved?: boolean;
   selected?: boolean;
   onClick?: MouseEventHandler<HTMLButtonElement>;
@@ -43,7 +45,7 @@ export default function Tab({
         }
         className="h-5 w-5 ml-0.5 group flex items-center justify-center translate-x-1 transition-colors bg-transparent hover:bg-muted-foreground/25 cursor-pointer rounded-sm"
       >
-        {closing ? (
+        {closing || creating ? (
           <Loader2 className="animate-spin w-3 h-3" />
         ) : saved ? (
           <X className="w-3 h-3" />

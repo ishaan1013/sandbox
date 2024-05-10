@@ -30,6 +30,7 @@ import DisableAccessModal from "./live/disableModal";
 import Loading from "./loading";
 import PreviewWindow from "./preview";
 import Terminals from "./terminals";
+import { ImperativePanelHandle } from "react-resizable-panels";
 
 export default function CodeEditor({
   userData,
@@ -44,12 +45,28 @@ export default function CodeEditor({
     `http://localhost:4000?userId=${userData.id}&sandboxId=${sandboxData.id}`
   );
 
+  const [isPreviewCollapsed, setIsPreviewCollapsed] = useState(
+    sandboxData.type !== "react"
+  );
+  const [disableAccess, setDisableAccess] = useState({
+    isDisabled: false,
+    message: "",
+  });
+
+  // File state
   const [files, setFiles] = useState<(TFolder | TFile)[]>([]);
   const [tabs, setTabs] = useState<TTab[]>([]);
-  const [editorLanguage, setEditorLanguage] = useState("plaintext");
   const [activeFileId, setActiveFileId] = useState<string>("");
   const [activeFileContent, setActiveFileContent] = useState("");
+
+  // Editor state
+  const [editorLanguage, setEditorLanguage] = useState("plaintext");
   const [cursorLine, setCursorLine] = useState(0);
+  const [editorRef, setEditorRef] =
+    useState<monaco.editor.IStandaloneCodeEditor>();
+
+  // AI Copilot state
+  const [ai, setAi] = useState(false);
   const [generate, setGenerate] = useState<{
     show: boolean;
     id: string;
@@ -62,6 +79,8 @@ export default function CodeEditor({
     options: monaco.editor.IModelDeltaDecoration[];
     instance: monaco.editor.IEditorDecorationsCollection | undefined;
   }>({ options: [], instance: undefined });
+
+  // Terminal state
   const [terminals, setTerminals] = useState<
     {
       id: string;
@@ -71,24 +90,21 @@ export default function CodeEditor({
   const [activeTerminalId, setActiveTerminalId] = useState("");
   const [creatingTerminal, setCreatingTerminal] = useState(false);
   const [closingTerminal, setClosingTerminal] = useState("");
-  const [provider, setProvider] = useState<TypedLiveblocksProvider>();
-  const [ai, setAi] = useState(false);
-  const [disableAccess, setDisableAccess] = useState({
-    isDisabled: false,
-    message: "",
-  });
+  const activeTerminal = terminals.find((t) => t.id === activeTerminalId);
 
   const isOwner = sandboxData.userId === userData.id;
   const clerk = useClerk();
-  const room = useRoom();
-  const activeTerminal = terminals.find((t) => t.id === activeTerminalId);
 
-  const [editorRef, setEditorRef] =
-    useState<monaco.editor.IStandaloneCodeEditor>();
+  // Liveblocks hooks
+  const room = useRoom();
+  const [provider, setProvider] = useState<TypedLiveblocksProvider>();
+
+  // Refs for libraries / features
   const editorContainerRef = useRef<HTMLDivElement>(null);
   const monacoRef = useRef<typeof monaco | null>(null);
   const generateRef = useRef<HTMLDivElement>(null);
   const generateWidgetRef = useRef<HTMLDivElement>(null);
+  const previewPanelRef = useRef<ImperativePanelHandle>(null);
 
   // Resize observer tracks editor width for generate widget
   const resizeObserver = new ResizeObserver((entries) => {
@@ -371,10 +387,11 @@ export default function CodeEditor({
     };
 
     const onDisableAccess = (message: string) => {
-      setDisableAccess({
-        isDisabled: true,
-        message,
-      });
+      if (!isOwner)
+        setDisableAccess({
+          isDisabled: true,
+          message,
+        });
     };
 
     socket.on("connect", onConnect);
@@ -571,7 +588,7 @@ export default function CodeEditor({
       <ResizablePanelGroup direction="horizontal">
         <ResizablePanel
           className="p-2 flex flex-col"
-          maxSize={75}
+          maxSize={80}
           minSize={30}
           defaultSize={60}
         >
@@ -659,11 +676,22 @@ export default function CodeEditor({
         <ResizablePanel defaultSize={40}>
           <ResizablePanelGroup direction="vertical">
             <ResizablePanel
+              ref={previewPanelRef}
               defaultSize={50}
-              minSize={20}
+              collapsedSize={4}
+              minSize={25}
+              collapsible
               className="p-2 flex flex-col"
+              onCollapse={() => setIsPreviewCollapsed(true)}
+              onExpand={() => setIsPreviewCollapsed(false)}
             >
-              <PreviewWindow />
+              <PreviewWindow
+                collapsed={isPreviewCollapsed}
+                open={() => {
+                  previewPanelRef.current?.expand();
+                  setIsPreviewCollapsed(false);
+                }}
+              />
             </ResizablePanel>
             <ResizableHandle />
             <ResizablePanel

@@ -120,7 +120,12 @@ export default function NewProjectModal({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(open: boolean) => {
+        if (!loading) setOpen(open);
+      }}
+    >
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Create A Sandbox</DialogTitle>

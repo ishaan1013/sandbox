@@ -9,6 +9,7 @@ import Link from "next/link";
 import { Card } from "../ui/card";
 import { deleteSandbox, updateSandbox } from "@/lib/actions";
 import { toast } from "sonner";
+import { useState } from "react";
 
 export default function DashboardProjects({
   sandboxes,
@@ -17,9 +18,16 @@ export default function DashboardProjects({
   sandboxes: Sandbox[];
   q: string | null;
 }) {
+  const [deletingId, setDeletingId] = useState<string>("");
+
   const onDelete = async (sandbox: Sandbox) => {
+    setDeletingId(sandbox.id);
     toast(`Project ${sandbox.name} deleted.`);
     await deleteSandbox(sandbox.id);
+    setTimeout(() => {
+      // timeout to wait for revalidatePath and avoid flashing
+      setDeletingId("");
+    }, 200);
   };
 
   const onVisibilityChange = async (sandbox: Sandbox) => {
@@ -50,7 +58,11 @@ export default function DashboardProjects({
                 <Link
                   key={sandbox.id}
                   href={`/code/${sandbox.id}`}
-                  className="cursor-pointer transition-all focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
+                  className={`${
+                    deletingId === sandbox.id
+                      ? "pointer-events-none opacity-50"
+                      : ""
+                  } cursor-pointer transition-all focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:ring-2 focus-visible:ring-ring rounded-lg`}
                 >
                   <Card className="p-4 h-48 flex flex-col justify-between items-start hover:border-foreground transition-all">
                     {/* <ProjectCard key={sandbox.id} id={sandbox.id}> */}

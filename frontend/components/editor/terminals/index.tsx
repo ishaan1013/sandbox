@@ -50,6 +50,7 @@ export default function Terminals({
         {terminals.map((term) => (
           <Tab
             key={term.id}
+            creating={creatingTerminal}
             onClick={() => setActiveTerminalId(term.id)}
             onClose={() =>
               closeTerminal({
@@ -85,7 +86,7 @@ export default function Terminals({
           }}
           size="smIcon"
           variant={"secondary"}
-          className={`font-normal shrink-0 select-none text-muted-foreground`}
+          className={`font-normal shrink-0 select-none text-muted-foreground disabled:opacity-50`}
         >
           {creatingTerminal ? (
             <Loader2 className="animate-spin w-4 h-4" />
