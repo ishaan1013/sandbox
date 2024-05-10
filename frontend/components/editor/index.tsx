@@ -562,12 +562,14 @@ export default function CodeEditor({
 
       {/* Main editor components */}
       <Sidebar
+        sandboxData={sandboxData}
         files={files}
         selectFile={selectFile}
         handleRename={handleRename}
         handleDeleteFile={handleDeleteFile}
         handleDeleteFolder={handleDeleteFolder}
         socket={socket}
+        setFiles={setFiles}
         addNew={(name, type) => {
           if (type === "file") {
             setFiles((prev) => [

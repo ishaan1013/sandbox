@@ -12,6 +12,7 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { Pencil, Trash2 } from "lucide-react";
+import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 
 export default function SidebarFolder({
   data,
@@ -19,6 +20,7 @@ export default function SidebarFolder({
   handleRename,
   handleDeleteFile,
   handleDeleteFolder,
+  movingId,
 }: {
   data: TFolder;
   selectFile: (file: TTab) => void;
@@ -30,7 +32,38 @@ export default function SidebarFolder({
   ) => boolean;
   handleDeleteFile: (file: TFile) => void;
   handleDeleteFolder: (folder: TFolder) => void;
+  movingId: string;
 }) {
+  const ref = useRef(null); // drop target
+  const [isDraggedOver, setIsDraggedOver] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+
+    if (el)
+      return dropTargetForElements({
+        element: el,
+        onDragEnter: () => setIsDraggedOver(true),
+        onDragLeave: () => setIsDraggedOver(false),
+        onDrop: () => setIsDraggedOver(false),
+        getData: () => ({ id: data.id }),
+
+        // Commented out to avoid propagating drop event downwards
+        // Todo: Make this logic more elegant, the current implementation is just checking at the end in index.tsx
+
+        // canDrop: ({ source }) => {
+        //   const file = data.children.find(
+        //     (child) => child.id === source.data.id
+        //   );
+        //   return !file;
+        // },
+
+        canDrop: () => {
+          return !movingId;
+        }, // no dropping while awaiting move
+      });
+  }, []);
+
   const [isOpen, setIsOpen] = useState(false);
   const folder = isOpen
     ? getIconForOpenFolder(data.name)
@@ -45,11 +78,23 @@ export default function SidebarFolder({
     }
   }, [editing]);
 
+  // return (
+  //   <div
+  //     ref={ref}
+  //     className="w-full h-7 rounded-full"
+  //     style={{backgroundColor: isDraggedOver ? "red" : "blue"}}
+  //   >
+  //   </div>
+  // )
+
   return (
     <ContextMenu>
       <ContextMenuTrigger
+        ref={ref}
         onClick={() => setIsOpen((prev) => !prev)}
-        className="w-full flex items-center h-7 px-1 transition-colors hover:bg-secondary rounded-sm cursor-pointer"
+        className={`${
+          isDraggedOver ? "bg-secondary/50 rounded-t-sm" : "rounded-sm"
+        } w-full flex items-center h-7 px-1 transition-colors hover:bg-secondary cursor-pointer`}
       >
         <Image
           src={`/icons/${folder}`}
@@ -99,7 +144,11 @@ export default function SidebarFolder({
         </ContextMenuItem>
       </ContextMenuContent>
       {isOpen ? (
-        <div className="flex w-full items-stretch">
+        <div
+          className={`flex w-full items-stretch ${
+            isDraggedOver ? "rounded-b-sm bg-secondary/50" : ""
+          }`}
+        >
           <div className="w-[1px] bg-border mx-2 h-full"></div>
           <div className="flex flex-col grow">
             {data.children.map((child) =>
@@ -110,6 +159,7 @@ export default function SidebarFolder({
                   selectFile={selectFile}
                   handleRename={handleRename}
                   handleDeleteFile={handleDeleteFile}
+                  movingId={movingId}
                 />
               ) : (
                 <SidebarFolder
@@ -119,6 +169,7 @@ export default function SidebarFolder({
                   handleRename={handleRename}
                   handleDeleteFile={handleDeleteFile}
                   handleDeleteFolder={handleDeleteFolder}
+                  movingId={movingId}
                 />
               )
             )}

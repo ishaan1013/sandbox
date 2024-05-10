@@ -156,6 +156,29 @@ io.on("connection", async (socket) => {
     }
   })
 
+  socket.on("moveFile", async (fileId: string, folderId: string, callback) => {
+    const file = sandboxFiles.fileData.find((f) => f.id === fileId)
+    if (!file) return
+
+    const parts = fileId.split("/")
+    const newFileId = folderId + "/" + parts.pop()
+
+    fs.rename(
+      path.join(dirName, fileId),
+      path.join(dirName, newFileId),
+      function (err) {
+        if (err) throw err
+      }
+    )
+
+    file.id = newFileId
+
+    await renameFile(fileId, newFileId, file.data)
+    const newFiles = await getSandboxFiles(data.sandboxId)
+
+    callback(newFiles.files)
+  })
+
   socket.on("createFile", async (name: string, callback) => {
     try {
 
