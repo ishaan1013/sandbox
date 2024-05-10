@@ -128,7 +128,7 @@ export default function NewProjectModal({
         <div className="grid grid-cols-2 w-full gap-2 mt-2">
           {data.map((item) => (
             <button
-              disabled={item.disabled}
+              disabled={item.disabled || loading}
               key={item.id}
               onClick={() => setSelected(item.id)}
               className={`${
@@ -155,7 +155,11 @@ export default function NewProjectModal({
                 <FormItem className="mb-4">
                   <FormLabel>Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="My Project" {...field} />
+                    <Input
+                      disabled={loading}
+                      placeholder="My Project"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -168,6 +172,7 @@ export default function NewProjectModal({
                 <FormItem className="mb-8">
                   <FormLabel>Visibility</FormLabel>
                   <Select
+                    disabled={loading}
                     onValueChange={field.onChange}
                     defaultValue={field.value}
                   >
