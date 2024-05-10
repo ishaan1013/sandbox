@@ -16,7 +16,23 @@ export default {
 		const path = url.pathname;
 		const method = request.method;
 
-		if (path === '/api') {
+    if (path === '/api/size' && method === 'GET') {
+      const params = url.searchParams;
+      const sandboxId = params.get('sandboxId');
+
+      if (sandboxId) {
+        const res = await env.R2.list({ prefix: `projects/${sandboxId}` });
+
+        // sum up the size of all files
+        let size = 0;
+        for (const file of res.objects) {
+          size += file.size;
+        }
+
+        return new Response(JSON.stringify({ size }), { status: 200 });
+      } else return invalidRequest;
+    }
+		else if (path === '/api') {
 			if (method === 'GET') {
 				const params = url.searchParams;
 				const sandboxId = params.get('sandboxId');

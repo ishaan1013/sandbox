@@ -13,6 +13,7 @@ import {
   createFile,
   deleteFile,
   generateCode,
+  getProjectSize,
   getSandboxFiles,
   renameFile,
   saveFile,
@@ -155,8 +156,16 @@ io.on("connection", async (socket) => {
     }
   })
 
-  socket.on("createFile", async (name: string) => {
+  socket.on("createFile", async (name: string, callback) => {
     try {
+
+      const size: number = await getProjectSize(data.sandboxId)
+      // limit is 200mb
+      if (size > 200 * 1024 * 1024) {
+        io.emit("rateLimit", "Rate limited: project size exceeded. Please delete some files.")
+        callback({success: false})
+      }
+
       await createFileRL.consume(data.userId, 1)
 
       const id = `projects/${data.sandboxId}/${name}`
@@ -177,6 +186,8 @@ io.on("connection", async (socket) => {
       })
 
       await createFile(id)
+
+      callback({success: true})
     } catch (e) {
       io.emit("rateLimit", "Rate limited: file creation. Please slow down.")
     }

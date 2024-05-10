@@ -1,3 +1,4 @@
+import e from "cors"
 import {
   R2FileBody,
   R2Files,
@@ -132,6 +133,13 @@ export const deleteFile = async (fileId: string) => {
     body: JSON.stringify({ fileId }),
   })
   return res.ok
+}
+
+export const getProjectSize = async (id: string) => {
+  const res = await fetch(
+    `https://storage.ishaan1013.workers.dev/api/size?sandboxId=${id}`
+  )
+  return (await res.json()).size
 }
 
 export const generateCode = async ({
