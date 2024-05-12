@@ -9,6 +9,7 @@ import { Suspense } from "react";
 
 const CodeEditor = dynamic(() => import("@/components/editor"), {
   ssr: false,
+  loading: () => <Loading />,
 });
 
 const getUserData = async (id: string) => {

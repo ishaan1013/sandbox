@@ -1,33 +1,33 @@
-"use client"
+"use client";
 
-import Image from "next/image"
-import Logo from "@/assets/logo.svg"
-import { Pencil, Users } from "lucide-react"
-import Link from "next/link"
-import { Sandbox, User } from "@/lib/types"
-import UserButton from "@/components/ui/userButton"
-import { Button } from "@/components/ui/button"
-import { useState } from "react"
-import EditSandboxModal from "./edit"
-import ShareSandboxModal from "./share"
-import { Avatars } from "../live/avatars"
+import Image from "next/image";
+import Logo from "@/assets/logo.svg";
+import { Pencil, Users } from "lucide-react";
+import Link from "next/link";
+import { Sandbox, User } from "@/lib/types";
+import UserButton from "@/components/ui/userButton";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import EditSandboxModal from "./edit";
+import ShareSandboxModal from "./share";
+import { Avatars } from "../live/avatars";
 
 export default function Navbar({
   userData,
   sandboxData,
   shared,
 }: {
-  userData: User
-  sandboxData: Sandbox
+  userData: User;
+  sandboxData: Sandbox;
   shared: {
-    id: string
-    name: string
-  }[]
+    id: string;
+    name: string;
+  }[];
 }) {
-  const [isEditOpen, setIsEditOpen] = useState(false)
-  const [isShareOpen, setIsShareOpen] = useState(false)
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isShareOpen, setIsShareOpen] = useState(false);
 
-  const isOwner = sandboxData.userId === userData.id
+  const isOwner = sandboxData.userId === userData.id;
 
   return (
     <>
@@ -42,7 +42,7 @@ export default function Navbar({
         data={sandboxData}
         shared={shared}
       />
-      <div className="h-14 px-2 w-full flex items-center justify-between border-b border-border">
+      <div className="h-14 shrink-0 px-2 w-full flex items-center justify-between border-b border-border">
         <div className="flex items-center space-x-4">
           <Link
             href="/"
@@ -75,5 +75,5 @@ export default function Navbar({
         </div>
       </div>
     </>
-  )
+  );
 }
