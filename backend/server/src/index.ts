@@ -18,6 +18,7 @@ import {
   getSandboxFiles,
   renameFile,
   saveFile,
+  stopServer,
 } from "./utils"
 import { IDisposable, IPty, spawn } from "node-pty"
 import {
@@ -437,10 +438,12 @@ io.on("connection", async (socket) => {
       inactivityTimeout = setTimeout(() => {
         io.fetchSockets().then(sockets => {
           if (sockets.length === 0) {
-              console.log("No users have been connected for 15 seconds.");
+            // close server
+            console.log("Closing server due to inactivity.");
+            stopServer(data.sandboxId, data.userId)
           }
       });
-      }, 15000);
+      }, 60000);
     }
 
   })

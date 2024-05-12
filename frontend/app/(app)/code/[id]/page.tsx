@@ -2,15 +2,8 @@ import Navbar from "@/components/editor/navbar";
 import { Room } from "@/components/editor/live/room";
 import { Sandbox, User, UsersToSandboxes } from "@/lib/types";
 import { currentUser } from "@clerk/nextjs";
-import dynamic from "next/dynamic";
 import { notFound, redirect } from "next/navigation";
-import Loading from "@/components/editor/loading";
-import { Suspense } from "react";
-
-const CodeEditor = dynamic(() => import("@/components/editor"), {
-  ssr: false,
-  loading: () => <Loading />,
-});
+import Editor from "@/components/editor";
 
 const getUserData = async (id: string) => {
   const userRes = await fetch(
@@ -67,11 +60,7 @@ export default async function CodePage({ params }: { params: { id: string } }) {
       <Room id={sandboxId}>
         <Navbar userData={userData} sandboxData={sandboxData} shared={shared} />
         <div className="w-screen flex grow">
-          <CodeEditor
-            userData={userData}
-            sandboxData={sandboxData}
-            isSharedUser={isSharedUser}
-          />
+          <Editor userData={userData} sandboxData={sandboxData} />
         </div>
       </Room>
       {/* </Suspense> */}

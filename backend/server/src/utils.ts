@@ -196,3 +196,16 @@ ${code}`,
     }
   )
 }
+
+export const stopServer = async (sandboxId: string, userId: string) => {
+  await fetch("http://localhost:4001/stop", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      sandboxId,
+      userId
+    }),
+  })
+}

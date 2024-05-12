@@ -3,9 +3,22 @@ import Logo from "@/assets/logo.svg";
 import { Skeleton } from "../ui/skeleton";
 import { Loader, Loader2 } from "lucide-react";
 
-export default function Loading({ withNav = false }: { withNav?: boolean }) {
+export default function Loading({
+  withNav = false,
+  text = "",
+}: {
+  withNav?: boolean;
+  text?: string;
+}) {
   return (
-    <div className="overflow-hidden overscroll-none w-screen flex flex-col h-screen bg-background">
+    <div className="overflow-hidden overscroll-none w-screen flex flex-col justify-center items-center z-0 h-screen bg-background relative">
+      {text ? (
+        <div className="text-lg font-medium flex items-center z-50 shadow-xl shadow-red-500">
+          <Loader2 className="h-5 w-5 animate-spin mr-2" />
+          {text}
+        </div>
+      ) : null}
+
       {withNav ? (
         <div className="h-14 px-2 w-full flex items-center justify-between border-b border-border">
           <div className="flex items-center space-x-4">

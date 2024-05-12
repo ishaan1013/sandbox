@@ -48,3 +48,26 @@ export function addNew(name: string, type: "file" | "folder", setFiles: React.Di
     setFiles(prev => [...prev, { id: `projects/${sandboxData.id}/${name}`, name, type: "folder", children: [] }])
   }
 }
+
+export async function startServer(sandboxId: string, userId: string, callback: (success: boolean) => void) {
+  try {
+    await fetch("http://localhost:4001/start", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        sandboxId,
+        userId
+      }),
+    })
+
+    callback(true)
+    
+  } catch (error) {
+    console.error("Failed to start server", error)
+    
+    callback(false)
+  }
+
+}

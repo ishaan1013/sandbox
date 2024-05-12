@@ -19,8 +19,7 @@ app.use(express.json())
 dotenv.config()
 
 const corsOptions = {
-  origin: 'http://localhost:3000',
-  // origin: 'https://s.ishaand.com',
+  origin: ['http://localhost:3000', 'https://s.ishaand.com', 'http://localhost:4000'],
 }
 
 const kubeconfig = new KubeConfig()
