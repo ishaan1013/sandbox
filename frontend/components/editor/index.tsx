@@ -23,7 +23,7 @@ import Tab from "../ui/tab";
 import Sidebar from "./sidebar";
 import GenerateInput from "./generate";
 import { Sandbox, User, TFile, TFolder, TTab } from "@/lib/types";
-import { processFileType, validateName } from "@/lib/utils";
+import { addNew, processFileType, validateName } from "@/lib/utils";
 import { Cursors } from "./live/cursors";
 import { Terminal } from "@xterm/xterm";
 import DisableAccessModal from "./live/disableModal";
@@ -615,17 +615,7 @@ export default function CodeEditor({
         handleDeleteFolder={handleDeleteFolder}
         socket={socket}
         setFiles={setFiles}
-        addNew={(name, type) => {
-          if (type === "file") {
-            setFiles((prev) => [
-              ...prev,
-              { id: `projects/${sandboxData.id}/${name}`, name, type: "file" },
-            ]);
-          } else {
-            console.log("adding folder");
-            // setFiles(prev => [...prev, { id, name, type: "folder", children: [] }])
-          }
-        }}
+        addNew={(name, type) => addNew(name, type, setFiles, sandboxData)}
         deletingFolderId={deletingFolderId}
         // AI Copilot Toggle
         ai={ai}

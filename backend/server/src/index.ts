@@ -23,6 +23,7 @@ import { IDisposable, IPty, spawn } from "node-pty"
 import {
   MAX_BODY_SIZE,
   createFileRL,
+  createFolderRL,
   deleteFileRL,
   renameFileRL,
   saveFileRL,
@@ -222,6 +223,22 @@ io.on("connection", async (socket) => {
     }
   })
 
+  socket.on("createFolder", async (name: string, callback) => {
+    try {
+      await createFolderRL.consume(data.userId, 1)
+
+      const id = `projects/${data.sandboxId}/${name}`
+
+      fs.mkdir(path.join(dirName, id), { recursive: true }, function (err) {
+        if (err) throw err
+      })
+
+      callback()
+    } catch (e) {
+      io.emit("rateLimit", "Rate limited: folder creation. Please slow down.")
+    }
+  })
+
   socket.on("renameFile", async (fileId: string, newName: string) => {
     try {
       await renameFileRL.consume(data.userId, 1)
@@ -277,8 +294,6 @@ io.on("connection", async (socket) => {
   socket.on("deleteFolder", async (folderId: string, callback) => {
     const files = await getFolder(folderId)
 
-    console.log("deleting folder", folderId, files)
-    
     await Promise.all(files.map(async (file) => {
       fs.unlink(path.join(dirName, file), function (err) {
         if (err) throw err

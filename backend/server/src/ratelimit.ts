@@ -12,6 +12,11 @@ export const createFileRL = new RateLimiterMemory({
   duration: 2,
 })
 
+export const createFolderRL = new RateLimiterMemory({
+  points: 1,
+  duration: 2,
+})
+
 export const renameFileRL = new RateLimiterMemory({
   points: 1,
   duration: 2,

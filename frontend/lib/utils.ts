@@ -1,6 +1,7 @@
 import { type ClassValue, clsx } from "clsx"
 // import { toast } from "sonner"
 import { twMerge } from "tailwind-merge"
+import { Sandbox, TFile, TFolder } from "./types"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -34,4 +35,16 @@ export function validateName(
     return { status: false, message: "Invalid file name." }
   }
   return { status: true, message: "" }
+}
+
+export function addNew(name: string, type: "file" | "folder", setFiles: React.Dispatch<React.SetStateAction<(TFolder | TFile)[]>>, sandboxData: Sandbox) {
+  if (type === "file") {
+    setFiles((prev) => [
+      ...prev,
+      { id: `projects/${sandboxData.id}/${name}`, name, type: "file" },
+    ]);
+  } else {
+    console.log("adding folder");
+    setFiles(prev => [...prev, { id: `projects/${sandboxData.id}/${name}`, name, type: "folder", children: [] }])
+  }
 }

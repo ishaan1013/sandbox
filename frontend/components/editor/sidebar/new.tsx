@@ -18,7 +18,7 @@ export default function New({
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const createNew = () => {
+  function createNew() {
     const name = inputRef.current?.value;
 
     if (name) {
@@ -34,11 +34,15 @@ export default function New({
               }
             }
           );
+        } else {
+          socket.emit("createFolder", name, () => {
+            addNew(name, type);
+          });
         }
       }
     }
     stopEditing();
-  };
+  }
 
   useEffect(() => {
     inputRef.current?.focus();

@@ -81,7 +81,6 @@ export default function Sidebar({
 
         const fileFolder = fileId.split("/").slice(0, -1).join("/");
         if (fileFolder === folderId) {
-          console.log("NO");
           return;
         }
 
