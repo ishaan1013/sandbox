@@ -16,11 +16,64 @@ import { z } from "zod"
 const app = express()
 const port = process.env.PORT || 4001
 app.use(express.json())
-app.use(cors())
 dotenv.config()
 
+const corsOptions = {
+  origin: 'http://localhost:3000',
+  // origin: 'https://s.ishaand.com',
+}
+
 const kubeconfig = new KubeConfig()
+if (process.env.NODE_ENV === "production") {
+  kubeconfig.loadFromOptions({
+    clusters: [
+      {
+        name: 'docker-desktop',
+        server: process.env.DOCKER_DESKTOP_SERVER!,
+        caData: process.env.DOCKER_DESKTOP_CA_DATA,
+      },
+      {
+        name: 'gke_sylvan-epoch-422219-f9_us-central1_sandbox',
+        server: process.env.GKE_CLUSTER_SERVER!,
+        caData: process.env.GKE_CLUSTER_CA_DATA, 
+      }
+    ],
+    users: [
+      {
+        name: 'docker-desktop',
+        certData: process.env.DOCKER_DESKTOP_CLIENT_CERTIFICATE_DATA,
+        keyData: process.env.DOCKER_DESKTOP_CLIENT_KEY_DATA,
+      },
+      {
+        name: 'gke_sylvan-epoch-422219-f9_us-central1_sandbox',
+        exec: {
+          apiVersion: 'client.authentication.k8s.io/v1beta1',
+          command: 'gke-gcloud-auth-plugin',
+          args: [],
+          env: null,
+          installHint: 'Install gke-gcloud-auth-plugin for use with kubectl by following https://cloud.google.com/kubernetes-engine/docs/how-to/cluster-access-for-kubectl#install_plugin',
+          interactiveMode: 'IfAvailable',
+          provideClusterInfo: true
+        }
+      }
+    ],
+    contexts: [
+      {
+        name: 'docker-desktop',
+        cluster: 'docker-desktop',
+        user: 'docker-desktop'
+      },
+      {
+        name: 'gke_sylvan-epoch-422219-f9_us-central1_sandbox',
+        cluster: 'gke_sylvan-epoch-422219-f9_us-central1_sandbox',
+        user: 'gke_sylvan-epoch-422219-f9_us-central1_sandbox'
+      }
+    ],
+    currentContext: "gke_sylvan-epoch-422219-f9_us-central1_sandbox",
+  });
+}
 kubeconfig.loadFromDefault()
+
 const coreV1Api = kubeconfig.makeApiClient(CoreV1Api)
 const appsV1Api = kubeconfig.makeApiClient(AppsV1Api)
 const networkingV1Api = kubeconfig.makeApiClient(NetworkingV1Api)
@@ -58,22 +111,56 @@ const dataSchema = z.object({
   sandboxId: z.string(),
 })
 
-app.post("/start", async (req, res) => {
-  const { userId, sandboxId } = dataSchema.parse(req.body)
-  const namespace = "default"
+const namespace = "sandbox"
+
+app.get("/test", cors(), async (req, res) => {
+  res.status(200).send({ message: "Orchestrator is up and running." })
+})
+
+app.get("/test/cors", cors(corsOptions), async (req, res) => {
+  res.status(200).send({ message: "With CORS, Orchestrator is up and running." })
+})
+
+app.post("/start", cors(corsOptions), async (req, res) => {
+  const { sandboxId } = dataSchema.parse(req.body)
 
   try {
     const kubeManifests = readAndParseKubeYaml(
       path.join(__dirname, "../service.yaml"),
       sandboxId
     )
+
+    async function resourceExists(api: any, getMethod: string, name: string) {
+      try {
+        await api[getMethod](namespace, name)
+        return true
+      } catch (e: any) {
+        if (e.response && e.response.statusCode === 404) return false
+        throw e
+      }
+    }
+
     kubeManifests.forEach(async (manifest) => {
-      if (manifest.kind === "Deployment")
-        await appsV1Api.createNamespacedDeployment(namespace, manifest)
-      else if (manifest.kind === "Service")
-        await coreV1Api.createNamespacedService(namespace, manifest)
-      else if (manifest.kind === "Ingress")
-        await networkingV1Api.createNamespacedIngress(namespace, manifest)
+      const { kind, metadata: { name } } = manifest
+
+      if (kind === "Deployment")
+        if (!(await resourceExists(appsV1Api, 'readNamespacedDeployment', name))) {
+          await appsV1Api.createNamespacedDeployment(namespace, manifest)
+        } else {
+          return res.status(200).send({ message: "Resource deployment already exists." })
+        }
+      else if (kind === "Service")
+        if (!(await resourceExists(coreV1Api, 'readNamespacedService', name))) {
+          await coreV1Api.createNamespacedService(namespace, manifest)
+        } else {
+          return res.status(200).send({ message: "Resource service already exists." })
+        }
+      else if (kind === "Ingress")
+        if (!(await resourceExists(networkingV1Api, 'readNamespacedIngress', name))) {
+          await networkingV1Api.createNamespacedIngress(namespace, manifest)
+        } else {
+          return res.status(200).send({ message: "Resource ingress already exists." })
+        }
     })
     res.status(200).send({ message: "Resources created." })
   } catch (error) {
@@ -82,9 +169,8 @@ app.post("/start", async (req, res) => {
   }
 })
 
-app.post("/stop", async (req, res) => {
-  const { userId, sandboxId } = dataSchema.parse(req.body)
-  const namespace = "default"
+app.post("/stop", cors(corsOptions), async (req, res) => {
+  const { sandboxId } = dataSchema.parse(req.body)
 
   try {
     const kubeManifests = readAndParseKubeYaml(

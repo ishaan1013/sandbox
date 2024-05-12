@@ -41,3 +41,5 @@ wrangler.toml
 backend/server/dist
 backend/server/projects
 backend/database/drizzle
+
+app.yaml
