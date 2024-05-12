@@ -20,6 +20,7 @@ export default function SidebarFile({
   handleRename,
   handleDeleteFile,
   movingId,
+  deletingFolderId,
 }: {
   data: TFile;
   selectFile: (file: TTab) => void;
@@ -31,8 +32,11 @@ export default function SidebarFile({
   ) => boolean;
   handleDeleteFile: (file: TFile) => void;
   movingId: string;
+  deletingFolderId: string;
 }) {
   const isMoving = movingId === data.id;
+  const isDeleting =
+    deletingFolderId.length > 0 && data.id.startsWith(deletingFolderId);
 
   const ref = useRef(null); // for draggable
   const [dragging, setDragging] = useState(false);
@@ -40,7 +44,11 @@ export default function SidebarFile({
   const inputRef = useRef<HTMLInputElement>(null);
   const [imgSrc, setImgSrc] = useState(`/icons/${getIconForFile(data.name)}`);
   const [editing, setEditing] = useState(false);
-  const [pendingDelete, setPendingDelete] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState(isDeleting);
+
+  useEffect(() => {
+    setPendingDelete(isDeleting);
+  }, [isDeleting]);
 
   useEffect(() => {
     const el = ref.current;
@@ -104,8 +112,9 @@ export default function SidebarFile({
           </>
         ) : pendingDelete ? (
           <>
-            <Loader2 className="text-muted-foreground w-4 h-4 animate-spin mr-2" />
-            <div className="text-muted-foreground">Deleting...</div>
+            <div className="text-muted-foreground animate-pulse">
+              Deleting...
+            </div>
           </>
         ) : (
           <form

@@ -13,6 +13,7 @@ import {
   createFile,
   deleteFile,
   generateCode,
+  getFolder,
   getProjectSize,
   getSandboxFiles,
   renameFile,
@@ -128,6 +129,11 @@ io.on("connection", async (socket) => {
     if (!file) return
 
     callback(file.data)
+  })
+
+  socket.on("getFolder", async (folderId: string, callback) => {
+    const files = await getFolder(folderId)
+    callback(files)
   })
 
   // todo: send diffs + debounce for efficiency
@@ -264,6 +270,33 @@ io.on("connection", async (socket) => {
     }
   })
 
+  socket.on("renameFolder", async (folderId: string, newName: string) => {
+      // todo
+  })
+
+  socket.on("deleteFolder", async (folderId: string, callback) => {
+    const files = await getFolder(folderId)
+
+    console.log("deleting folder", folderId, files)
+    
+    await Promise.all(files.map(async (file) => {
+      fs.unlink(path.join(dirName, file), function (err) {
+        if (err) throw err
+      })
+
+      sandboxFiles.fileData = sandboxFiles.fileData.filter(
+        (f) => f.id !== file
+      )
+
+      await deleteFile(file)
+    }))
+
+    const newFiles = await getSandboxFiles(data.sandboxId)
+    
+    callback(newFiles.files)
+
+  })
+
   socket.on("createTerminal", (id: string, callback) => {
     console.log("creating terminal", id)
     if (terminals[id] || Object.keys(terminals).length >= 4) {
@@ -339,6 +372,7 @@ io.on("connection", async (socket) => {
       instructions: string,
       callback
     ) => {
+      // Log code generation credit in DB
       const fetchPromise = fetch(`https://database.ishaan1013.workers.dev/api/sandbox/generate`, {
         method: "POST",
         headers: {
@@ -349,6 +383,7 @@ io.on("connection", async (socket) => {
         }),
       })
 
+      // Generate code from cloudflare workers AI
       const generateCodePromise = generateCode({
         fileName,
         code,

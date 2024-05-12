@@ -36,11 +36,15 @@ export default {
 			if (method === 'GET') {
 				const params = url.searchParams;
 				const sandboxId = params.get('sandboxId');
+        const folderId = params.get('folderId');
 				const fileId = params.get('fileId');
 
 				if (sandboxId) {
 					const res = await env.R2.list({ prefix: `projects/${sandboxId}` });
 					return new Response(JSON.stringify(res), { status: 200 });
+        } else if (folderId) {
+          const res = await env.R2.list({ prefix: folderId });
+          return new Response(JSON.stringify(res), { status: 200 });
 				} else if (fileId) {
 					const obj = await env.R2.get(fileId);
 					if (obj === null) {

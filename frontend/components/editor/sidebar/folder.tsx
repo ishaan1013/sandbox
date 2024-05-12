@@ -11,8 +11,10 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import { Pencil, Trash2 } from "lucide-react";
+import { Loader2, Pencil, Trash2 } from "lucide-react";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+
+// Note: Renaming has not been implemented in the backend yet, so UI relating to renaming is commented out
 
 export default function SidebarFolder({
   data,
@@ -21,6 +23,7 @@ export default function SidebarFolder({
   handleDeleteFile,
   handleDeleteFolder,
   movingId,
+  deletingFolderId,
 }: {
   data: TFolder;
   selectFile: (file: TTab) => void;
@@ -33,9 +36,13 @@ export default function SidebarFolder({
   handleDeleteFile: (file: TFile) => void;
   handleDeleteFolder: (folder: TFolder) => void;
   movingId: string;
+  deletingFolderId: string;
 }) {
   const ref = useRef(null); // drop target
   const [isDraggedOver, setIsDraggedOver] = useState(false);
+
+  const isDeleting =
+    deletingFolderId.length > 0 && data.id.startsWith(deletingFolderId);
 
   useEffect(() => {
     const el = ref.current;
@@ -58,9 +65,10 @@ export default function SidebarFolder({
         //   return !file;
         // },
 
+        // no dropping while awaiting move
         canDrop: () => {
           return !movingId;
-        }, // no dropping while awaiting move
+        },
       });
   }, []);
 
@@ -69,28 +77,20 @@ export default function SidebarFolder({
     ? getIconForOpenFolder(data.name)
     : getIconForFolder(data.name);
 
-  const [editing, setEditing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  // const [editing, setEditing] = useState(false);
 
-  useEffect(() => {
-    if (editing) {
-      inputRef.current?.focus();
-    }
-  }, [editing]);
-
-  // return (
-  //   <div
-  //     ref={ref}
-  //     className="w-full h-7 rounded-full"
-  //     style={{backgroundColor: isDraggedOver ? "red" : "blue"}}
-  //   >
-  //   </div>
-  // )
+  // useEffect(() => {
+  //   if (editing) {
+  //     inputRef.current?.focus();
+  //   }
+  // }, [editing]);
 
   return (
     <ContextMenu>
       <ContextMenuTrigger
         ref={ref}
+        disabled={isDeleting}
         onClick={() => setIsOpen((prev) => !prev)}
         className={`${
           isDraggedOver ? "bg-secondary/50 rounded-t-sm" : "rounded-sm"
@@ -103,13 +103,26 @@ export default function SidebarFolder({
           height={18}
           className="mr-2"
         />
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            setEditing(false);
-          }}
-        >
-          <input
+        {isDeleting ? (
+          <>
+            <div className="text-muted-foreground animate-pulse">
+              Deleting...
+            </div>
+          </>
+        ) : (
+          <form
+          // onSubmit={(e) => {
+          //   e.preventDefault();
+          //   setEditing(false);
+          // }}
+          >
+            <input
+              ref={inputRef}
+              disabled
+              className={`pointer-events-none bg-transparent transition-all focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:ring-2 focus-visible:ring-ring rounded-sm w-full`}
+              defaultValue={data.name}
+            />
+            {/* <input
             ref={inputRef}
             className={`bg-transparent transition-all focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:ring-2 focus-visible:ring-ring rounded-sm w-full ${
               editing ? "" : "pointer-events-none"
@@ -119,24 +132,24 @@ export default function SidebarFolder({
             onBlur={() => {
               setEditing(false);
             }}
-          />
-        </form>
+          /> */}
+          </form>
+        )}
       </ContextMenuTrigger>
       <ContextMenuContent>
         <ContextMenuItem
-          onClick={() => {
-            setEditing(true);
-          }}
+          disabled
+          // onClick={() => {
+          //   setEditing(true);
+          // }}
         >
           <Pencil className="w-4 h-4 mr-2" />
           Rename
         </ContextMenuItem>
         <ContextMenuItem
-          // disabled={pendingDelete}
+          disabled={isDeleting}
           onClick={() => {
-            console.log("delete");
-            // setPendingDelete(true)
-            // handleDeleteFile(data)
+            handleDeleteFolder(data);
           }}
         >
           <Trash2 className="w-4 h-4 mr-2" />
@@ -160,6 +173,7 @@ export default function SidebarFolder({
                   handleRename={handleRename}
                   handleDeleteFile={handleDeleteFile}
                   movingId={movingId}
+                  deletingFolderId={deletingFolderId}
                 />
               ) : (
                 <SidebarFolder
@@ -170,6 +184,7 @@ export default function SidebarFolder({
                   handleDeleteFile={handleDeleteFile}
                   handleDeleteFolder={handleDeleteFolder}
                   movingId={movingId}
+                  deletingFolderId={deletingFolderId}
                 />
               )
             )}

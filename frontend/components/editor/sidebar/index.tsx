@@ -26,6 +26,7 @@ export default function Sidebar({
   addNew,
   ai,
   setAi,
+  deletingFolderId,
 }: {
   sandboxData: Sandbox;
   files: (TFile | TFolder)[];
@@ -43,6 +44,7 @@ export default function Sidebar({
   addNew: (name: string, type: "file" | "folder") => void;
   ai: boolean;
   setAi: React.Dispatch<React.SetStateAction<boolean>>;
+  deletingFolderId: string;
 }) {
   const ref = useRef(null); // drop target
 
@@ -147,6 +149,7 @@ export default function Sidebar({
                     handleRename={handleRename}
                     handleDeleteFile={handleDeleteFile}
                     movingId={movingId}
+                    deletingFolderId={deletingFolderId}
                   />
                 ) : (
                   <SidebarFolder
@@ -157,6 +160,7 @@ export default function Sidebar({
                     handleDeleteFile={handleDeleteFile}
                     handleDeleteFolder={handleDeleteFolder}
                     movingId={movingId}
+                    deletingFolderId={deletingFolderId}
                   />
                 )
               )}

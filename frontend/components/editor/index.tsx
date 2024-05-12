@@ -58,6 +58,7 @@ export default function CodeEditor({
   const [tabs, setTabs] = useState<TTab[]>([]);
   const [activeFileId, setActiveFileId] = useState<string>("");
   const [activeFileContent, setActiveFileContent] = useState("");
+  const [deletingFolderId, setDeletingFolderId] = useState("");
 
   // Editor state
   const [editorLanguage, setEditorLanguage] = useState("plaintext");
@@ -435,14 +436,16 @@ export default function CodeEditor({
   };
 
   // Close tab and remove from tabs
-  const closeTab = (tab: TFile) => {
+  const closeTab = (id: string) => {
     const numTabs = tabs.length;
-    const index = tabs.findIndex((t) => t.id === tab.id);
+    const index = tabs.findIndex((t) => t.id === id);
+
+    console.log("closing tab", id, index);
 
     if (index === -1) return;
 
     const nextId =
-      activeFileId === tab.id
+      activeFileId === id
         ? numTabs === 1
           ? null
           : index < numTabs - 1
@@ -450,12 +453,42 @@ export default function CodeEditor({
           : tabs[index - 1].id
         : activeFileId;
 
-    setTabs((prev) => prev.filter((t) => t.id !== tab.id));
+    setTabs((prev) => prev.filter((t) => t.id !== id));
 
     if (!nextId) {
       setActiveFileId("");
     } else {
       const nextTab = tabs.find((t) => t.id === nextId);
+      if (nextTab) {
+        selectFile(nextTab);
+      }
+    }
+  };
+
+  const closeTabs = (ids: string[]) => {
+    const numTabs = tabs.length;
+
+    if (numTabs === 0) return;
+
+    const allIndexes = ids.map((id) => tabs.findIndex((t) => t.id === id));
+
+    const indexes = allIndexes.filter((index) => index !== -1);
+    if (indexes.length === 0) return;
+
+    console.log("closing tabs", ids, indexes);
+
+    const activeIndex = tabs.findIndex((t) => t.id === activeFileId);
+
+    const newTabs = tabs.filter((t) => !ids.includes(t.id));
+    setTabs(newTabs);
+
+    if (indexes.length === numTabs) {
+      setActiveFileId("");
+    } else {
+      const nextTab =
+        newTabs.length > activeIndex
+          ? newTabs[activeIndex]
+          : newTabs[newTabs.length - 1];
       if (nextTab) {
         selectFile(nextTab);
       }
@@ -486,13 +519,25 @@ export default function CodeEditor({
     socket.emit("deleteFile", file.id, (response: (TFolder | TFile)[]) => {
       setFiles(response);
     });
-    closeTab(file);
+    closeTab(file.id);
   };
 
   const handleDeleteFolder = (folder: TFolder) => {
-    // socket.emit("deleteFolder", folder.id, (response: (TFolder | TFile)[]) => {
-    //   setFiles(response)
-    // })
+    setDeletingFolderId(folder.id);
+    console.log("deleting folder", folder.id);
+
+    socket.emit("getFolder", folder.id, (response: string[]) =>
+      closeTabs(response)
+    );
+
+    socket.emit("deleteFolder", folder.id, (response: (TFolder | TFile)[]) => {
+      setFiles(response);
+      setDeletingFolderId("");
+    });
+
+    setTimeout(() => {
+      setDeletingFolderId("");
+    }, 3000);
   };
 
   // On disabled access for shared users, show un-interactable loading placeholder + info modal
@@ -581,6 +626,7 @@ export default function CodeEditor({
             // setFiles(prev => [...prev, { id, name, type: "folder", children: [] }])
           }
         }}
+        deletingFolderId={deletingFolderId}
         // AI Copilot Toggle
         ai={ai}
         setAi={setAi}
@@ -604,7 +650,7 @@ export default function CodeEditor({
                 onClick={(e) => {
                   selectFile(tab);
                 }}
-                onClose={() => closeTab(tab)}
+                onClose={() => closeTab(tab.id)}
               >
                 {tab.name}
               </Tab>

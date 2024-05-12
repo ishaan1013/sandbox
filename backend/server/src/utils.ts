@@ -10,14 +10,23 @@ import {
 } from "./types"
 
 export const getSandboxFiles = async (id: string) => {
-  const sandboxRes = await fetch(
+  const res = await fetch(
     `https://storage.ishaan1013.workers.dev/api?sandboxId=${id}`
   )
-  const sandboxData: R2Files = await sandboxRes.json()
+  const data: R2Files = await res.json()
 
-  const paths = sandboxData.objects.map((obj) => obj.key)
+  const paths = data.objects.map((obj) => obj.key)
   const processedFiles = await processFiles(paths, id)
   return processedFiles
+}
+
+export const getFolder = async (folderId: string) => {
+  const res = await fetch(
+    `https://storage.ishaan1013.workers.dev/api?folderId=${folderId}`
+  )
+  const data: R2Files = await res.json()
+
+  return data.objects.map((obj) => obj.key)
 }
 
 const processFiles = async (paths: string[], id: string) => {
