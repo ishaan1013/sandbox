@@ -3,6 +3,7 @@
 import {
   ChevronLeft,
   ChevronRight,
+  Globe,
   RotateCw,
   TerminalSquare,
   UnfoldVertical,
@@ -22,8 +23,13 @@ export default function PreviewWindow({
           collapsed ? "h-full" : "h-10"
         } select-none w-full flex gap-2`}
       >
-        <div className="h-8 rounded-md px-3 text-xs bg-secondary flex items-center w-full justify-between">
-          Preview
+        <div className="h-8 rounded-md px-3 bg-secondary flex items-center w-full justify-between">
+          <div className="text-xs">
+            Preview
+            <span className="inline-block ml-2 items-center font-mono text-muted-foreground">
+              localhost:3000
+            </span>
+          </div>
           <div className="flex space-x-1 translate-x-1">
             {collapsed ? (
               <PreviewButton onClick={open}>

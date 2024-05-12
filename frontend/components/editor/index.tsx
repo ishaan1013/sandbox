@@ -715,7 +715,7 @@ export default function CodeEditor({
           <ResizablePanelGroup direction="vertical">
             <ResizablePanel
               ref={previewPanelRef}
-              defaultSize={50}
+              defaultSize={4}
               collapsedSize={4}
               minSize={25}
               collapsible

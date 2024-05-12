@@ -1,6 +1,13 @@
 "use client";
 
-import { FilePlus, FolderPlus, Loader2, Search, Sparkles } from "lucide-react";
+import {
+  FilePlus,
+  FolderPlus,
+  Loader2,
+  MonitorPlay,
+  Search,
+  Sparkles,
+} from "lucide-react";
 import SidebarFile from "./file";
 import SidebarFolder from "./folder";
 import { Sandbox, TFile, TFolder, TTab } from "@/lib/types";
@@ -13,6 +20,7 @@ import {
   dropTargetForElements,
   monitorForElements,
 } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import Button from "@/components/ui/customButton";
 
 export default function Sidebar({
   sandboxData,
@@ -177,19 +185,24 @@ export default function Sidebar({
           )}
         </div>
       </div>
-      <div className="flex items-center justify-between w-full">
-        <div className="flex items-center">
-          <Sparkles
-            className={`h-4 w-4 mr-2 ${
-              ai ? "text-indigo-500" : "text-muted-foreground"
-            }`}
-          />
-          Copilot{" "}
-          <span className="font-mono text-muted-foreground inline-block ml-1.5 text-xs leading-none border border-b-2 border-muted-foreground py-1 px-1.5 rounded-md">
-            ⌘G
-          </span>
+      <div className="w-full space-y-4">
+        <div className="flex items-center justify-between w-full">
+          <div className="flex items-center">
+            <Sparkles
+              className={`h-4 w-4 mr-2 ${
+                ai ? "text-indigo-500" : "text-muted-foreground"
+              }`}
+            />
+            Copilot{" "}
+            <span className="font-mono text-muted-foreground inline-block ml-1.5 text-xs leading-none border border-b-2 border-muted-foreground py-1 px-1.5 rounded-md">
+              ⌘G
+            </span>
+          </div>
+          <Switch checked={ai} onCheckedChange={setAi} />
         </div>
-        <Switch checked={ai} onCheckedChange={setAi} />
+        <Button className="w-full">
+          <MonitorPlay className="w-4 h-4 mr-2" /> Run
+        </Button>
       </div>
     </div>
   );
