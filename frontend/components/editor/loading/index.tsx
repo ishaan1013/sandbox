@@ -39,7 +39,7 @@ export default function Loading({
               {didFail ? (
                 <>
                   <X className="h-4 w-4 mr-2 text-destructive" /> Failed to
-                  create resources.
+                  start server.
                 </>
               ) : (
                 <>
@@ -47,7 +47,12 @@ export default function Loading({
                 </>
               )}
             </DialogTitle>
-            {description ? (
+            {didFail ? (
+              <DialogDescription>
+                Try again in a minute, or contact @ishaandey_ on Twitter/X if it
+                still doesn't work.
+              </DialogDescription>
+            ) : description ? (
               <DialogDescription>{description}</DialogDescription>
             ) : null}
           </DialogHeader>

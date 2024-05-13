@@ -183,7 +183,7 @@ app.post("/start", async (req, res) => {
     res.status(200).send({ message: "Resources created." })
   } catch (error: any) {
     const body = error.response.body
-    console.log("Failed to create resources", body)
+    console.log("Failed to create resources", error)
 
     if (body.code === 409) {
       return res.status(200).send({ message: "Resource already exists." })

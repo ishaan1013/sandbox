@@ -200,9 +200,9 @@ export default function Sidebar({
           </div>
           <Switch checked={ai} onCheckedChange={setAi} />
         </div>
-        <Button className="w-full">
+        {/* <Button className="w-full">
           <MonitorPlay className="w-4 h-4 mr-2" /> Run
-        </Button>
+        </Button> */}
       </div>
     </div>
   );

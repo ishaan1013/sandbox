@@ -19,7 +19,6 @@ export default function Editor({
   userData: User;
   sandboxData: Sandbox;
 }) {
-  console.log("userData", userData);
   const [isServerRunning, setIsServerRunning] = useState(false);
   const [didFail, setDidFail] = useState(false);
 
@@ -38,7 +37,7 @@ export default function Editor({
     // };
   }, []);
 
-  if (!isServerRunning)
+  if (!isServerRunning || didFail)
     return <Loading didFail={didFail} text="Creating your sandbox resources" />;
 
   return <CodeEditor userData={userData} sandboxData={sandboxData} />;
