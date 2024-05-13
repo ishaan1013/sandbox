@@ -14,7 +14,7 @@ import {
 import { z } from "zod"
 
 const app = express()
-const port = process.env.PORT || 4001
+const port = process.env.PORT || 8080
 app.use(express.json())
 dotenv.config()
 
