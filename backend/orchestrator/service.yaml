@@ -53,7 +53,7 @@ spec:
       port: 4000
       targetPort: 4000
     - protocol: TCP
-      name: user
+      name: s
       port: 8000
       targetPort: 8000
 ---
