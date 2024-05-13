@@ -198,7 +198,7 @@ ${code}`,
 }
 
 export const stopServer = async (sandboxId: string, userId: string) => {
-  const res = await fetch("http://localhost:4001/stop", {
+  const res = await fetch("https://sylvan-epoch-422219-f9.uc.r.appspot.com/stop", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

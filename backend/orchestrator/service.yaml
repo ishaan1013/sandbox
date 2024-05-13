@@ -76,7 +76,7 @@ spec:
                 name: <SANDBOX>
                 port:
                   number: 4000
-    - host: <SANDBOX>.s.ishaand.com
+    - host: <SANDBOX>.sandbox.ishaand.com
       http:
         paths:
           - path: /

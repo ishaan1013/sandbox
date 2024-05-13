@@ -418,6 +418,7 @@ io.on("connection", async (socket) => {
   )
 
   socket.on("disconnect", async () => {
+    console.log("disconnected", data.userId, data.sandboxId)
     if (data.isOwner) {
       // console.log("deleting all terminals")
       Object.entries(terminals).forEach((t) => {
@@ -445,11 +446,13 @@ io.on("connection", async (socket) => {
           }
       });
       }, 20000);
+    } else {
+      console.log("number of sockets", sockets.length)
     }
 
   })
 })
 
 httpServer.listen(port, () => {
-  console.log(`Server running on port ${port}`)
+  console.log(`Server, running on port ${port}`)
 })

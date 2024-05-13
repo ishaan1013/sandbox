@@ -12,11 +12,13 @@ import {
   NetworkingV1Api,
 } from "@kubernetes/client-node"
 import { z } from "zod"
+import container from '@google-cloud/container';
 
 const app = express()
 const port = process.env.PORT || 4001
 app.use(express.json())
 dotenv.config()
+
 
 // const corsOptions = {
 //   origin: ['http://localhost:3000', 'https://s.ishaand.com', 'http://localhost:4000', /\.ws\.ishaand\.com$/],
@@ -104,6 +106,26 @@ app.post("/test", async (req, res) => {
 
 app.post("/start", async (req, res) => {
   const { sandboxId } = dataSchema.parse(req.body)
+
+  async function main() {
+    const client = new container.v1.ClusterManagerClient();
+  
+    async function quickstart() {
+      const zone = 'us-central1-a';
+      const projectId = await client.getProjectId();
+      const request = {
+        projectId: projectId,
+        zone: zone,
+      };
+  
+      const [response] = await client.listClusters(request);
+      console.log('Clusters: ', response);
+    }
+
+    quickstart();
+  }
+
+  main().catch(console.error);
 
   try {
 

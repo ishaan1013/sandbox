@@ -52,7 +52,7 @@ export function addNew(name: string, type: "file" | "folder", setFiles: React.Di
 
 export async function startServer(sandboxId: string, userId: string, callback: (success: boolean) => void) {
   try {
-    const res = await fetch("http://localhost:4001/start", {
+    const res = await fetch("https://sylvan-epoch-422219-f9.uc.r.appspot.com/start", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
