@@ -18,11 +18,11 @@ const port = process.env.PORT || 4001
 app.use(express.json())
 dotenv.config()
 
-const corsOptions = {
-  origin: ['http://localhost:3000', 'https://s.ishaand.com', 'http://localhost:4000', /\.ws\.ishaand\.com$/],
-}
-
+// const corsOptions = {
+//   origin: ['http://localhost:3000', 'https://s.ishaand.com', 'http://localhost:4000', /\.ws\.ishaand\.com$/],
+// }
 // app.use(cors(corsOptions))
+
 app.use(cors())
 
 const kubeconfig = new KubeConfig()
@@ -35,14 +35,12 @@ if (process.env.NODE_ENV === "production") {
         caData: process.env.GKE_CLUSTER_CA_DATA, 
       }
     ],
-    users: [
+    users: [ 
       {
         name: 'gke_sylvan-epoch-422219-f9_us-central1_sandbox-cluster',
         exec: {
           apiVersion: 'client.authentication.k8s.io/v1beta1',
           command: 'gke-gcloud-auth-plugin',
-          args: [],
-          env: null,
           installHint: 'Install gke-gcloud-auth-plugin for use with kubectl by following https://cloud.google.com/kubernetes-engine/docs/how-to/cluster-access-for-kubectl#install_plugin',
           interactiveMode: 'IfAvailable',
           provideClusterInfo: true
@@ -51,17 +49,12 @@ if (process.env.NODE_ENV === "production") {
     ],
     contexts: [
       {
-        name: 'docker-desktop',
-        cluster: 'docker-desktop',
-        user: 'docker-desktop'
-      },
-      {
-        name: 'gke_sylvan-epoch-422219-f9_us-central1_sandbox',
-        cluster: 'gke_sylvan-epoch-422219-f9_us-central1_sandbox',
-        user: 'gke_sylvan-epoch-422219-f9_us-central1_sandbox'
+        name: 'gke_sylvan-epoch-422219-f9_us-central1_sandbox-cluster',
+        cluster: 'gke_sylvan-epoch-422219-f9_us-central1_sandbox-cluster',
+        user: 'gke_sylvan-epoch-422219-f9_us-central1_sandbox-cluster'
       }
     ],
-    currentContext: "gke_sylvan-epoch-422219-f9_us-central1_sandbox",
+    currentContext: "gke_sylvan-epoch-422219-f9_us-central1_sandbox-cluster"
   });
 }
 kubeconfig.loadFromDefault()
@@ -134,24 +127,32 @@ app.post("/start", async (req, res) => {
       }
     }
 
+    const createResource = async (api: any, method: string, manifest: any) => {
+    const { kind, metadata: { name } } = manifest;
+      if (!(await resourceExists(api, 'readNamespaced' + kind, name))) {
+        await api['createNamespaced' + kind](namespace, manifest);
+        console.log(`Created ${kind.toLowerCase()}`, name);
+      } else {
+        console.log(`${kind} ${name} already exists.`);
+      }
+    };
+
     const promises = kubeManifests.map(async (manifest) => {
       const { kind, metadata: { name } } = manifest
 
-      if (kind === "Deployment")
-        if (!(await resourceExists(appsV1Api, 'readNamespacedDeployment', name))) {
-          await appsV1Api.createNamespacedDeployment(namespace, manifest)
-          console.log("Made deploymnet")
-        }
-      else if (kind === "Service")
-        if (!(await resourceExists(coreV1Api, 'readNamespacedService', name))) {
-          await coreV1Api.createNamespacedService(namespace, manifest)
-          console.log("Made service")
-        }
-      else if (kind === "Ingress")
-        if (!(await resourceExists(networkingV1Api, 'readNamespacedIngress', name))) {
-          await networkingV1Api.createNamespacedIngress(namespace, manifest)
-          console.log("Made ingress")
-        }
+      console.log("Kind:", kind)
+
+      switch (manifest.kind) {
+        case 'Deployment':
+          return createResource(appsV1Api, 'Deployment', manifest);
+        case 'Service':
+          return createResource(coreV1Api, 'Service', manifest);
+        case 'Ingress':
+          return createResource(networkingV1Api, 'Ingress', manifest);
+        default:
+          console.error("Unsupported kind:", manifest.kind);
+          return Promise.reject("Unsupported kind: " + manifest.kind);
+      }
     })
 
     await Promise.all(promises)

@@ -19,6 +19,7 @@ export default function Editor({
   userData: User;
   sandboxData: Sandbox;
 }) {
+  console.log("userData", userData);
   const [isServerRunning, setIsServerRunning] = useState(false);
   const [didFail, setDidFail] = useState(false);
 

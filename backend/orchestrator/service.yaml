@@ -15,17 +15,17 @@ spec:
         app: <SANDBOX>
     spec:
       volumes:
-        - name: workspace-volume
+        - name: projects-volume
           emptyDir: {}
       containers:
-        - name: runner
+        - name: sandbox
           image: ishaan1013/sandbox:latest
           ports:
             - containerPort: 4000
-            - containerPort: 8000
+            - containerPort: 3000
           volumeMounts:
-            - name: workspace-volume
-              mountPath: /workspace
+            - name: projects-volume
+              mountPath: /projects
           resources:
             requests:
               cpu: "1"
@@ -53,14 +53,16 @@ spec:
       port: 4000
       targetPort: 4000
     - protocol: TCP
-      name: s
-      port: 8000
-      targetPort: 8000
+      name: user
+      port: 3000
+      targetPort: 3000
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: <SANDBOX>
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
 spec:
   ingressClassName: nginx
   rules:
@@ -83,4 +85,4 @@ spec:
               service:
                 name: <SANDBOX>
                 port:
-                  number: 8000
+                  number: 3000

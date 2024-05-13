@@ -22,6 +22,10 @@ const getSandboxData = async (id: string) => {
 };
 
 const getSharedUsers = async (usersToSandboxes: UsersToSandboxes[]) => {
+  if (!usersToSandboxes) {
+    return [];
+  }
+
   const shared = await Promise.all(
     usersToSandboxes.map(async (user) => {
       const userRes = await fetch(
