@@ -101,7 +101,9 @@ const dataSchema = z.object({
 const namespace = "ingress-nginx"
 
 app.post("/test", async (req, res) => {
-  res.status(200).send({ message: "Orchestrator is up and running." })
+  const pods = await coreV1Api.listNamespacedPod(namespace)
+  res.status(200).send({ pods: pods.body.items.map(item => item?.metadata?.generateName), message: "Orchestrator is up and running." })
+  // res.status(200).send({ message: "Orchestrator is up and running." })
 })
 
 app.post("/start", async (req, res) => {
