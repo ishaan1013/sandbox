@@ -27,7 +27,7 @@ dotenv.config()
 app.use(cors())
 
 const kubeconfig = new KubeConfig()
-if (process.env.NODE_ENV === "production") {
+if (process.env.NODE_ENV !== "deployment") {
   kubeconfig.loadFromOptions({
     clusters: [
       {
