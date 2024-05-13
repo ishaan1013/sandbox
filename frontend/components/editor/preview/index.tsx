@@ -4,10 +4,13 @@ import {
   ChevronLeft,
   ChevronRight,
   Globe,
+  Link,
   RotateCw,
   TerminalSquare,
   UnfoldVertical,
 } from "lucide-react";
+import { useRef } from "react";
+import { toast } from "sonner";
 
 export default function PreviewWindow({
   collapsed,
@@ -18,6 +21,8 @@ export default function PreviewWindow({
   open: () => void;
   sandboxId: string;
 }) {
+  const ref = useRef<HTMLIFrameElement>(null);
+
   return (
     <>
       <div
@@ -29,7 +34,7 @@ export default function PreviewWindow({
           <div className="text-xs">
             Preview
             <span className="inline-block ml-2 items-center font-mono text-muted-foreground">
-              localhost:8000
+              localhost:3000
             </span>
           </div>
           <div className="flex space-x-1 translate-x-1">
@@ -39,16 +44,28 @@ export default function PreviewWindow({
               </PreviewButton>
             ) : (
               <>
-                <PreviewButton onClick={() => console.log("Terminal")}>
+                {/* Todo, make this open inspector */}
+                <PreviewButton disabled onClick={() => {}}>
                   <TerminalSquare className="w-4 h-4" />
                 </PreviewButton>
-                <PreviewButton onClick={() => console.log("Back")}>
-                  <ChevronLeft className="w-4 h-4" />
+
+                <PreviewButton
+                  onClick={() => {
+                    navigator.clipboard.writeText(
+                      `http://${sandboxId}.sandbox.ishaand.com`
+                    );
+                    toast.info("Copied preview link to clipboard");
+                  }}
+                >
+                  <Link className="w-4 h-4" />
                 </PreviewButton>
-                <PreviewButton onClick={() => console.log("Forward")}>
-                  <ChevronRight className="w-4 h-4" />
-                </PreviewButton>
-                <PreviewButton onClick={() => console.log("Reload")}>
+                <PreviewButton
+                  onClick={() => {
+                    if (ref.current) {
+                      ref.current.contentWindow?.location.reload();
+                    }
+                  }}
+                >
                   <RotateCw className="w-3 h-3" />
                 </PreviewButton>
               </>
@@ -59,9 +76,10 @@ export default function PreviewWindow({
       {collapsed ? null : (
         <div className="w-full grow rounded-md overflow-hidden bg-foreground">
           <iframe
+            ref={ref}
             width={"100%"}
             height={"100%"}
-            src={`http://${sandboxId}.s.ishaand.com`}
+            src={`http://${sandboxId}.sandbox.ishaand.com`}
           />
         </div>
       )}
@@ -71,14 +89,18 @@ export default function PreviewWindow({
 
 function PreviewButton({
   children,
+  disabled = false,
   onClick,
 }: {
   children: React.ReactNode;
+  disabled?: boolean;
   onClick: () => void;
 }) {
   return (
     <div
-      className="p-0.5 h-5 w-5 ml-0.5 flex items-center justify-center transition-colors bg-transparent hover:bg-muted-foreground/25 cursor-pointer rounded-sm"
+      className={`${
+        disabled ? "pointer-events-none opacity-50" : ""
+      } p-0.5 h-5 w-5 ml-0.5 flex items-center justify-center transition-colors bg-transparent hover:bg-muted-foreground/25 cursor-pointer rounded-sm`}
       onClick={onClick}
     >
       {children}
