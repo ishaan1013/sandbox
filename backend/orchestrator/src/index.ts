@@ -19,8 +19,11 @@ app.use(express.json())
 dotenv.config()
 
 const corsOptions = {
-  origin: ['http://localhost:3000', 'https://s.ishaand.com', 'http://localhost:4000'],
+  origin: ['http://localhost:3000', 'https://s.ishaand.com', 'http://localhost:4000', /\.ws\.ishaand\.com$/],
 }
+
+// app.use(cors(corsOptions))
+app.use(cors())
 
 const kubeconfig = new KubeConfig()
 if (process.env.NODE_ENV === "production") {
@@ -110,24 +113,25 @@ const dataSchema = z.object({
   sandboxId: z.string(),
 })
 
-const namespace = "sandbox"
+const namespace = "ingress-nginx"
 
-app.get("/test", cors(), async (req, res) => {
+app.post("/test", async (req, res) => {
   res.status(200).send({ message: "Orchestrator is up and running." })
 })
 
-app.get("/test/cors", cors(corsOptions), async (req, res) => {
-  res.status(200).send({ message: "With CORS, Orchestrator is up and running." })
-})
-
-app.post("/start", cors(corsOptions), async (req, res) => {
+app.post("/start", async (req, res) => {
   const { sandboxId } = dataSchema.parse(req.body)
 
   try {
+
+    console.log("Creating resources for sandbox", sandboxId)
+    
     const kubeManifests = readAndParseKubeYaml(
       path.join(__dirname, "../service.yaml"),
       sandboxId
     )
+
+    console.log("Successfully read and parsed kube yaml")
 
     async function resourceExists(api: any, getMethod: string, name: string) {
       try {
@@ -139,44 +143,57 @@ app.post("/start", cors(corsOptions), async (req, res) => {
       }
     }
 
-    kubeManifests.forEach(async (manifest) => {
+    const promises = kubeManifests.map(async (manifest) => {
       const { kind, metadata: { name } } = manifest
 
       if (kind === "Deployment")
         if (!(await resourceExists(appsV1Api, 'readNamespacedDeployment', name))) {
           await appsV1Api.createNamespacedDeployment(namespace, manifest)
+          console.log("Made deploymnet")
         } else {
           return res.status(200).send({ message: "Resource deployment already exists." })
         }
       else if (kind === "Service")
         if (!(await resourceExists(coreV1Api, 'readNamespacedService', name))) {
           await coreV1Api.createNamespacedService(namespace, manifest)
+          console.log("Made service")
         } else {
           return res.status(200).send({ message: "Resource service already exists." })
         }
       else if (kind === "Ingress")
         if (!(await resourceExists(networkingV1Api, 'readNamespacedIngress', name))) {
           await networkingV1Api.createNamespacedIngress(namespace, manifest)
+          console.log("Made ingress")
         } else {
           return res.status(200).send({ message: "Resource ingress already exists." })
         }
     })
+
+    await Promise.all(promises)
+
+    console.log("All done!")
     res.status(200).send({ message: "Resources created." })
-  } catch (error) {
-    console.log("Failed to create resources", error)
+  } catch (error: any) {
+    const body = error.response.body
+    console.log("Failed to create resources", body)
+
+    if (body.code === 409) {
+      return res.status(200).send({ message: "Resource already exists." })
+    }
     res.status(500).send({ message: "Failed to create resources." })
   }
 })
 
-app.post("/stop", cors(corsOptions), async (req, res) => {
+app.post("/stop", async (req, res) => {
   const { sandboxId } = dataSchema.parse(req.body)
+  console.log("Deleting resources for sandbox", sandboxId)
 
   try {
     const kubeManifests = readAndParseKubeYaml(
       path.join(__dirname, "../service.yaml"),
       sandboxId
     )
-    kubeManifests.forEach(async (manifest) => {
+    const promises = kubeManifests.map(async (manifest) => {
       if (manifest.kind === "Deployment")
         await appsV1Api.deleteNamespacedDeployment(
           manifest.metadata?.name || "",
@@ -193,6 +210,9 @@ app.post("/stop", cors(corsOptions), async (req, res) => {
           namespace
         )
     })
+
+    await Promise.all(promises)
+    
     res.status(200).send({ message: "Resources deleted." })
   } catch (error) {
     console.log("Failed to delete resources", error)

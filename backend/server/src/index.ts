@@ -435,15 +435,16 @@ io.on("connection", async (socket) => {
       clearTimeout(inactivityTimeout)
     };
     if (sockets.length === 0) {
+      console.log("STARTING TIMER")
       inactivityTimeout = setTimeout(() => {
-        io.fetchSockets().then(sockets => {
+        io.fetchSockets().then(async (sockets) => {
           if (sockets.length === 0) {
             // close server
             console.log("Closing server due to inactivity.");
-            stopServer(data.sandboxId, data.userId)
+            // const res = await stopServer(data.sandboxId, data.userId)
           }
       });
-      }, 60000);
+      }, 20000);
     }
 
   })

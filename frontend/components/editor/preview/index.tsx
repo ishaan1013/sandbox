@@ -12,9 +12,11 @@ import {
 export default function PreviewWindow({
   collapsed,
   open,
+  sandboxId,
 }: {
   collapsed: boolean;
   open: () => void;
+  sandboxId: string;
 }) {
   return (
     <>
@@ -55,7 +57,13 @@ export default function PreviewWindow({
         </div>
       </div>
       {collapsed ? null : (
-        <div className="w-full grow rounded-md bg-foreground"></div>
+        <div className="w-full grow rounded-md overflow-hidden bg-foreground">
+          <iframe
+            width={"100%"}
+            height={"100%"}
+            src={`http://${sandboxId}.s.ishaand.com`}
+          />
+        </div>
       )}
     </>
   );

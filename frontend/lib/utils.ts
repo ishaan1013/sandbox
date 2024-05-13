@@ -3,6 +3,7 @@ import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { Sandbox, TFile, TFolder } from "./types"
 
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
@@ -51,7 +52,7 @@ export function addNew(name: string, type: "file" | "folder", setFiles: React.Di
 
 export async function startServer(sandboxId: string, userId: string, callback: (success: boolean) => void) {
   try {
-    await fetch("http://localhost:4001/start", {
+    const res = await fetch("http://localhost:4001/start", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -62,6 +63,11 @@ export async function startServer(sandboxId: string, userId: string, callback: (
       }),
     })
 
+    if (res.status !== 200) {
+      console.error("Failed to start server", res)
+      callback(false)
+    }
+
     callback(true)
     
   } catch (error) {
@@ -70,4 +76,17 @@ export async function startServer(sandboxId: string, userId: string, callback: (
     callback(false)
   }
 
+}
+
+export const stopServer = async (sandboxId: string, userId: string) => {
+  const res = await fetch("http://localhost:4001/stop", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      sandboxId,
+      userId
+    }),
+  })
 }

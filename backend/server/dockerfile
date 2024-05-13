@@ -1,7 +1,9 @@
-ARG CF_API_TOKEN
-ARG CF_USER_ID
-
 FROM node:20
+
+# Security: Drop all capabilities
+USER root
+RUN apt-get update && apt-get install -y libcap2-bin
+RUN setcap cap_net_bind_service=+ep /usr/local/bin/node
 
 WORKDIR /code
 
@@ -13,8 +15,15 @@ COPY . .
 
 RUN npm run build
 
+# Security: Create non-root user and assign ownership
+RUN useradd -m myuser
+RUN mkdir projects && chown -R myuser:myuser projects
+USER myuser
+
 EXPOSE 3000
 
+ARG CF_API_TOKEN
+ARG CF_USER_ID
 ENV CF_API_TOKEN=$CF_API_TOKEN
 ENV CF_USER_ID=$CF_USER_ID
 

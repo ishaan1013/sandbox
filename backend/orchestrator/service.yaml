@@ -22,7 +22,7 @@ spec:
           image: ishaan1013/sandbox:latest
           ports:
             - containerPort: 4000
-            - containerPort: 3000
+            - containerPort: 8000
           volumeMounts:
             - name: workspace-volume
               mountPath: /workspace
@@ -54,8 +54,8 @@ spec:
       targetPort: 4000
     - protocol: TCP
       name: user
-      port: 3000
-      targetPort: 3000
+      port: 8000
+      targetPort: 8000
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -83,4 +83,4 @@ spec:
               service:
                 name: <SANDBOX>
                 port:
-                  number: 3000
+                  number: 8000

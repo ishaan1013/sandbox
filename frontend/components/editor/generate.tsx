@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
-import { useEffect, useRef, useState } from "react"
-import { Button } from "../ui/button"
-import { Check, Loader2, RotateCw, Sparkles, X } from "lucide-react"
-import { Socket } from "socket.io-client"
-import { Editor } from "@monaco-editor/react"
-import { User } from "@/lib/types"
-import { toast } from "sonner"
-import { usePathname, useRouter } from "next/navigation"
+import { useEffect, useRef, useState } from "react";
+import { Button } from "../ui/button";
+import { Check, Loader2, RotateCw, Sparkles, X } from "lucide-react";
+import { Socket } from "socket.io-client";
+import { Editor } from "@monaco-editor/react";
+import { User } from "@/lib/types";
+import { toast } from "sonner";
+import { usePathname, useRouter } from "next/navigation";
 // import monaco from "monaco-editor"
 
 export default function GenerateInput({
@@ -19,52 +19,52 @@ export default function GenerateInput({
   onExpand,
   onAccept,
 }: {
-  user: User
-  socket: Socket
-  width: number
+  user: User;
+  socket: Socket;
+  width: number;
   data: {
-    fileName: string
-    code: string
-    line: number
-  }
+    fileName: string;
+    code: string;
+    line: number;
+  };
   editor: {
-    language: string
-  }
-  onExpand: () => void
-  onAccept: (code: string) => void
+    language: string;
+  };
+  onExpand: () => void;
+  onAccept: (code: string) => void;
 }) {
-  const pathname = usePathname()
-  const router = useRouter()
-  const inputRef = useRef<HTMLInputElement>(null)
+  const pathname = usePathname();
+  const router = useRouter();
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const [code, setCode] = useState("")
-  const [expanded, setExpanded] = useState(false)
+  const [code, setCode] = useState("");
+  const [expanded, setExpanded] = useState(false);
   const [loading, setLoading] = useState({
     generate: false,
     regenerate: false,
-  })
-  const [input, setInput] = useState("")
-  const [currentPrompt, setCurrentPrompt] = useState("")
+  });
+  const [input, setInput] = useState("");
+  const [currentPrompt, setCurrentPrompt] = useState("");
 
   useEffect(() => {
     setTimeout(() => {
-      inputRef.current?.focus()
-    }, 0)
-  }, [])
+      inputRef.current?.focus();
+    }, 0);
+  }, []);
 
   const handleGenerate = async ({
     regenerate = false,
   }: {
-    regenerate?: boolean
+    regenerate?: boolean;
   }) => {
     if (user.generations >= 30) {
       toast.error(
         "You reached the maximum # of generations. Contact @ishaandey_ on X/Twitter to reset :)"
-      )
+      );
     }
 
-    setLoading({ generate: !regenerate, regenerate })
-    setCurrentPrompt(input)
+    setLoading({ generate: !regenerate, regenerate });
+    setCurrentPrompt(input);
     socket.emit(
       "generateCode",
       data.fileName,
@@ -73,30 +73,30 @@ export default function GenerateInput({
       regenerate ? currentPrompt : input,
       (res: {
         result: {
-          response: string
-        }
-        success: boolean
-        errors: any[]
-        messages: any[]
+          response: string;
+        };
+        success: boolean;
+        errors: any[];
+        messages: any[];
       }) => {
         if (!res.success) {
-          console.error(res.errors)
-          return
+          console.error(res.errors);
+          return;
         }
 
-        setCode(res.result.response)
-        router.refresh()
+        setCode(res.result.response);
+        router.refresh();
       }
-    )
-  }
+    );
+  };
 
   useEffect(() => {
     if (code) {
-      setExpanded(true)
-      onExpand()
-      setLoading({ generate: false, regenerate: false })
+      setExpanded(true);
+      onExpand();
+      setLoading({ generate: false, regenerate: false });
     }
-  }, [code])
+  }, [code]);
 
   return (
     <div className="w-full pr-4 space-y-2">
@@ -187,5 +187,5 @@ export default function GenerateInput({
         </>
       ) : null}
     </div>
-  )
+  );
 }

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import monaco from "monaco-editor";
 import Editor, { BeforeMount, OnMount } from "@monaco-editor/react";
-import { io } from "socket.io-client";
+import { Socket, io } from "socket.io-client";
 import { toast } from "sonner";
 import { useClerk } from "@clerk/nextjs";
 
@@ -40,12 +40,12 @@ export default function CodeEditor({
   sandboxData: Sandbox;
 }) {
   const socket = io(
-    `http://localhost:4000?userId=${userData.id}&sandboxId=${sandboxData.id}`
+    `ws://${sandboxData.id}.ws.ishaand.com?userId=${userData.id}&sandboxId=${sandboxData.id}`
+    // `http://localhost:4000?userId=${userData.id}&sandboxId=${sandboxData.id}`
   );
 
-  const [isPreviewCollapsed, setIsPreviewCollapsed] = useState(
-    sandboxData.type !== "react"
-  );
+  const [isAwaitingConnection, setIsAwaitingConnection] = useState(true);
+  const [isPreviewCollapsed, setIsPreviewCollapsed] = useState(true);
   const [disableAccess, setDisableAccess] = useState({
     isDisabled: false,
     message: "",
@@ -364,7 +364,9 @@ export default function CodeEditor({
 
   // Socket event listener effect
   useEffect(() => {
-    const onConnect = () => {};
+    const onConnect = () => {
+      setIsAwaitingConnection(false);
+    };
 
     const onDisconnect = () => {
       setTerminals([]);
@@ -537,6 +539,14 @@ export default function CodeEditor({
       setDeletingFolderId("");
     }, 3000);
   };
+
+  if (isAwaitingConnection)
+    return (
+      <Loading
+        text="Connecting to server..."
+        description="This could take a few minutes if the backend needs to scale resources for your cloud code editing environment. Please check back soon."
+      />
+    );
 
   // On disabled access for shared users, show un-interactable loading placeholder + info modal
   if (disableAccess.isDisabled)
@@ -727,6 +737,7 @@ export default function CodeEditor({
                   previewPanelRef.current?.expand();
                   setIsPreviewCollapsed(false);
                 }}
+                sandboxId={sandboxData.id}
               />
             </ResizablePanel>
             <ResizableHandle />

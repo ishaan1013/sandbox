@@ -1,23 +1,58 @@
 import Image from "next/image";
 import Logo from "@/assets/logo.svg";
-import { Skeleton } from "../ui/skeleton";
-import { Loader, Loader2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Loader2, X } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useEffect, useState } from "react";
 
 export default function Loading({
+  didFail = false,
   withNav = false,
   text = "",
+  description = "",
 }: {
+  didFail?: boolean;
   withNav?: boolean;
   text?: string;
+  description?: string;
 }) {
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (text) {
+      setOpen(true);
+    }
+  }, [text]);
+
   return (
     <div className="overflow-hidden overscroll-none w-screen flex flex-col justify-center items-center z-0 h-screen bg-background relative">
-      {text ? (
-        <div className="text-lg font-medium flex items-center z-50 shadow-xl shadow-red-500">
-          <Loader2 className="h-5 w-5 animate-spin mr-2" />
-          {text}
-        </div>
-      ) : null}
+      <Dialog open={open}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {didFail ? (
+                <>
+                  <X className="h-4 w-4 mr-2 text-destructive" /> Failed to
+                  create resources.
+                </>
+              ) : (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" /> {text}
+                </>
+              )}
+            </DialogTitle>
+            {description ? (
+              <DialogDescription>{description}</DialogDescription>
+            ) : null}
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
 
       {withNav ? (
         <div className="h-14 px-2 w-full flex items-center justify-between border-b border-border">

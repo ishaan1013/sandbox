@@ -38,7 +38,7 @@ next-env.d.ts
 
 wrangler.toml
 
-backend/server/dist
+dist
 backend/server/projects
 backend/database/drizzle
 
