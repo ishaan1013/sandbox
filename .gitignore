@@ -43,3 +43,4 @@ backend/server/projects
 backend/database/drizzle
 
 app.yaml
+ingressController.yaml

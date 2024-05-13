@@ -30,24 +30,14 @@ if (process.env.NODE_ENV === "production") {
   kubeconfig.loadFromOptions({
     clusters: [
       {
-        name: 'docker-desktop',
-        server: process.env.DOCKER_DESKTOP_SERVER!,
-        caData: process.env.DOCKER_DESKTOP_CA_DATA,
-      },
-      {
-        name: 'gke_sylvan-epoch-422219-f9_us-central1_sandbox',
+        name: 'gke_sylvan-epoch-422219-f9_us-central1_sandbox-cluster',
         server: process.env.GKE_CLUSTER_SERVER!,
         caData: process.env.GKE_CLUSTER_CA_DATA, 
       }
     ],
     users: [
       {
-        name: 'docker-desktop',
-        certData: process.env.DOCKER_DESKTOP_CLIENT_CERTIFICATE_DATA,
-        keyData: process.env.DOCKER_DESKTOP_CLIENT_KEY_DATA,
-      },
-      {
-        name: 'gke_sylvan-epoch-422219-f9_us-central1_sandbox',
+        name: 'gke_sylvan-epoch-422219-f9_us-central1_sandbox-cluster',
         exec: {
           apiVersion: 'client.authentication.k8s.io/v1beta1',
           command: 'gke-gcloud-auth-plugin',
@@ -76,8 +66,8 @@ if (process.env.NODE_ENV === "production") {
 }
 kubeconfig.loadFromDefault()
 
-const coreV1Api = kubeconfig.makeApiClient(CoreV1Api)
 const appsV1Api = kubeconfig.makeApiClient(AppsV1Api)
+const coreV1Api = kubeconfig.makeApiClient(CoreV1Api)
 const networkingV1Api = kubeconfig.makeApiClient(NetworkingV1Api)
 
 const readAndParseKubeYaml = (
@@ -131,14 +121,15 @@ app.post("/start", async (req, res) => {
       sandboxId
     )
 
-    console.log("Successfully read and parsed kube yaml")
-
     async function resourceExists(api: any, getMethod: string, name: string) {
       try {
-        await api[getMethod](namespace, name)
+        await api[getMethod](name, namespace)
         return true
       } catch (e: any) {
-        if (e.response && e.response.statusCode === 404) return false
+        if (e.response && e.response.statusCode === 404) {
+          console.log("Resource does not exist.", e.response.body.message, e.response.body.details)
+          return false
+        }
         throw e
       }
     }
@@ -150,22 +141,16 @@ app.post("/start", async (req, res) => {
         if (!(await resourceExists(appsV1Api, 'readNamespacedDeployment', name))) {
           await appsV1Api.createNamespacedDeployment(namespace, manifest)
           console.log("Made deploymnet")
-        } else {
-          return res.status(200).send({ message: "Resource deployment already exists." })
         }
       else if (kind === "Service")
         if (!(await resourceExists(coreV1Api, 'readNamespacedService', name))) {
           await coreV1Api.createNamespacedService(namespace, manifest)
           console.log("Made service")
-        } else {
-          return res.status(200).send({ message: "Resource service already exists." })
         }
       else if (kind === "Ingress")
         if (!(await resourceExists(networkingV1Api, 'readNamespacedIngress', name))) {
           await networkingV1Api.createNamespacedIngress(namespace, manifest)
           console.log("Made ingress")
-        } else {
-          return res.status(200).send({ message: "Resource ingress already exists." })
         }
     })
 

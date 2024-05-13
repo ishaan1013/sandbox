@@ -29,7 +29,7 @@ export default function PreviewWindow({
           <div className="text-xs">
             Preview
             <span className="inline-block ml-2 items-center font-mono text-muted-foreground">
-              localhost:3000
+              localhost:8000
             </span>
           </div>
           <div className="flex space-x-1 translate-x-1">

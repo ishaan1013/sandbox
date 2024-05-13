@@ -441,7 +441,7 @@ io.on("connection", async (socket) => {
           if (sockets.length === 0) {
             // close server
             console.log("Closing server due to inactivity.");
-            // const res = await stopServer(data.sandboxId, data.userId)
+            const res = await stopServer(data.sandboxId, data.userId)
           }
       });
       }, 20000);

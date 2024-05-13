@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import Loading from "@/components/editor/loading";
 import { Sandbox, User } from "@/lib/types";
 import { useEffect, useState } from "react";
-import { startServer, stopServer } from "@/lib/utils";
+import { startServer } from "@/lib/utils";
 import { toast } from "sonner";
 
 const CodeEditor = dynamic(() => import("@/components/editor/editor"), {
@@ -32,9 +32,9 @@ export default function Editor({
       }
     });
 
-    return () => {
-      stopServer(sandboxData.id, userData.id);
-    };
+    // return () => {
+    //   stopServer(sandboxData.id, userData.id);
+    // };
   }, []);
 
   if (!isServerRunning)

@@ -15,5 +15,6 @@
 
 # Node.js dependencies:
 node_modules/
-
 .env
+
+ingressController.yaml
