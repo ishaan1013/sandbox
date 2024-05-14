@@ -104,16 +104,7 @@ export default function CodeEditor({
   const generateRef = useRef<HTMLDivElement>(null);
   const generateWidgetRef = useRef<HTMLDivElement>(null);
   const previewPanelRef = useRef<ImperativePanelHandle>(null);
-
-  // Resize observer tracks editor width for generate widget
-  const resizeObserver = new ResizeObserver((entries) => {
-    for (const entry of entries) {
-      const { width } = entry.contentRect;
-      setGenerate((prev) => {
-        return { ...prev, width };
-      });
-    }
-  });
+  const editorPanelRef = useRef<ImperativePanelHandle>(null);
 
   // Pre-mount editor keybindings
   const handleEditorWillMount: BeforeMount = (monaco) => {
@@ -230,8 +221,17 @@ export default function CodeEditor({
         },
       };
 
+      // window width - sidebar width, times the percentage of the editor panel
+      const width = editorPanelRef.current
+        ? (editorPanelRef.current.getSize() / 100) * (window.innerWidth - 224)
+        : 400; //fallback
+
       setGenerate((prev) => {
-        return { ...prev, widget: contentWidget };
+        return {
+          ...prev,
+          widget: contentWidget,
+          width,
+        };
       });
       editorRef?.addContentWidget(contentWidget);
 
@@ -348,17 +348,12 @@ export default function CodeEditor({
     };
   }, [editorRef, room, activeFileContent]);
 
-  // Connection/disconnection effect + resizeobserver
+  // Connection/disconnection effect
   useEffect(() => {
     socket.connect();
 
-    if (editorContainerRef.current) {
-      resizeObserver.observe(editorContainerRef.current);
-    }
-
     return () => {
       socket.disconnect();
-      resizeObserver.disconnect();
     };
   }, []);
 
@@ -637,6 +632,7 @@ export default function CodeEditor({
           maxSize={80}
           minSize={30}
           defaultSize={60}
+          ref={editorPanelRef}
         >
           <div className="h-10 w-full flex gap-2 overflow-auto tab-scroll">
             {/* File tabs */}
