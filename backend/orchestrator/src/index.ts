@@ -27,7 +27,7 @@ dotenv.config()
 app.use(cors())
 
 const kubeconfig = new KubeConfig()
-// if (process.env.NODE_ENV !== "deployment") {
+if (process.env.NODE_ENV !== "deployment") {
   kubeconfig.loadFromOptions({
     clusters: [
       {
@@ -57,8 +57,8 @@ const kubeconfig = new KubeConfig()
     ],
     currentContext: "gke_sylvan-epoch-422219-f9_us-central1_sandbox-cluster"
   });
-// }
-// kubeconfig.loadFromDefault()
+}
+kubeconfig.loadFromDefault()
 
 const appsV1Api = kubeconfig.makeApiClient(AppsV1Api)
 const coreV1Api = kubeconfig.makeApiClient(CoreV1Api)
