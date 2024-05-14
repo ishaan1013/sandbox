@@ -604,6 +604,14 @@ export default function CodeEditor({
               const updatedFile = lines.join("\n");
               editorRef?.setValue(updatedFile);
             }}
+            onClose={() => {
+              setGenerate((prev) => {
+                return {
+                  ...prev,
+                  show: !prev.show,
+                };
+              });
+            }}
           />
         ) : null}
       </div>

@@ -18,6 +18,7 @@ export default function GenerateInput({
   editor,
   onExpand,
   onAccept,
+  onClose,
 }: {
   user: User;
   socket: Socket;
@@ -32,6 +33,7 @@ export default function GenerateInput({
   };
   onExpand: () => void;
   onAccept: (code: string) => void;
+  onClose: () => void;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -61,6 +63,7 @@ export default function GenerateInput({
       toast.error(
         "You reached the maximum # of generations. Contact @ishaandey_ on X/Twitter to reset :)"
       );
+      return;
     }
 
     setLoading({ generate: !regenerate, regenerate });
@@ -72,10 +75,11 @@ export default function GenerateInput({
       data.line,
       regenerate ? currentPrompt : input,
       (res: { response: string; success: boolean }) => {
-        if (!res.success) {
-          toast.error("Failed to generate code.");
-          return;
-        }
+        console.log("Generated code", res.response, res.success);
+        // if (!res.success) {
+        //   toast.error("Failed to generate code.");
+        //   return;
+        // }
 
         setCode(res.response);
         router.refresh();
@@ -121,6 +125,14 @@ export default function GenerateInput({
               Generate Code
             </>
           )}
+        </Button>
+        <Button
+          onClick={onClose}
+          variant="outline"
+          size="smIcon"
+          className="bg-transparent shrink-0 border-muted-foreground"
+        >
+          <X className="h-3 w-3" />
         </Button>
       </div>
       {expanded ? (
