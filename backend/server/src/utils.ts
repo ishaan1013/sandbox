@@ -1,4 +1,4 @@
-import e from "cors"
+import e from "cors";
 import {
   R2FileBody,
   R2Files,
@@ -7,55 +7,55 @@ import {
   TFileData,
   TFolder,
   User,
-} from "./types"
+} from "./types";
 
 export const getSandboxFiles = async (id: string) => {
   const res = await fetch(
     `https://storage.ishaan1013.workers.dev/api?sandboxId=${id}`
-  )
-  const data: R2Files = await res.json()
+  );
+  const data: R2Files = await res.json();
 
-  const paths = data.objects.map((obj) => obj.key)
-  const processedFiles = await processFiles(paths, id)
-  return processedFiles
-}
+  const paths = data.objects.map((obj) => obj.key);
+  const processedFiles = await processFiles(paths, id);
+  return processedFiles;
+};
 
 export const getFolder = async (folderId: string) => {
   const res = await fetch(
     `https://storage.ishaan1013.workers.dev/api?folderId=${folderId}`
-  )
-  const data: R2Files = await res.json()
+  );
+  const data: R2Files = await res.json();
 
-  return data.objects.map((obj) => obj.key)
-}
+  return data.objects.map((obj) => obj.key);
+};
 
 const processFiles = async (paths: string[], id: string) => {
-  const root: TFolder = { id: "/", type: "folder", name: "/", children: [] }
-  const fileData: TFileData[] = []
+  const root: TFolder = { id: "/", type: "folder", name: "/", children: [] };
+  const fileData: TFileData[] = [];
 
   paths.forEach((path) => {
-    const allParts = path.split("/")
+    const allParts = path.split("/");
     if (allParts[1] !== id) {
-      return
+      return;
     }
 
-    const parts = allParts.slice(2)
-    let current: TFolder = root
+    const parts = allParts.slice(2);
+    let current: TFolder = root;
 
     for (let i = 0; i < parts.length; i++) {
-      const part = parts[i]
-      const isFile = i === parts.length - 1 && part.includes(".")
-      const existing = current.children.find((child) => child.name === part)
+      const part = parts[i];
+      const isFile = i === parts.length - 1 && part.includes(".");
+      const existing = current.children.find((child) => child.name === part);
 
       if (existing) {
         if (!isFile) {
-          current = existing as TFolder
+          current = existing as TFolder;
         }
       } else {
         if (isFile) {
-          const file: TFile = { id: path, type: "file", name: part }
-          current.children.push(file)
-          fileData.push({ id: path, data: "" })
+          const file: TFile = { id: path, type: "file", name: part };
+          current.children.push(file);
+          fileData.push({ id: path, data: "" });
         } else {
           const folder: TFolder = {
             // id: path, // todo: wrong id. for example, folder "src" ID is: projects/a7vgttfqbgy403ratp7du3ln/src/App.css
@@ -63,38 +63,38 @@ const processFiles = async (paths: string[], id: string) => {
             type: "folder",
             name: part,
             children: [],
-          }
-          current.children.push(folder)
-          current = folder
+          };
+          current.children.push(folder);
+          current = folder;
         }
       }
     }
-  })
+  });
 
   await Promise.all(
     fileData.map(async (file) => {
-      const data = await fetchFileContent(file.id)
-      file.data = data
+      const data = await fetchFileContent(file.id);
+      file.data = data;
     })
-  )
+  );
 
   return {
     files: root.children,
     fileData,
-  }
-}
+  };
+};
 
 const fetchFileContent = async (fileId: string): Promise<string> => {
   try {
     const fileRes = await fetch(
       `https://storage.ishaan1013.workers.dev/api?fileId=${fileId}`
-    )
-    return await fileRes.text()
+    );
+    return await fileRes.text();
   } catch (error) {
-    console.error("ERROR fetching file:", error)
-    return ""
+    console.error("ERROR fetching file:", error);
+    return "";
   }
-}
+};
 
 export const createFile = async (fileId: string) => {
   const res = await fetch(`https://storage.ishaan1013.workers.dev/api`, {
@@ -103,9 +103,9 @@ export const createFile = async (fileId: string) => {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ fileId }),
-  })
-  return res.ok
-}
+  });
+  return res.ok;
+};
 
 export const renameFile = async (
   fileId: string,
@@ -118,9 +118,9 @@ export const renameFile = async (
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ fileId, newFileId, data }),
-  })
-  return res.ok
-}
+  });
+  return res.ok;
+};
 
 export const saveFile = async (fileId: string, data: string) => {
   const res = await fetch(`https://storage.ishaan1013.workers.dev/api/save`, {
@@ -129,9 +129,9 @@ export const saveFile = async (fileId: string, data: string) => {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ fileId, data }),
-  })
-  return res.ok
-}
+  });
+  return res.ok;
+};
 
 export const deleteFile = async (fileId: string) => {
   const res = await fetch(`https://storage.ishaan1013.workers.dev/api`, {
@@ -140,16 +140,16 @@ export const deleteFile = async (fileId: string) => {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ fileId }),
-  })
-  return res.ok
-}
+  });
+  return res.ok;
+};
 
 export const getProjectSize = async (id: string) => {
   const res = await fetch(
     `https://storage.ishaan1013.workers.dev/api/size?sandboxId=${id}`
-  )
-  return (await res.json()).size
-}
+  );
+  return (await res.json()).size;
+};
 
 export const generateCode = async ({
   fileName,
@@ -157,10 +157,10 @@ export const generateCode = async ({
   line,
   instructions,
 }: {
-  fileName: string
-  code: string
-  line: number
-  instructions: string
+  fileName: string;
+  code: string;
+  line: number;
+  instructions: string;
 }) => {
   return await fetch(
     `https://api.cloudflare.com/client/v4/accounts/${process.env.CF_USER_ID}/ai/run/@cf/meta/llama-3-8b-instruct`,
@@ -194,21 +194,21 @@ ${code}`,
         ],
       }),
     }
-  )
-}
+  );
+};
 
 export const stopServer = async (sandboxId: string, userId: string) => {
-  const res = await fetch("https://sylvan-epoch-422219-f9.uc.r.appspot.com/stop", {
+  const res = await fetch("http://localhost:4001/stop", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
       sandboxId,
-      userId
+      userId,
     }),
-  })
-  const data = await res.json()
+  });
+  const data = await res.json();
 
-  return data
-}
+  return data;
+};
