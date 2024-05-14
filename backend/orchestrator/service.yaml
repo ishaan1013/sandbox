@@ -34,10 +34,8 @@ spec:
               cpu: "1"
               memory: "1Gi"
             env:
-              - name: CF_API_TOKEN
-                value: <CF_API_TOKEN>
-              - name: CF_USER_ID
-                value: <CF_USER_ID>
+              - name: CF_AI_KEY
+                value: <CF_AI_KEY>
 
 ---
 apiVersion: v1

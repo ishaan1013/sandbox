@@ -72,17 +72,11 @@ const readAndParseKubeYaml = (
     const regex = new RegExp(`<SANDBOX>`, "g");
     docString = docString.replace(regex, sandboxId);
 
-    if (!process.env.CF_API_TOKEN) {
-      throw new Error("CF_API_TOKEN is not defined");
+    if (!process.env.CF_AI_KEY) {
+      throw new Error("CF_AI_KEY is not defined");
     }
-    const regexEnv1 = new RegExp(`<CF_API_TOKEN>`, "g");
-    docString = docString.replace(regexEnv1, process.env.CF_API_TOKEN);
-
-    if (!process.env.CF_USER_ID) {
-      throw new Error("CF_USER_ID is not defined");
-    }
-    const regexEnv2 = new RegExp(`<CF_USER_ID>`, "g");
-    docString = docString.replace(regexEnv2, process.env.CF_USER_ID);
+    const regexEnv = new RegExp(`<CF_AI_KEY>`, "g");
+    docString = docString.replace(regexEnv, process.env.CF_AI_KEY);
 
     return yaml.parse(docString);
   });
