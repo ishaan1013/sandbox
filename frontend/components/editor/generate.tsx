@@ -71,20 +71,13 @@ export default function GenerateInput({
       data.code,
       data.line,
       regenerate ? currentPrompt : input,
-      (res: {
-        result: {
-          response: string;
-        };
-        success: boolean;
-        errors: any[];
-        messages: any[];
-      }) => {
+      (res: { response: string; success: boolean }) => {
         if (!res.success) {
-          console.error(res.errors);
+          toast.error("Failed to generate code.");
           return;
         }
 
-        setCode(res.result.response);
+        setCode(res.response);
         router.refresh();
       }
     );

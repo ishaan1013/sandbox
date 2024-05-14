@@ -22,7 +22,4 @@ USER myuser
 
 EXPOSE 3000
 
-ARG CF_AI_KEY
-ENV CF_AI_KEY=$CF_AI_KEY
-
 CMD [ "node", "dist/index.js" ]

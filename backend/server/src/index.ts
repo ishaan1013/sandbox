@@ -404,8 +404,6 @@ io.on("connection", async (socket) => {
         }
       );
 
-      console.log("CF_AI_KEY", process.env.CF_AI_KEY);
-
       // Generate code from cloudflare workers AI
       const generateCodePromise = fetch(
         `https://ai.ishaan1013.workers.dev/api?fileName=${fileName}&code=${code}&line=${line}&instructions=${instructions}`,
@@ -423,7 +421,9 @@ io.on("connection", async (socket) => {
       ]);
 
       const json = await generateCodeResponse.json();
-      callback(json);
+
+      console.log("Code generation response", json);
+      callback({ response: json.response, success: true });
     }
   );
 

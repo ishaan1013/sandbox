@@ -75,6 +75,7 @@ const readAndParseKubeYaml = (
     if (!process.env.CF_AI_KEY) {
       throw new Error("CF_AI_KEY is not defined");
     }
+
     const regexEnv = new RegExp(`<CF_AI_KEY>`, "g");
     docString = docString.replace(regexEnv, process.env.CF_AI_KEY);
 
