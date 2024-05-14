@@ -151,28 +151,6 @@ export const getProjectSize = async (id: string) => {
   return (await res.json()).size;
 };
 
-export const generateCode = async ({
-  fileName,
-  code,
-  line,
-  instructions,
-}: {
-  fileName: string;
-  code: string;
-  line: number;
-  instructions: string;
-}) => {
-  return await fetch(
-    `https://ai.ishaan1013.workers.dev/api?fileName=${fileName}&code=${code}&line=${line}&instructions=${instructions}`,
-    {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `${process.env.CF_AI_KEY}`,
-      },
-    }
-  );
-};
-
 export const stopServer = async (sandboxId: string, userId: string) => {
   const res = await fetch("http://localhost:4001/stop", {
     method: "POST",

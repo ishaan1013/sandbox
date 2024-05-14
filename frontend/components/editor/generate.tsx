@@ -49,8 +49,8 @@ export default function GenerateInput({
   useEffect(() => {
     setTimeout(() => {
       inputRef.current?.focus();
-    }, 0);
-  }, []);
+    }, 100);
+  }, [inputRef.current]);
 
   const handleGenerate = async ({
     regenerate = false,
