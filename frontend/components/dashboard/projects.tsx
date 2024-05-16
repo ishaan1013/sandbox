@@ -10,6 +10,18 @@ import { Card } from "../ui/card";
 import { deleteSandbox, updateSandbox } from "@/lib/actions";
 import { toast } from "sonner";
 import { useState } from "react";
+import { CanvasRevealEffect } from "./projectCard/revealEffect";
+
+const colors = {
+  react: [
+    [71, 207, 237],
+    [30, 126, 148],
+  ],
+  node: [
+    [86, 184, 72],
+    [59, 112, 52],
+  ],
+};
 
 export default function DashboardProjects({
   sandboxes,
@@ -18,6 +30,7 @@ export default function DashboardProjects({
   sandboxes: Sandbox[];
   q: string | null;
 }) {
+  const [focusedId, setFocusedId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string>("");
 
   const onDelete = async (sandbox: Sandbox) => {
@@ -58,52 +71,26 @@ export default function DashboardProjects({
                 <Link
                   key={sandbox.id}
                   href={`/code/${sandbox.id}`}
+                  onFocus={() => setFocusedId(sandbox.id)}
                   className={`${
                     deletingId === sandbox.id
                       ? "pointer-events-none opacity-50"
                       : ""
                   } cursor-pointer transition-all focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:ring-2 focus-visible:ring-ring rounded-lg`}
                 >
-                  <Card className="p-4 h-48 flex flex-col justify-between items-start hover:border-foreground transition-all">
-                    {/* <ProjectCard key={sandbox.id} id={sandbox.id}> */}
-                    <div className="space-x-2 flex items-center justify-start w-full">
-                      <Image
-                        alt=""
-                        src={
-                          sandbox.type === "react"
-                            ? "/project-icons/react.svg"
-                            : "/project-icons/node.svg"
-                        }
-                        width={20}
-                        height={20}
-                      />
-                      <div className="font-medium static whitespace-nowrap w-full text-ellipsis overflow-hidden">
-                        {sandbox.name}
-                      </div>
-                      <ProjectCardDropdown
-                        sandbox={sandbox}
-                        onVisibilityChange={onVisibilityChange}
-                        onDelete={onDelete}
-                      />
-                    </div>
-                    <div className="flex flex-col text-muted-foreground space-y-0.5 text-sm">
-                      <div className="flex items-center">
-                        {sandbox.visibility === "private" ? (
-                          <>
-                            <Lock className="w-3 h-3 mr-2" /> Private
-                          </>
-                        ) : (
-                          <>
-                            <Globe className="w-3 h-3 mr-2" /> Public
-                          </>
-                        )}
-                      </div>
-                      <div className="flex items-center">
-                        <Clock className="w-3 h-3 mr-2" /> 3d ago
-                      </div>
-                    </div>
-                    {/* </ProjectCard> */}
-                  </Card>
+                  <ProjectCard
+                    sandbox={sandbox}
+                    onVisibilityChange={onVisibilityChange}
+                    onDelete={onDelete}
+                  >
+                    <CanvasRevealEffect
+                      animationSpeed={3}
+                      containerClassName="bg-black"
+                      colors={colors[sandbox.type]}
+                      dotSize={2}
+                    />
+                    <div className="absolute inset-0 [mask-image:radial-gradient(400px_at_center,white,transparent)] bg-background/75" />
+                  </ProjectCard>
                 </Link>
               );
             })}
