@@ -1,30 +1,30 @@
-"use client"
+"use client";
 
-import { Sandbox } from "@/lib/types"
-import { Ellipsis, Globe, Lock, Trash2 } from "lucide-react"
+import { Sandbox } from "@/lib/types";
+import { Ellipsis, Globe, Lock, Trash2 } from "lucide-react";
 
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 
 export default function ProjectCardDropdown({
   sandbox,
   onVisibilityChange,
   onDelete,
 }: {
-  sandbox: Sandbox
-  onVisibilityChange: (sandbox: Sandbox) => void
-  onDelete: (sandbox: Sandbox) => void
+  sandbox: Sandbox;
+  onVisibilityChange: (sandbox: Sandbox) => void;
+  onDelete: (sandbox: Sandbox) => void;
 }) {
   return (
-    <DropdownMenu>
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger
         onClick={(e) => {
-          e.preventDefault()
-          e.stopPropagation()
+          e.preventDefault();
+          e.stopPropagation();
         }}
         className="h-6 w-6 flex items-center justify-center transition-colors bg-transparent hover:bg-muted-foreground/25 rounded-sm outline-foreground"
       >
@@ -33,8 +33,8 @@ export default function ProjectCardDropdown({
       <DropdownMenuContent className="w-40">
         <DropdownMenuItem
           onClick={(e) => {
-            e.stopPropagation()
-            onVisibilityChange(sandbox)
+            e.stopPropagation();
+            onVisibilityChange(sandbox);
           }}
           className="cursor-pointer"
         >
@@ -52,8 +52,8 @@ export default function ProjectCardDropdown({
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={(e) => {
-            e.stopPropagation()
-            onDelete(sandbox)
+            e.stopPropagation();
+            onDelete(sandbox);
           }}
           className="!text-destructive cursor-pointer"
         >
@@ -62,5 +62,5 @@ export default function ProjectCardDropdown({
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }

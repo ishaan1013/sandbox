@@ -87,18 +87,6 @@
   background: radial-gradient(circle at bottom, #312e81 -10%, hsl(0 0% 3.9%) 80%); /* violet 900 -> bg */
 }
 
-.gradient-project-card-bg {
-  background: radial-gradient(circle at bottom right, #a5b4fc -15%, #3730a3 25%, hsl(0 0% 3.9%) 50%); /* violet 300 -> 800 */
-}
-
-.gradient-project-card {
-  background: radial-gradient(circle at bottom right, #312e81 -75%, hsl(0 0% 3.9%) 50%); /* violet 900 -> bg */
-}
-
-.gradient-project-card-bg > div:hover {
-  background: radial-gradient(circle at bottom right, #312e81 -75%, hsl(0 0% 3.9%) 60%); /* violet 900 -> bg */
-}
-
 .inline-decoration::before {
   content: 'Generate';
   color: #525252;

@@ -7,25 +7,31 @@ import ProjectCardDropdown from "./dropdown";
 import { Clock, Globe, Lock } from "lucide-react";
 import { Sandbox } from "@/lib/types";
 import { Card } from "@/components/ui/card";
+import { useRouter } from "next/navigation";
 
 export default function ProjectCard({
   children,
   sandbox,
   onVisibilityChange,
   onDelete,
+  deletingId,
 }: {
   children?: React.ReactNode;
   sandbox: Sandbox;
   onVisibilityChange: (sandbox: Sandbox) => void;
   onDelete: (sandbox: Sandbox) => void;
+  deletingId: string;
 }) {
   const [hovered, setHovered] = useState(false);
+  const router = useRouter();
 
   return (
     <Card
+      tabIndex={0}
+      onClick={() => router.push(`/code/${sandbox.id}`)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className="group/canvas-card p-4 h-48 flex flex-col justify-between items-start hover:border-foreground transition-all relative overflow-hidden"
+      className={`group/canvas-card p-4 h-48 flex flex-col justify-between items-start hover:border-muted-foreground relative overflow-hidden transition-all`}
     >
       <AnimatePresence>
         {hovered && (

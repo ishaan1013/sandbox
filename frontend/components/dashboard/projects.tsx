@@ -9,7 +9,7 @@ import Link from "next/link";
 import { Card } from "../ui/card";
 import { deleteSandbox, updateSandbox } from "@/lib/actions";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CanvasRevealEffect } from "./projectCard/revealEffect";
 
 const colors = {
@@ -30,18 +30,19 @@ export default function DashboardProjects({
   sandboxes: Sandbox[];
   q: string | null;
 }) {
-  const [focusedId, setFocusedId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string>("");
 
   const onDelete = async (sandbox: Sandbox) => {
     setDeletingId(sandbox.id);
     toast(`Project ${sandbox.name} deleted.`);
     await deleteSandbox(sandbox.id);
-    setTimeout(() => {
-      // timeout to wait for revalidatePath and avoid flashing
-      setDeletingId("");
-    }, 200);
   };
+
+  useEffect(() => {
+    if (deletingId) {
+      setDeletingId("");
+    }
+  }, [sandboxes]);
 
   const onVisibilityChange = async (sandbox: Sandbox) => {
     const newVisibility =
@@ -71,17 +72,17 @@ export default function DashboardProjects({
                 <Link
                   key={sandbox.id}
                   href={`/code/${sandbox.id}`}
-                  onFocus={() => setFocusedId(sandbox.id)}
                   className={`${
                     deletingId === sandbox.id
-                      ? "pointer-events-none opacity-50"
-                      : ""
-                  } cursor-pointer transition-all focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:ring-2 focus-visible:ring-ring rounded-lg`}
+                      ? "pointer-events-none opacity-50 cursor-events-none"
+                      : "cursor-pointer"
+                  } transition-all focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:ring-2 focus-visible:ring-ring rounded-lg`}
                 >
                   <ProjectCard
                     sandbox={sandbox}
                     onVisibilityChange={onVisibilityChange}
                     onDelete={onDelete}
+                    deletingId={deletingId}
                   >
                     <CanvasRevealEffect
                       animationSpeed={3}
