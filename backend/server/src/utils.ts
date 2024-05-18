@@ -10,10 +10,9 @@ import {
 } from "./types";
 
 import {
+  DeleteServiceCommand,
   DescribeServicesCommand,
   ECSClient,
-  StartTaskCommand,
-  StopTaskCommand,
 } from "@aws-sdk/client-ecs";
 
 dotenv.config();
@@ -178,10 +177,11 @@ export const getProjectSize = async (id: string) => {
   return (await res.json()).size;
 };
 
-export const stopServer = async (task: string) => {
-  const command = new StopTaskCommand({
-    cluster: "arn:aws:ecs:us-east-1:767398085538:service/Sandbox/Sandbox",
-    task,
+export const stopServer = async (service: string) => {
+  const command = new DeleteServiceCommand({
+    cluster: "Sandbox",
+    service,
+    force: true,
   });
 
   try {
