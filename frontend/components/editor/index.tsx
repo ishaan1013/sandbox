@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import Loading from "@/components/editor/loading";
 import { Sandbox, User } from "@/lib/types";
 import { useEffect, useState } from "react";
-import { startServer } from "@/lib/utils";
+// import { startServer } from "@/lib/utils";
 import { toast } from "sonner";
 
 const CodeEditor = dynamic(() => import("@/components/editor/editor"), {
@@ -23,18 +23,15 @@ export default function Editor({
   const [didFail, setDidFail] = useState(false);
 
   useEffect(() => {
-    startServer(sandboxData.id, userData.id, (success: boolean) => {
-      if (!success) {
-        toast.error("Failed to start server.");
-        setDidFail(true);
-      } else {
-        setIsServerRunning(true);
-      }
-    });
-
-    // return () => {
-    //   stopServer(sandboxData.id, userData.id);
-    // };
+    // startServer(sandboxData.id, userData.id, (success: boolean) => {
+    //   if (!success) {
+    //     toast.error("Failed to start server.");
+    //     setDidFail(true);
+    //   } else {
+    //     setIsServerRunning(true);
+    //   }
+    // });
+    console.log("startServer");
   }, []);
 
   if (!isServerRunning || didFail)

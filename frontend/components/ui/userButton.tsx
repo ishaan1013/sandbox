@@ -54,10 +54,11 @@ export default function UserButton({ userData }: { userData: User }) {
           </div>
         </div>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="cursor-pointer">
+
+        {/* <DropdownMenuItem className="cursor-pointer">
           <Pencil className="mr-2 h-4 w-4" />
           <span>Edit Profile</span>
-        </DropdownMenuItem>
+        </DropdownMenuItem> */}
         <DropdownMenuItem
           onClick={() => signOut(() => router.push("/"))}
           className="!text-destructive cursor-pointer"

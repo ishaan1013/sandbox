@@ -31,7 +31,7 @@ export default function ProjectCard({
       onClick={() => router.push(`/code/${sandbox.id}`)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className={`group/canvas-card p-4 h-48 flex flex-col justify-between items-start hover:border-muted-foreground relative overflow-hidden transition-all`}
+      className={`group/canvas-card p-4 h-48 flex flex-col justify-between items-start hover:border-muted-foreground/50 relative overflow-hidden transition-all`}
     >
       <AnimatePresence>
         {hovered && (
