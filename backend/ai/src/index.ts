@@ -8,9 +8,9 @@ export default {
 		if (request.method !== 'GET') {
 			return new Response('Method Not Allowed', { status: 405 });
 		}
-		// if (request.headers.get('Authorization') !== env.KEY) {
-		// 	return new Response('Unauthorized', { status: 401 });
-		// }
+		if (request.headers.get('Authorization') !== env.KEY) {
+			return new Response('Unauthorized', { status: 401 });
+		}
 
 		const url = new URL(request.url);
 		const fileName = url.searchParams.get('fileName');
