@@ -18,6 +18,7 @@ import {
   renameFile,
   saveFile,
   stopServer,
+  testDescribe,
 } from "./utils";
 import { IDisposable, IPty, spawn } from "node-pty";
 import {
@@ -114,6 +115,10 @@ io.on("connection", async (socket) => {
       return;
     }
   }
+
+  console.log("describing service:");
+  const describeService = await testDescribe();
+  console.log(describeService);
 
   const sandboxFiles = await getSandboxFiles(data.sandboxId);
   sandboxFiles.fileData.forEach((file) => {
@@ -290,9 +295,9 @@ io.on("connection", async (socket) => {
     }
   });
 
-  socket.on("renameFolder", async (folderId: string, newName: string) => {
-    // todo
-  });
+  // todo
+  // socket.on("renameFolder", async (folderId: string, newName: string) => {
+  // });
 
   socket.on("deleteFolder", async (folderId: string, callback) => {
     const files = await getFolder(folderId);
@@ -329,7 +334,6 @@ io.on("connection", async (socket) => {
     });
 
     const onData = pty.onData((data) => {
-      // console.log("terminalResponse", id, data)
       io.emit("terminalResponse", {
         id,
         data,
@@ -430,7 +434,6 @@ io.on("connection", async (socket) => {
   socket.on("disconnect", async () => {
     console.log("disconnected", data.userId, data.sandboxId);
     if (data.isOwner) {
-      // console.log("deleting all terminals")
       Object.entries(terminals).forEach((t) => {
         const { terminal, onData, onExit } = t[1];
         onData.dispose();
@@ -453,9 +456,8 @@ io.on("connection", async (socket) => {
       inactivityTimeout = setTimeout(() => {
         io.fetchSockets().then(async (sockets) => {
           if (sockets.length === 0) {
-            // close server
             console.log("Closing server due to inactivity.");
-            const res = await stopServer(data.sandboxId, data.userId);
+            // const res = await stopServer(data.sandboxId, data.userId);
           }
         });
       }, 20000);

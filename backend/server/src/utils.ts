@@ -1,4 +1,4 @@
-import e from "cors";
+import * as dotenv from "dotenv";
 import {
   R2FileBody,
   R2Files,
@@ -8,6 +8,33 @@ import {
   TFolder,
   User,
 } from "./types";
+
+import {
+  DescribeServicesCommand,
+  ECSClient,
+  StartTaskCommand,
+  StopTaskCommand,
+} from "@aws-sdk/client-ecs";
+
+dotenv.config();
+
+const client = new ECSClient({
+  region: "us-east-1",
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+  },
+});
+
+export const testDescribe = async () => {
+  const command = new DescribeServicesCommand({
+    cluster: "Sandbox",
+    services: ["Sandbox"],
+  });
+  const response = await client.send(command);
+  console.log("describing: ", response);
+  return response;
+};
 
 export const getSandboxFiles = async (id: string) => {
   const res = await fetch(
@@ -151,18 +178,16 @@ export const getProjectSize = async (id: string) => {
   return (await res.json()).size;
 };
 
-export const stopServer = async (sandboxId: string, userId: string) => {
-  const res = await fetch("http://localhost:4001/stop", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      sandboxId,
-      userId,
-    }),
+export const stopServer = async (task: string) => {
+  const command = new StopTaskCommand({
+    cluster: "arn:aws:ecs:us-east-1:767398085538:service/Sandbox/Sandbox",
+    task,
   });
-  const data = await res.json();
 
-  return data;
+  try {
+    const response = await client.send(command);
+    console.log("Stopped server:", response);
+  } catch (error) {
+    console.error("Error stopping server:", error);
+  }
 };

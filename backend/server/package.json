@@ -11,6 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@aws-sdk/client-ecs": "^3.577.0",
     "concurrently": "^8.2.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
