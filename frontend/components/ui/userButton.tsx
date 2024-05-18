@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
   DropdownMenu,
@@ -7,26 +7,27 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { User } from "@/lib/types"
-import { useClerk } from "@clerk/nextjs"
-import { LogOut, Pencil, Sparkles } from "lucide-react"
-import { useRouter } from "next/navigation"
+} from "@/components/ui/dropdown-menu";
+import { User } from "@/lib/types";
+import { useClerk } from "@clerk/nextjs";
+import { LogOut, Pencil, Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function UserButton({ userData }: { userData: User }) {
-  if (!userData) return null
+  if (!userData) return null;
 
-  const { signOut } = useClerk()
-  const router = useRouter()
+  const { signOut } = useClerk();
+  const router = useRouter();
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger>
         <div className="w-9 h-9 font-mono rounded-full overflow-hidden bg-gradient-to-t from-neutral-800 to-neutral-600 flex items-center justify-center text-sm font-medium">
-          {userData.name && userData.name
-            .split(" ")
-            .slice(0, 2)
-            .map((name) => name[0].toUpperCase())}
+          {userData.name &&
+            userData.name
+              .split(" ")
+              .slice(0, 2)
+              .map((name) => name[0].toUpperCase())}
         </div>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-48" align="end">
@@ -41,13 +42,13 @@ export default function UserButton({ userData }: { userData: User }) {
         <div className="py-1.5 px-2 w-full flex flex-col items-start text-sm">
           <div className="flex items-center">
             <Sparkles className={`h-4 w-4 mr-2 text-indigo-500`} />
-            AI Usage: {userData.generations}/30
+            AI Usage: {userData.generations}/10
           </div>
           <div className="rounded-full w-full mt-2 h-2 overflow-hidden bg-secondary">
             <div
               className="h-full bg-indigo-500 rounded-full"
               style={{
-                width: `${(userData.generations * 100) / 30}%`,
+                width: `${(userData.generations * 100) / 10}%`,
               }}
             />
           </div>
@@ -66,5 +67,5 @@ export default function UserButton({ userData }: { userData: User }) {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }

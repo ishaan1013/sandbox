@@ -529,10 +529,6 @@ export default function CodeEditor({
       setFiles(response);
       setDeletingFolderId("");
     });
-
-    setTimeout(() => {
-      setDeletingFolderId("");
-    }, 3000);
   };
 
   if (isAwaitingConnection)

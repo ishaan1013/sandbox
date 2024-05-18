@@ -181,7 +181,7 @@ export default {
 			if (!dbUser) {
 				return new Response("User not found.", { status: 400 });
 			}
-			if (dbUser.generations !== null && dbUser.generations >= 30) {
+			if (dbUser.generations !== null && dbUser.generations >= 10) {
 				return new Response("You reached the maximum # of generations.", { status: 400 });
 			}
 
