@@ -5,6 +5,8 @@ import { currentUser } from "@clerk/nextjs";
 import { notFound, redirect } from "next/navigation";
 import Editor from "@/components/editor";
 
+export const revalidate = 0;
+
 const getUserData = async (id: string) => {
   const userRes = await fetch(
     `https://database.ishaan1013.workers.dev/api/user?id=${id}`

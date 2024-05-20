@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import monaco from "monaco-editor";
 import Editor, { BeforeMount, OnMount } from "@monaco-editor/react";
-import { Socket, io } from "socket.io-client";
+import { io } from "socket.io-client";
 import { toast } from "sonner";
 import { useClerk } from "@clerk/nextjs";
 
@@ -40,8 +40,11 @@ export default function CodeEditor({
   sandboxData: Sandbox;
 }) {
   const socket = io(
-    `ws://${sandboxData.id}.ws.ishaand.com?userId=${userData.id}&sandboxId=${sandboxData.id}`
-    // `http://localhost:4000?userId=${userData.id}&sandboxId=${sandboxData.id}`
+    // `ws://${sandboxData.id}.ws.ishaand.com?userId=${userData.id}&sandboxId=${sandboxData.id}`
+    `http://localhost:4000?userId=${userData.id}&sandboxId=${sandboxData.id}`,
+    {
+      timeout: 2000,
+    }
   );
 
   const [isAwaitingConnection, setIsAwaitingConnection] = useState(true);
@@ -695,6 +698,7 @@ export default function CodeEditor({
                     }
                   }}
                   options={{
+                    tabSize: 2,
                     minimap: {
                       enabled: false,
                     },

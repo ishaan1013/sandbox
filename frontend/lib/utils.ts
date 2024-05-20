@@ -2,6 +2,8 @@ import { type ClassValue, clsx } from "clsx";
 // import { toast } from "sonner"
 import { twMerge } from "tailwind-merge";
 import { Sandbox, TFile, TFolder } from "./types";
+import ecsClient from "./ecs";
+import { DescribeServicesCommand } from "@aws-sdk/client-ecs";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -91,3 +93,32 @@ export function addNew(
 //     callback(false);
 //   }
 // }
+
+// const checkServiceStatus = (serviceName: string) => {
+//   return new Promise((resolve, reject) => {
+
+//     const command = new DescribeServicesCommand({
+//       cluster: "arn:aws:ecs:us-east-1:767398085538:service/Sandbox/Sandbox",
+//       services: [serviceName]
+//     })
+
+//     const interval = setInterval(async () => {
+//       try {
+
+//       const response = await ecsClient.send(command)
+
+//       if (response.services && response.services.length > 0) {
+//         const service = response.services?.[0];
+//         if (service.runningCount === service.desiredCount && service.deployments.length === 1 && service.deployments[0].rolloutState === 'COMPLETED') {
+//           clearInterval(interval);
+//           resolve(service);
+//         }
+//       }
+
+//       } catch (error) {
+//         clearInterval(interval);
+//         reject(error);
+//       }
+//     }, 5000); // Check every 5 seconds
+//   });
+// };
