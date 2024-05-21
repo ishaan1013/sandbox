@@ -34,8 +34,8 @@ export default function Editor({
     console.log("startServer");
   }, []);
 
-  if (!isServerRunning || didFail)
-    return <Loading didFail={didFail} text="Creating your sandbox resources" />;
+  // if (!isServerRunning || didFail)
+  //   return <Loading didFail={didFail} text="Creating your sandbox resources" />;
 
   return <CodeEditor userData={userData} sandboxData={sandboxData} />;
 }

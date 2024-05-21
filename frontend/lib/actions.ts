@@ -83,13 +83,13 @@ export async function unshareSandbox(sandboxId: string, userId: string) {
 
 export async function startServer(serviceName: string) {
   const command = new CreateServiceCommand({
-    cluster: "arn:aws:ecs:us-east-1:767398085538:service/Sandbox/Sandbox",
+    cluster: process.env.AWS_ECS_CLUSTER!,
     serviceName,
     taskDefinition: "Sandbox1",
     desiredCount: 1,
     networkConfiguration: {
       awsvpcConfiguration: {
-        securityGroups: ["sg-07e489fcf3299af52"],
+        securityGroups: [process.env.AWS_ECS_SECURITY_GROUP!],
         subnets: [
           "subnet-06d04f2a6ebb1710c",
           "subnet-097c000f157c26a78",
@@ -105,7 +105,17 @@ export async function startServer(serviceName: string) {
 
   try {
     const response = await ecsClient.send(command);
-    console.log("started server:", response);
+    console.log("started server:", response.service?.serviceName);
+
+    // store in workers kv:
+    // {
+    //   userId: {
+    //     sandboxId,
+    //     serviceName,
+    //     startedAt,
+
+    //   }
+    // }
   } catch (error) {
     console.error("Error starting server:", error);
   }

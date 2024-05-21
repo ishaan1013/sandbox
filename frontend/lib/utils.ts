@@ -94,31 +94,34 @@ export function addNew(
 //   }
 // }
 
-// const checkServiceStatus = (serviceName: string) => {
-//   return new Promise((resolve, reject) => {
+const checkServiceStatus = (serviceName: string) => {
+  return new Promise((resolve, reject) => {
+    const command = new DescribeServicesCommand({
+      cluster: process.env.NEXT_PUBLIC_AWS_ECS_CLUSTER,
+      services: [serviceName],
+    });
 
-//     const command = new DescribeServicesCommand({
-//       cluster: "arn:aws:ecs:us-east-1:767398085538:service/Sandbox/Sandbox",
-//       services: [serviceName]
-//     })
+    const interval = setInterval(async () => {
+      try {
+        const response = await ecsClient.send(command);
+        console.log("Checking service status", response);
 
-//     const interval = setInterval(async () => {
-//       try {
-
-//       const response = await ecsClient.send(command)
-
-//       if (response.services && response.services.length > 0) {
-//         const service = response.services?.[0];
-//         if (service.runningCount === service.desiredCount && service.deployments.length === 1 && service.deployments[0].rolloutState === 'COMPLETED') {
-//           clearInterval(interval);
-//           resolve(service);
-//         }
-//       }
-
-//       } catch (error) {
-//         clearInterval(interval);
-//         reject(error);
-//       }
-//     }, 5000); // Check every 5 seconds
-//   });
-// };
+        if (response.services && response.services.length > 0) {
+          const service = response.services?.[0];
+          if (
+            service.runningCount === service.desiredCount &&
+            service.deployments &&
+            service.deployments.length === 1 &&
+            service.deployments[0].rolloutState === "COMPLETED"
+          ) {
+            clearInterval(interval);
+            resolve(service);
+          }
+        }
+      } catch (error) {
+        clearInterval(interval);
+        reject(error);
+      }
+    }, 5000);
+  });
+};

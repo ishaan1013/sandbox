@@ -20,6 +20,8 @@ RUN useradd -m myuser
 RUN mkdir projects && chown -R myuser:myuser projects
 USER myuser
 
+# user namespace mapping
+
 EXPOSE 3000
 EXPOSE 4000
 
