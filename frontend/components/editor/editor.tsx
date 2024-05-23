@@ -35,19 +35,20 @@ import { ImperativePanelHandle } from "react-resizable-panels";
 export default function CodeEditor({
   userData,
   sandboxData,
+  ip,
 }: {
   userData: User;
   sandboxData: Sandbox;
+  ip: string;
 }) {
   const socket = io(
     // `ws://${sandboxData.id}.ws.ishaand.com?userId=${userData.id}&sandboxId=${sandboxData.id}`
-    `http://localhost:4000?userId=${userData.id}&sandboxId=${sandboxData.id}`,
+    `http://${ip}:4000?userId=${userData.id}&sandboxId=${sandboxData.id}`,
     {
       timeout: 2000,
     }
   );
 
-  const [isAwaitingConnection, setIsAwaitingConnection] = useState(true);
   const [isPreviewCollapsed, setIsPreviewCollapsed] = useState(true);
   const [disableAccess, setDisableAccess] = useState({
     isDisabled: false,
@@ -362,9 +363,7 @@ export default function CodeEditor({
 
   // Socket event listener effect
   useEffect(() => {
-    const onConnect = () => {
-      setIsAwaitingConnection(false);
-    };
+    const onConnect = () => {};
 
     const onDisconnect = () => {
       setTerminals([]);
@@ -533,14 +532,6 @@ export default function CodeEditor({
       setDeletingFolderId("");
     });
   };
-
-  if (isAwaitingConnection)
-    return (
-      <Loading
-        text="Connecting to server..."
-        description="This could take a few minutes if the backend needs to scale resources for your cloud code editing environment. Please check back soon."
-      />
-    );
 
   // On disabled access for shared users, show un-interactable loading placeholder + info modal
   if (disableAccess.isDisabled)

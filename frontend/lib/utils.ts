@@ -2,8 +2,8 @@ import { type ClassValue, clsx } from "clsx";
 // import { toast } from "sonner"
 import { twMerge } from "tailwind-merge";
 import { Sandbox, TFile, TFolder } from "./types";
-import ecsClient from "./ecs";
-import { DescribeServicesCommand } from "@aws-sdk/client-ecs";
+import { Service } from "@aws-sdk/client-ecs";
+import { describeService } from "./actions";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -94,34 +94,44 @@ export function addNew(
 //   }
 // }
 
-const checkServiceStatus = (serviceName: string) => {
+export function checkServiceStatus(serviceName: string): Promise<Service> {
   return new Promise((resolve, reject) => {
-    const command = new DescribeServicesCommand({
-      cluster: process.env.NEXT_PUBLIC_AWS_ECS_CLUSTER,
-      services: [serviceName],
-    });
+    let tries = 0;
 
     const interval = setInterval(async () => {
       try {
-        const response = await ecsClient.send(command);
-        console.log("Checking service status", response);
+        tries++;
 
-        if (response.services && response.services.length > 0) {
-          const service = response.services?.[0];
+        if (tries > 40) {
+          clearInterval(interval);
+          reject(new Error("Timed out."));
+        }
+
+        const response = await describeService(serviceName);
+        const activeServices = response.services?.filter(
+          (service) => service.status === "ACTIVE"
+        );
+        console.log("Checking activeServices status", activeServices);
+
+        if (activeServices?.length === 1) {
+          const service = activeServices?.[0];
           if (
             service.runningCount === service.desiredCount &&
-            service.deployments &&
-            service.deployments.length === 1 &&
-            service.deployments[0].rolloutState === "COMPLETED"
+            service.deployments?.length === 1
           ) {
-            clearInterval(interval);
-            resolve(service);
+            if (service.deployments[0].rolloutState === "COMPLETED") {
+              clearInterval(interval);
+              resolve(service);
+            } else if (service.deployments[0].rolloutState === "FAILED") {
+              clearInterval(interval);
+              reject(new Error("Deployment failed."));
+            }
           }
         }
-      } catch (error) {
+      } catch (error: any) {
         clearInterval(interval);
         reject(error);
       }
-    }, 5000);
+    }, 3000);
   });
-};
+}
