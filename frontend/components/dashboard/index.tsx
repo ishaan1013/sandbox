@@ -117,7 +117,11 @@ export default function Dashboard({
           </div>
         </div>
         {screen === "projects" ? (
-          <DashboardProjects sandboxes={sandboxes} q={q} />
+          <>
+            {sandboxes ? (
+              <DashboardProjects sandboxes={sandboxes} q={q} />
+            ) : null}
+          </>
         ) : screen === "shared" ? (
           <DashboardSharedWithMe shared={shared} />
         ) : screen === "settings" ? null : null}

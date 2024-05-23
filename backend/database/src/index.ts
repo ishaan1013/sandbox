@@ -222,6 +222,13 @@ export default {
 
 				const res = await db.insert(user).values({ id, name, email }).returning().get();
 				return json({ res });
+			} else if (method === "DELETE") {
+				const params = url.searchParams;
+				if (params.has("id")) {
+					const id = params.get("id") as string;
+					await db.delete(user).where(eq(user.id, id));
+					return success;
+				} else return invalidRequest;
 			} else {
 				return methodNotAllowed;
 			}

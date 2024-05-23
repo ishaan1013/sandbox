@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
   Dialog,
@@ -7,19 +7,19 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import Image from "next/image"
-import { useState } from "react"
+} from "@/components/ui/dialog";
+import Image from "next/image";
+import { useState } from "react";
 
-import { Button } from "../ui/button"
-import { ChevronRight } from "lucide-react"
+import { Button } from "../ui/button";
+import { ChevronRight } from "lucide-react";
 
 export default function AboutModal({
   open,
   setOpen,
 }: {
-  open: boolean
-  setOpen: (open: boolean) => void
+  open: boolean;
+  setOpen: (open: boolean) => void;
 }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -30,10 +30,10 @@ export default function AboutModal({
         <div className="text-sm text-muted-foreground">
           Sandbox is an open-source cloud-based code editing environment with
           custom AI code autocompletion and real-time collaboration. The
-          infrastructure runs on Docker and Kubernetes to scale automatically
-          based on resource usage.
+          infrastructure runs on Docker and AWS ECS to scale automatically based
+          on resource usage.
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
