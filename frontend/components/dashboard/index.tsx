@@ -10,13 +10,13 @@ import {
   Settings,
   Users,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Sandbox } from "@/lib/types";
 import DashboardProjects from "./projects";
 import DashboardSharedWithMe from "./shared";
 import NewProjectModal from "./newProject";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import AboutModal from "./about";
 import { toast } from "sonner";
 
@@ -47,6 +47,13 @@ export default function Dashboard({
 
   const searchParams = useSearchParams();
   const q = searchParams.get("q");
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!sandboxes) {
+      router.refresh();
+    }
+  }, [sandboxes]);
 
   return (
     <>

@@ -1,0 +1,12 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "database"
+main = "src/index.ts"
+compatibility_date = "2024-04-05"
+compatibility_flags = ["nodejs_compat"]
+
+services = [{ binding = "STORAGE", service = "storage" }]
+
+[[d1_databases]]
+binding = "DB"
+database_name = ""
+database_id = ""
