@@ -179,14 +179,14 @@ export const getProjectSize = async (id: string) => {
 
 export const stopServer = async (service: string) => {
   const command = new DeleteServiceCommand({
-    cluster: "Sandbox",
+    cluster: process.env.AWS_ECS_CLUSTER!,
     service,
     force: true,
   });
 
   try {
     const response = await client.send(command);
-    console.log("Stopped server:", response);
+    return response;
   } catch (error) {
     console.error("Error stopping server:", error);
   }

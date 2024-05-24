@@ -78,15 +78,15 @@
 .gradient-button-bg {
   background: radial-gradient(
     circle at top,
-    #a5b4fc 0%,
-    #3730a3 50%
+    #d4d4d4 0%,
+    #262626 50%
   ); /* violet 300 -> 800 */
 }
 
 .gradient-button {
   background: radial-gradient(
     circle at bottom,
-    #312e81 -10%,
+    #262626 -10%,
     hsl(0 0% 3.9%) 50%
   ); /* violet 900 -> bg */
 }
@@ -94,7 +94,7 @@
 .gradient-button-bg > div:hover {
   background: radial-gradient(
     circle at bottom,
-    #312e81 -10%,
+    #262626 -10%,
     hsl(0 0% 3.9%) 80%
   ); /* violet 900 -> bg */
 }

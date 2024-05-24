@@ -33,7 +33,7 @@ export default function ProjectCard({
       onMouseLeave={() => setHovered(false)}
       className={`group/canvas-card p-4 h-48 flex flex-col justify-between items-start hover:border-muted-foreground/50 relative overflow-hidden transition-all`}
     >
-      <AnimatePresence>
+      {/* <AnimatePresence>
         {hovered && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -43,7 +43,7 @@ export default function ProjectCard({
             {children}
           </motion.div>
         )}
-      </AnimatePresence>
+      </AnimatePresence> */}
 
       <div className="space-x-2 flex items-center justify-start w-full z-10">
         <Image

@@ -92,7 +92,7 @@ export default {
 					return new Response("You reached the maximum # of sandboxes.", { status: 400 });
 				}
 
-				const sb = await db.insert(sandbox).values({ type, name, userId, visibility }).returning().get();
+				const sb = await db.insert(sandbox).values({ type, name, userId, visibility, createdAt: new Date() }).returning().get();
 
 				const initStorageRequest = new Request("https://storage.ishaan1013.workers.dev/api/init", {
 					method: "POST",

@@ -343,6 +343,7 @@ io.on("connection", async (socket) => {
     const onExit = pty.onExit((code) => console.log("exit :(", code));
 
     pty.write("clear\r");
+    pty.write("export PS1='> '\r");
 
     terminals[id] = {
       terminal: pty,
@@ -457,7 +458,8 @@ io.on("connection", async (socket) => {
         io.fetchSockets().then(async (sockets) => {
           if (sockets.length === 0) {
             console.log("Closing server due to inactivity.");
-            // const res = await stopServer(data.sandboxId, data.userId);
+            const res = await stopServer(data.sandboxId);
+            console.log("Server stopped", res);
           }
         });
       }, 20000);
