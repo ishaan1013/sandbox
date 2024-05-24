@@ -16,7 +16,24 @@ export default {
 		const path = url.pathname;
 		const method = request.method;
 
-		if (path === '/api/size' && method === 'GET') {
+		if (path === '/api/project' && method === 'DELETE') {
+			const deleteSchema = z.object({
+				sandboxId: z.string(),
+			});
+
+			const body = await request.json();
+			const { sandboxId } = deleteSchema.parse(body);
+
+			const res = await env.R2.list({ prefix: 'projects/' + sandboxId });
+			// delete all files
+			await Promise.all(
+				res.objects.map(async (file) => {
+					await env.R2.delete(file.key);
+				})
+			);
+
+			return success;
+		} else if (path === '/api/size' && method === 'GET') {
 			const params = url.searchParams;
 			const sandboxId = params.get('sandboxId');
 

@@ -15,11 +15,11 @@ import { toast } from "sonner";
 export default function PreviewWindow({
   collapsed,
   open,
-  sandboxId,
+  ip,
 }: {
   collapsed: boolean;
   open: () => void;
-  sandboxId: string;
+  ip: string;
 }) {
   const ref = useRef<HTMLIFrameElement>(null);
 
@@ -51,9 +51,7 @@ export default function PreviewWindow({
 
                 <PreviewButton
                   onClick={() => {
-                    navigator.clipboard.writeText(
-                      `http://${sandboxId}.sandbox.ishaand.com`
-                    );
+                    navigator.clipboard.writeText(`http://${ip}:3000`);
                     toast.info("Copied preview link to clipboard");
                   }}
                 >
@@ -79,7 +77,7 @@ export default function PreviewWindow({
             ref={ref}
             width={"100%"}
             height={"100%"}
-            src={`http://${sandboxId}.sandbox.ishaand.com`}
+            src={`http://${ip}:3000`}
           />
         </div>
       )}

@@ -64,36 +64,6 @@ export function addNew(
   }
 }
 
-// export async function startServer(
-//   sandboxId: string,
-//   userId: string,
-//   callback: (success: boolean) => void
-// ) {
-//   try {
-//     const res = await fetch("http://localhost:4001/start", {
-//       method: "POST",
-//       headers: {
-//         "Content-Type": "application/json",
-//       },
-//       body: JSON.stringify({
-//         sandboxId,
-//         userId,
-//       }),
-//     });
-
-//     if (res.status !== 200) {
-//       console.error("Failed to start server", res);
-//       callback(false);
-//     }
-
-//     callback(true);
-//   } catch (error) {
-//     console.error("Failed to start server", error);
-
-//     callback(false);
-//   }
-// }
-
 export function checkServiceStatus(serviceName: string): Promise<Service> {
   return new Promise((resolve, reject) => {
     let tries = 0;

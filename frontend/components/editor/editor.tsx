@@ -732,7 +732,7 @@ export default function CodeEditor({
                   previewPanelRef.current?.expand();
                   setIsPreviewCollapsed(false);
                 }}
-                sandboxId={sandboxData.id}
+                ip={ip}
               />
             </ResizablePanel>
             <ResizableHandle />

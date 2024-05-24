@@ -52,6 +52,14 @@ export default {
 					const id = params.get("id") as string;
 					await db.delete(usersToSandboxes).where(eq(usersToSandboxes.sandboxId, id));
 					await db.delete(sandbox).where(eq(sandbox.id, id));
+
+					const deleteStorageRequest = new Request("https://storage.ishaan1013.workers.dev/api/project", {
+						method: "DELETE",
+						body: JSON.stringify({ sandboxId: id }),
+						headers: { "Content-Type": "application/json" },
+					});
+					const deleteStorageRes = await env.STORAGE.fetch(deleteStorageRequest);
+
 					return success;
 				} else {
 					return invalidRequest;
@@ -93,7 +101,7 @@ export default {
 				});
 				const initStorageRes = await env.STORAGE.fetch(initStorageRequest);
 
-				const initStorage = await initStorageRes.text();
+				// const initStorage = await initStorageRes.text();
 
 				return new Response(sb.id, { status: 200 });
 			} else {
