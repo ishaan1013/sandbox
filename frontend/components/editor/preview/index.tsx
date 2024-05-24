@@ -34,7 +34,7 @@ export default function PreviewWindow({
           <div className="text-xs">
             Preview
             <span className="inline-block ml-2 items-center font-mono text-muted-foreground">
-              localhost:3000
+              localhost:8000
             </span>
           </div>
           <div className="flex space-x-1 translate-x-1">
@@ -51,7 +51,7 @@ export default function PreviewWindow({
 
                 <PreviewButton
                   onClick={() => {
-                    navigator.clipboard.writeText(`http://${ip}:3000`);
+                    navigator.clipboard.writeText(`http://${ip}:8000`);
                     toast.info("Copied preview link to clipboard");
                   }}
                 >
@@ -77,7 +77,7 @@ export default function PreviewWindow({
             ref={ref}
             width={"100%"}
             height={"100%"}
-            src={`http://${ip}:3000`}
+            src={`http://${ip}:8000`}
           />
         </div>
       )}

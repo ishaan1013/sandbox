@@ -2,8 +2,8 @@ FROM node:20
 
 # Security: Drop all capabilities
 USER root
-RUN apt-get update && apt-get install -y libcap2-bin
-RUN setcap cap_net_bind_service=+ep /usr/local/bin/node
+RUN apt-get update && apt-get install -y libcap2-bin && \
+  setcap cap_net_bind_service=+ep /usr/local/bin/node
 
 WORKDIR /code
 
@@ -15,14 +15,19 @@ COPY . .
 
 RUN npm run build
 
-# Security: Create non-root user and assign ownership
-RUN useradd -m myuser
-RUN mkdir projects && chown -R myuser:myuser projects
-USER myuser
+RUN useradd -m sboxuser
+RUN mkdir projects && chown -R sboxuser:sboxuser projects
 
-# user namespace mapping
+# todo user namespace mapping
 
-EXPOSE 3000
+RUN apt-get install -y firejail
+
+RUN echo '#!/bin/bash\nexec firejail --private=/projects --noprofile node dist/index.js' > /start.sh
+RUN chmod +x /start.sh
+
+USER sboxuser
+
+EXPOSE 8000
 EXPOSE 4000
 
-CMD [ "node", "dist/index.js" ]
+CMD ["/start.sh"]

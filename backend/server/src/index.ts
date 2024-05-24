@@ -342,8 +342,8 @@ io.on("connection", async (socket) => {
 
     const onExit = pty.onExit((code) => console.log("exit :(", code));
 
+    pty.write("export PS1='\\u > '\r");
     pty.write("clear\r");
-    pty.write("export PS1='> '\r");
 
     terminals[id] = {
       terminal: pty,
