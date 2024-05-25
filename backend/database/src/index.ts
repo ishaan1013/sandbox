@@ -1,4 +1,4 @@
-import type { DrizzleD1Database } from "drizzle-orm/d1";
+// import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { drizzle } from "drizzle-orm/d1";
 import { json } from "itty-router-extras";
 import { ZodError, z } from "zod";
@@ -10,6 +10,7 @@ import { and, eq, sql } from "drizzle-orm";
 export interface Env {
 	DB: D1Database;
 	STORAGE: any;
+	KV: KVNamespace;
 }
 
 // https://github.com/drizzle-team/drizzle-orm/tree/main/examples/cloudflare-d1
@@ -30,7 +31,35 @@ export default {
 
 		const db = drizzle(env.DB, { schema });
 
-		if (path === "/api/sandbox") {
+		if (path === "/api/session") {
+			if (method === "PUT") {
+				const body = await request.json();
+				const schema = z.object({
+					userId: z.string(),
+					sandboxId: z.string(),
+				});
+
+				const { userId, sandboxId } = schema.parse(body);
+
+				await env.KV.put(userId, sandboxId);
+
+				return success;
+			} else if (method === "GET") {
+				const params = url.searchParams;
+				if (params.has("id")) {
+					const id = params.get("id") as string;
+					const sandboxId = await env.KV.get(id);
+					return json({ sandboxId });
+				} else return invalidRequest;
+			} else if (method === "DELETE") {
+				const params = url.searchParams;
+				if (params.has("id")) {
+					const id = params.get("id") as string;
+					await env.KV.delete(id);
+					return success;
+				} else return invalidRequest;
+			} else return methodNotAllowed;
+		} else if (path === "/api/sandbox") {
 			if (method === "GET") {
 				const params = url.searchParams;
 				if (params.has("id")) {
@@ -65,14 +94,14 @@ export default {
 					return invalidRequest;
 				}
 			} else if (method === "POST") {
-				const initSchema = z.object({
+				const postSchema = z.object({
 					id: z.string(),
 					name: z.string().optional(),
 					visibility: z.enum(["public", "private"]).optional(),
 				});
 
 				const body = await request.json();
-				const { id, name, visibility } = initSchema.parse(body);
+				const { id, name, visibility } = postSchema.parse(body);
 				const sb = await db.update(sandbox).set({ name, visibility }).where(eq(sandbox.id, id)).returning().get();
 
 				return success;
@@ -99,9 +128,8 @@ export default {
 					body: JSON.stringify({ sandboxId: sb.id, type }),
 					headers: { "Content-Type": "application/json" },
 				});
-				const initStorageRes = await env.STORAGE.fetch(initStorageRequest);
 
-				// const initStorage = await initStorageRes.text();
+				await env.STORAGE.fetch(initStorageRequest);
 
 				return new Response(sb.id, { status: 200 });
 			} else {
