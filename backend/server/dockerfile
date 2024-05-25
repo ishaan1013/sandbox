@@ -21,8 +21,10 @@ RUN mkdir projects && chown -R sboxuser:sboxuser projects
 # todo user namespace mapping
 
 RUN apt-get install -y firejail
+# RUN echo "noblacklist /code/projects\nprivate-bin node\nwhitelist /code/projects\n" > /etc/firejail/sboxuser.profile
 
-RUN echo '#!/bin/bash\nexec firejail --private=/projects --noprofile node dist/index.js' > /start.sh
+# RUN echo '#!/bin/bash\nexec firejail --private=/projects --noprofile node dist/index.js' > /start.sh
+RUN echo '#!/bin/bash\nexec firejail --private=/code/projects --noprofile --net=none --whitelist=/code/projects node dist/index.js' > /start.sh
 RUN chmod +x /start.sh
 
 USER sboxuser

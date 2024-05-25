@@ -116,9 +116,9 @@ io.on("connection", async (socket) => {
     }
   }
 
-  console.log("describing service:");
-  const describeService = await testDescribe();
-  console.log(describeService);
+  // console.log("describing service:");
+  // const describeService = await testDescribe();
+  // console.log(describeService);
 
   const sandboxFiles = await getSandboxFiles(data.sandboxId);
   sandboxFiles.fileData.forEach((file) => {
