@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ProjectCardDropdown from "./dropdown";
 import { Clock, Globe, Lock } from "lucide-react";
 import { Sandbox } from "@/lib/types";
@@ -23,7 +23,26 @@ export default function ProjectCard({
   deletingId: string;
 }) {
   const [hovered, setHovered] = useState(false);
+  const [date, setDate] = useState<string>();
   const router = useRouter();
+
+  useEffect(() => {
+    const createdAt = new Date(sandbox.createdAt);
+    const now = new Date();
+    const diffInMinutes = Math.floor(
+      (now.getTime() - createdAt.getTime()) / 60000
+    );
+
+    if (diffInMinutes < 1) {
+      setDate("Now");
+    } else if (diffInMinutes < 60) {
+      setDate(`${diffInMinutes}m ago`);
+    } else if (diffInMinutes < 1440) {
+      setDate(`${Math.floor(diffInMinutes / 60)}h ago`);
+    } else {
+      setDate(`${Math.floor(diffInMinutes / 1440)}d ago`);
+    }
+  }, [sandbox]);
 
   return (
     <Card
@@ -78,7 +97,7 @@ export default function ProjectCard({
           )}
         </div>
         <div className="flex items-center">
-          <Clock className="w-3 h-3 mr-2" /> 3d ago
+          <Clock className="w-3 h-3 mr-2" /> {date}
         </div>
       </div>
     </Card>

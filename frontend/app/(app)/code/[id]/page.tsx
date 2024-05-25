@@ -60,6 +60,8 @@ export default async function CodePage({ params }: { params: { id: string } }) {
     return notFound();
   }
 
+  console.log("sandboxes: ", sandboxData);
+
   return (
     <div className="overflow-hidden overscroll-none w-screen flex flex-col h-screen bg-background">
       <Room id={sandboxId}>
