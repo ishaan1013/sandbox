@@ -415,6 +415,13 @@ export default function CodeEditor({
   // Select file and load content
   const selectFile = (tab: TTab) => {
     if (tab.id === activeFileId) return;
+
+    setGenerate((prev) => {
+      return {
+        ...prev,
+        show: false,
+      };
+    });
     const exists = tabs.find((t) => t.id === tab.id);
 
     setTabs((prev) => {
