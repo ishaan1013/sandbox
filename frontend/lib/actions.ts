@@ -1,21 +1,21 @@
-"use server";
+"use server"
 
-import { revalidatePath } from "next/cache";
-import ecsClient, { ec2Client } from "./ecs";
+import { revalidatePath } from "next/cache"
+import ecsClient, { ec2Client } from "./ecs"
 import {
   CreateServiceCommand,
   DescribeClustersCommand,
   DescribeServicesCommand,
   DescribeTasksCommand,
   ListTasksCommand,
-} from "@aws-sdk/client-ecs";
-import { DescribeNetworkInterfacesCommand } from "@aws-sdk/client-ec2";
+} from "@aws-sdk/client-ecs"
+import { DescribeNetworkInterfacesCommand } from "@aws-sdk/client-ec2"
 
 export async function createSandbox(body: {
-  type: string;
-  name: string;
-  userId: string;
-  visibility: string;
+  type: string
+  name: string
+  userId: string
+  visibility: string
 }) {
   const res = await fetch(
     "https://database.ishaan1013.workers.dev/api/sandbox",
@@ -26,15 +26,15 @@ export async function createSandbox(body: {
       },
       body: JSON.stringify(body),
     }
-  );
+  )
 
-  return await res.text();
+  return await res.text()
 }
 
 export async function updateSandbox(body: {
-  id: string;
-  name?: string;
-  visibility?: "public" | "private";
+  id: string
+  name?: string
+  visibility?: "public" | "private"
 }) {
   await fetch("https://database.ishaan1013.workers.dev/api/sandbox", {
     method: "POST",
@@ -42,17 +42,17 @@ export async function updateSandbox(body: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(body),
-  });
+  })
 
-  revalidatePath("/dashboard");
+  revalidatePath("/dashboard")
 }
 
 export async function deleteSandbox(id: string) {
   await fetch(`https://database.ishaan1013.workers.dev/api/sandbox?id=${id}`, {
     method: "DELETE",
-  });
+  })
 
-  revalidatePath("/dashboard");
+  revalidatePath("/dashboard")
 }
 
 export async function shareSandbox(sandboxId: string, email: string) {
@@ -65,15 +65,15 @@ export async function shareSandbox(sandboxId: string, email: string) {
       },
       body: JSON.stringify({ sandboxId, email }),
     }
-  );
-  const text = await res.text();
+  )
+  const text = await res.text()
 
   if (res.status !== 200) {
-    return { success: false, message: text };
+    return { success: false, message: text }
   }
 
-  revalidatePath(`/code/${sandboxId}`);
-  return { success: true, message: "Shared successfully." };
+  revalidatePath(`/code/${sandboxId}`)
+  return { success: true, message: "Shared successfully." }
 }
 
 export async function unshareSandbox(sandboxId: string, userId: string) {
@@ -83,102 +83,102 @@ export async function unshareSandbox(sandboxId: string, userId: string) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ sandboxId, userId }),
-  });
+  })
 
-  revalidatePath(`/code/${sandboxId}`);
+  revalidatePath(`/code/${sandboxId}`)
 }
 
 export async function describeService(serviceName: string) {
   const command = new DescribeServicesCommand({
     cluster: process.env.NEXT_PUBLIC_AWS_ECS_CLUSTER!,
     services: [serviceName],
-  });
+  })
 
-  return await ecsClient.send(command);
+  return await ecsClient.send(command)
 }
 
 export async function getTaskIp(serviceName: string) {
   const listCommand = new ListTasksCommand({
     cluster: process.env.NEXT_PUBLIC_AWS_ECS_CLUSTER!,
     serviceName,
-  });
+  })
 
-  const listResponse = await ecsClient.send(listCommand);
-  const taskArns = listResponse.taskArns;
+  const listResponse = await ecsClient.send(listCommand)
+  const taskArns = listResponse.taskArns
 
   const describeCommand = new DescribeTasksCommand({
     cluster: process.env.NEXT_PUBLIC_AWS_ECS_CLUSTER!,
     tasks: taskArns,
-  });
+  })
 
-  const describeResponse = await ecsClient.send(describeCommand);
-  const tasks = describeResponse.tasks;
-  const taskAttachment = tasks?.[0].attachments?.[0].details;
+  const describeResponse = await ecsClient.send(describeCommand)
+  const tasks = describeResponse.tasks
+  const taskAttachment = tasks?.[0].attachments?.[0].details
   if (!taskAttachment) {
-    throw new Error("Task attachment not found");
+    throw new Error("Task attachment not found")
   }
 
   const eni = taskAttachment.find(
     (detail) => detail.name === "networkInterfaceId"
-  )?.value;
+  )?.value
   if (!eni) {
-    throw new Error("Network interface not found");
+    throw new Error("Network interface not found")
   }
 
   const describeNetworkInterfacesCommand = new DescribeNetworkInterfacesCommand(
     {
       NetworkInterfaceIds: [eni],
     }
-  );
+  )
   const describeNetworkInterfacesResponse = await ec2Client.send(
     describeNetworkInterfacesCommand
-  );
+  )
 
   const ip =
     describeNetworkInterfacesResponse.NetworkInterfaces?.[0].Association
-      ?.PublicIp;
+      ?.PublicIp
   if (!ip) {
-    throw new Error("Public IP not found");
+    throw new Error("Public IP not found")
   }
 
-  return ip;
+  return ip
 }
 
-async function doesServiceExist(serviceName: string) {
-  const response = await describeService(serviceName);
+export async function doesServiceExist(serviceName: string) {
+  const response = await describeService(serviceName)
   const activeServices = response.services?.filter(
     (service) => service.status === "ACTIVE"
-  );
+  )
 
-  console.log("activeServices: ", activeServices);
+  console.log("activeServices: ", activeServices)
 
-  return activeServices?.length === 1;
+  return activeServices?.length === 1
 }
 
 async function countServices() {
   const command = new DescribeClustersCommand({
     clusters: [process.env.NEXT_PUBLIC_AWS_ECS_CLUSTER!],
-  });
+  })
 
-  const response = await ecsClient.send(command);
-  return response.clusters?.[0].activeServicesCount!;
+  const response = await ecsClient.send(command)
+  return response.clusters?.[0].activeServicesCount!
 }
 
 export async function startServer(
   serviceName: string
 ): Promise<{ success: boolean; message: string }> {
-  const serviceExists = await doesServiceExist(serviceName);
+  const serviceExists = await doesServiceExist(serviceName)
   if (serviceExists) {
-    return { success: true, message: "" };
+    return { success: true, message: "" }
   }
 
-  const activeServices = await countServices();
+  const activeServices = await countServices()
   if (activeServices >= 100) {
     return {
       success: false,
       message:
         "Too many servers are running! Please try again later or contact @ishaandey_ on Twitter/X.",
-    };
+    }
   }
 
   const command = new CreateServiceCommand({
@@ -201,13 +201,13 @@ export async function startServer(
         assignPublicIp: "ENABLED",
       },
     },
-  });
+  })
 
   try {
-    const response = await ecsClient.send(command);
-    console.log("started server:", response.service?.serviceName);
+    const response = await ecsClient.send(command)
+    console.log("started server:", response.service?.serviceName)
 
-    return { success: true, message: "" };
+    return { success: true, message: "" }
 
     // store in workers kv:
     // {
@@ -223,6 +223,6 @@ export async function startServer(
     return {
       success: false,
       message: `Error starting server: ${error.message}. Try again in a minute, or contact @ishaandey_ on Twitter/X if it still doesn't work.`,
-    };
+    }
   }
 }

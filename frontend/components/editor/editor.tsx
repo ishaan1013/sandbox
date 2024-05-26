@@ -1,110 +1,109 @@
-"use client";
+"use client"
 
-import { useEffect, useRef, useState } from "react";
-import monaco from "monaco-editor";
-import Editor, { BeforeMount, OnMount } from "@monaco-editor/react";
-import { io } from "socket.io-client";
-import { toast } from "sonner";
-import { useClerk } from "@clerk/nextjs";
+import { useEffect, useRef, useState } from "react"
+import monaco from "monaco-editor"
+import Editor, { BeforeMount, OnMount } from "@monaco-editor/react"
+import { io } from "socket.io-client"
+import { toast } from "sonner"
+import { useClerk } from "@clerk/nextjs"
 
-import * as Y from "yjs";
-import LiveblocksProvider from "@liveblocks/yjs";
-import { MonacoBinding } from "y-monaco";
-import { Awareness } from "y-protocols/awareness";
-import { TypedLiveblocksProvider, useRoom } from "@/liveblocks.config";
+import * as Y from "yjs"
+import LiveblocksProvider from "@liveblocks/yjs"
+import { MonacoBinding } from "y-monaco"
+import { Awareness } from "y-protocols/awareness"
+import { TypedLiveblocksProvider, useRoom } from "@/liveblocks.config"
 
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
-} from "@/components/ui/resizable";
-import { FileJson, Loader2, TerminalSquare } from "lucide-react";
-import Tab from "../ui/tab";
-import Sidebar from "./sidebar";
-import GenerateInput from "./generate";
-import { Sandbox, User, TFile, TFolder, TTab } from "@/lib/types";
-import { addNew, processFileType, validateName } from "@/lib/utils";
-import { Cursors } from "./live/cursors";
-import { Terminal } from "@xterm/xterm";
-import DisableAccessModal from "./live/disableModal";
-import Loading from "./loading";
-import PreviewWindow from "./preview";
-import Terminals from "./terminals";
-import { ImperativePanelHandle } from "react-resizable-panels";
+} from "@/components/ui/resizable"
+import { FileJson, Loader2, TerminalSquare } from "lucide-react"
+import Tab from "../ui/tab"
+import Sidebar from "./sidebar"
+import GenerateInput from "./generate"
+import { Sandbox, User, TFile, TFolder, TTab } from "@/lib/types"
+import { addNew, processFileType, validateName } from "@/lib/utils"
+import { Cursors } from "./live/cursors"
+import { Terminal } from "@xterm/xterm"
+import DisableAccessModal from "./live/disableModal"
+import Loading from "./loading"
+import PreviewWindow from "./preview"
+import Terminals from "./terminals"
+import { ImperativePanelHandle } from "react-resizable-panels"
 
 export default function CodeEditor({
   userData,
   sandboxData,
   ip,
 }: {
-  userData: User;
-  sandboxData: Sandbox;
-  ip: string;
+  userData: User
+  sandboxData: Sandbox
+  ip: string
 }) {
   const socket = io(
-    // `ws://${sandboxData.id}.ws.ishaand.com?userId=${userData.id}&sandboxId=${sandboxData.id}`
     `http://${ip}:4000?userId=${userData.id}&sandboxId=${sandboxData.id}`,
     {
       timeout: 2000,
     }
-  );
+  )
 
-  const [isPreviewCollapsed, setIsPreviewCollapsed] = useState(true);
+  const [isPreviewCollapsed, setIsPreviewCollapsed] = useState(true)
   const [disableAccess, setDisableAccess] = useState({
     isDisabled: false,
     message: "",
-  });
+  })
 
   // File state
-  const [files, setFiles] = useState<(TFolder | TFile)[]>([]);
-  const [tabs, setTabs] = useState<TTab[]>([]);
-  const [activeFileId, setActiveFileId] = useState<string>("");
-  const [activeFileContent, setActiveFileContent] = useState("");
-  const [deletingFolderId, setDeletingFolderId] = useState("");
+  const [files, setFiles] = useState<(TFolder | TFile)[]>([])
+  const [tabs, setTabs] = useState<TTab[]>([])
+  const [activeFileId, setActiveFileId] = useState<string>("")
+  const [activeFileContent, setActiveFileContent] = useState("")
+  const [deletingFolderId, setDeletingFolderId] = useState("")
 
   // Editor state
-  const [editorLanguage, setEditorLanguage] = useState("plaintext");
-  const [cursorLine, setCursorLine] = useState(0);
+  const [editorLanguage, setEditorLanguage] = useState("plaintext")
+  const [cursorLine, setCursorLine] = useState(0)
   const [editorRef, setEditorRef] =
-    useState<monaco.editor.IStandaloneCodeEditor>();
+    useState<monaco.editor.IStandaloneCodeEditor>()
 
   // AI Copilot state
-  const [ai, setAi] = useState(false);
+  const [ai, setAi] = useState(false)
   const [generate, setGenerate] = useState<{
-    show: boolean;
-    id: string;
-    line: number;
-    widget: monaco.editor.IContentWidget | undefined;
-    pref: monaco.editor.ContentWidgetPositionPreference[];
-    width: number;
-  }>({ show: false, line: 0, id: "", widget: undefined, pref: [], width: 0 });
+    show: boolean
+    id: string
+    line: number
+    widget: monaco.editor.IContentWidget | undefined
+    pref: monaco.editor.ContentWidgetPositionPreference[]
+    width: number
+  }>({ show: false, line: 0, id: "", widget: undefined, pref: [], width: 0 })
   const [decorations, setDecorations] = useState<{
-    options: monaco.editor.IModelDeltaDecoration[];
-    instance: monaco.editor.IEditorDecorationsCollection | undefined;
-  }>({ options: [], instance: undefined });
+    options: monaco.editor.IModelDeltaDecoration[]
+    instance: monaco.editor.IEditorDecorationsCollection | undefined
+  }>({ options: [], instance: undefined })
 
   // Terminal state
   const [terminals, setTerminals] = useState<
     {
-      id: string;
-      terminal: Terminal | null;
+      id: string
+      terminal: Terminal | null
     }[]
-  >([]);
+  >([])
 
-  const isOwner = sandboxData.userId === userData.id;
-  const clerk = useClerk();
+  const isOwner = sandboxData.userId === userData.id
+  const clerk = useClerk()
 
   // Liveblocks hooks
-  const room = useRoom();
-  const [provider, setProvider] = useState<TypedLiveblocksProvider>();
+  const room = useRoom()
+  const [provider, setProvider] = useState<TypedLiveblocksProvider>()
 
   // Refs for libraries / features
-  const editorContainerRef = useRef<HTMLDivElement>(null);
-  const monacoRef = useRef<typeof monaco | null>(null);
-  const generateRef = useRef<HTMLDivElement>(null);
-  const generateWidgetRef = useRef<HTMLDivElement>(null);
-  const previewPanelRef = useRef<ImperativePanelHandle>(null);
-  const editorPanelRef = useRef<ImperativePanelHandle>(null);
+  const editorContainerRef = useRef<HTMLDivElement>(null)
+  const monacoRef = useRef<typeof monaco | null>(null)
+  const generateRef = useRef<HTMLDivElement>(null)
+  const generateWidgetRef = useRef<HTMLDivElement>(null)
+  const previewPanelRef = useRef<ImperativePanelHandle>(null)
+  const editorPanelRef = useRef<ImperativePanelHandle>(null)
 
   // Pre-mount editor keybindings
   const handleEditorWillMount: BeforeMount = (monaco) => {
@@ -113,21 +112,21 @@ export default function CodeEditor({
         keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyG,
         command: "null",
       },
-    ]);
-  };
+    ])
+  }
 
   // Post-mount editor keybindings and actions
   const handleEditorMount: OnMount = (editor, monaco) => {
-    setEditorRef(editor);
-    monacoRef.current = monaco;
+    setEditorRef(editor)
+    monacoRef.current = monaco
 
     editor.onDidChangeCursorPosition((e) => {
-      const { column, lineNumber } = e.position;
-      if (lineNumber === cursorLine) return;
-      setCursorLine(lineNumber);
+      const { column, lineNumber } = e.position
+      if (lineNumber === cursorLine) return
+      setCursorLine(lineNumber)
 
-      const model = editor.getModel();
-      const endColumn = model?.getLineContent(lineNumber).length || 0;
+      const model = editor.getModel()
+      const endColumn = model?.getLineContent(lineNumber).length || 0
 
       setDecorations((prev) => {
         return {
@@ -145,18 +144,18 @@ export default function CodeEditor({
               },
             },
           ],
-        };
-      });
-    });
+        }
+      })
+    })
 
     editor.onDidBlurEditorText((e) => {
       setDecorations((prev) => {
         return {
           ...prev,
           options: [],
-        };
-      });
-    });
+        }
+      })
+    })
 
     editor.addAction({
       id: "generate",
@@ -170,11 +169,11 @@ export default function CodeEditor({
             ...prev,
             show: !prev.show,
             pref: [monaco.editor.ContentWidgetPositionPreference.BELOW],
-          };
-        });
+          }
+        })
       },
-    });
-  };
+    })
+  }
 
   // Generate widget effect
   useEffect(() => {
@@ -183,32 +182,32 @@ export default function CodeEditor({
         return {
           ...prev,
           show: false,
-        };
-      });
-      return;
+        }
+      })
+      return
     }
     if (generate.show) {
       editorRef?.changeViewZones(function (changeAccessor) {
-        if (!generateRef.current) return;
+        if (!generateRef.current) return
         const id = changeAccessor.addZone({
           afterLineNumber: cursorLine,
           heightInLines: 3,
           domNode: generateRef.current,
-        });
+        })
         setGenerate((prev) => {
-          return { ...prev, id, line: cursorLine };
-        });
-      });
+          return { ...prev, id, line: cursorLine }
+        })
+      })
 
-      if (!generateWidgetRef.current) return;
-      const widgetElement = generateWidgetRef.current;
+      if (!generateWidgetRef.current) return
+      const widgetElement = generateWidgetRef.current
 
       const contentWidget = {
         getDomNode: () => {
-          return widgetElement;
+          return widgetElement
         },
         getId: () => {
-          return "generate.widget";
+          return "generate.widget"
         },
         getPosition: () => {
           return {
@@ -217,232 +216,232 @@ export default function CodeEditor({
               column: 1,
             },
             preference: generate.pref,
-          };
+          }
         },
-      };
+      }
 
       // window width - sidebar width, times the percentage of the editor panel
       const width = editorPanelRef.current
         ? (editorPanelRef.current.getSize() / 100) * (window.innerWidth - 224)
-        : 400; //fallback
+        : 400 //fallback
 
       setGenerate((prev) => {
         return {
           ...prev,
           widget: contentWidget,
           width,
-        };
-      });
-      editorRef?.addContentWidget(contentWidget);
+        }
+      })
+      editorRef?.addContentWidget(contentWidget)
 
       if (generateRef.current && generateWidgetRef.current) {
-        editorRef?.applyFontInfo(generateRef.current);
-        editorRef?.applyFontInfo(generateWidgetRef.current);
+        editorRef?.applyFontInfo(generateRef.current)
+        editorRef?.applyFontInfo(generateWidgetRef.current)
       }
     } else {
       editorRef?.changeViewZones(function (changeAccessor) {
-        changeAccessor.removeZone(generate.id);
+        changeAccessor.removeZone(generate.id)
         setGenerate((prev) => {
-          return { ...prev, id: "" };
-        });
-      });
+          return { ...prev, id: "" }
+        })
+      })
 
-      if (!generate.widget) return;
-      editorRef?.removeContentWidget(generate.widget);
+      if (!generate.widget) return
+      editorRef?.removeContentWidget(generate.widget)
       setGenerate((prev) => {
         return {
           ...prev,
           widget: undefined,
-        };
-      });
+        }
+      })
     }
-  }, [generate.show]);
+  }, [generate.show])
 
   // Decorations effect for generate widget tips
   useEffect(() => {
     if (decorations.options.length === 0) {
-      decorations.instance?.clear();
+      decorations.instance?.clear()
     }
 
-    if (!ai) return;
+    if (!ai) return
 
     if (decorations.instance) {
-      decorations.instance.set(decorations.options);
+      decorations.instance.set(decorations.options)
     } else {
-      const instance = editorRef?.createDecorationsCollection();
-      instance?.set(decorations.options);
+      const instance = editorRef?.createDecorationsCollection()
+      instance?.set(decorations.options)
 
       setDecorations((prev) => {
         return {
           ...prev,
           instance,
-        };
-      });
+        }
+      })
     }
-  }, [decorations.options]);
+  }, [decorations.options])
 
   // Save file keybinding logic effect
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.key === "s" && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
+        e.preventDefault()
 
         setTabs((prev) =>
           prev.map((tab) =>
             tab.id === activeFileId ? { ...tab, saved: true } : tab
           )
-        );
+        )
 
-        socket.emit("saveFile", activeFileId, editorRef?.getValue());
+        socket.emit("saveFile", activeFileId, editorRef?.getValue())
       }
-    };
-    document.addEventListener("keydown", down);
+    }
+    document.addEventListener("keydown", down)
 
     return () => {
-      document.removeEventListener("keydown", down);
-    };
-  }, [tabs, activeFileId]);
+      document.removeEventListener("keydown", down)
+    }
+  }, [tabs, activeFileId])
 
   // Liveblocks live collaboration setup effect
   useEffect(() => {
-    const tab = tabs.find((t) => t.id === activeFileId);
-    const model = editorRef?.getModel();
+    const tab = tabs.find((t) => t.id === activeFileId)
+    const model = editorRef?.getModel()
 
-    if (!editorRef || !tab || !model) return;
+    if (!editorRef || !tab || !model) return
 
-    const yDoc = new Y.Doc();
-    const yText = yDoc.getText(tab.id);
-    const yProvider: any = new LiveblocksProvider(room, yDoc);
+    const yDoc = new Y.Doc()
+    const yText = yDoc.getText(tab.id)
+    const yProvider: any = new LiveblocksProvider(room, yDoc)
 
     const onSync = (isSynced: boolean) => {
       if (isSynced) {
-        const text = yText.toString();
+        const text = yText.toString()
         if (text === "") {
           if (activeFileContent) {
-            yText.insert(0, activeFileContent);
+            yText.insert(0, activeFileContent)
           } else {
             setTimeout(() => {
-              yText.insert(0, editorRef.getValue());
-            }, 0);
+              yText.insert(0, editorRef.getValue())
+            }, 0)
           }
         }
       }
-    };
+    }
 
-    yProvider.on("sync", onSync);
+    yProvider.on("sync", onSync)
 
-    setProvider(yProvider);
+    setProvider(yProvider)
 
     const binding = new MonacoBinding(
       yText,
       model,
       new Set([editorRef]),
       yProvider.awareness as Awareness
-    );
+    )
 
     return () => {
-      yDoc.destroy();
-      yProvider.destroy();
-      binding.destroy();
-      yProvider.off("sync", onSync);
-    };
-  }, [editorRef, room, activeFileContent]);
+      yDoc.destroy()
+      yProvider.destroy()
+      binding.destroy()
+      yProvider.off("sync", onSync)
+    }
+  }, [editorRef, room, activeFileContent])
 
   // Connection/disconnection effect
   useEffect(() => {
-    socket.connect();
+    socket.connect()
 
     return () => {
-      socket.disconnect();
-    };
-  }, []);
+      socket.disconnect()
+    }
+  }, [])
 
   // Socket event listener effect
   useEffect(() => {
-    const onConnect = () => {};
+    const onConnect = () => {}
 
     const onDisconnect = () => {
-      setTerminals([]);
-    };
+      setTerminals([])
+    }
 
     const onLoadedEvent = (files: (TFolder | TFile)[]) => {
-      setFiles(files);
-    };
+      setFiles(files)
+    }
 
     const onRateLimit = (message: string) => {
-      toast.error(message);
-    };
+      toast.error(message)
+    }
 
     const onTerminalResponse = (response: { id: string; data: string }) => {
-      const term = terminals.find((t) => t.id === response.id);
+      const term = terminals.find((t) => t.id === response.id)
       if (term && term.terminal) {
-        term.terminal.write(response.data);
+        term.terminal.write(response.data)
       }
-    };
+    }
 
     const onDisableAccess = (message: string) => {
       if (!isOwner)
         setDisableAccess({
           isDisabled: true,
           message,
-        });
-    };
+        })
+    }
 
-    socket.on("connect", onConnect);
-    socket.on("disconnect", onDisconnect);
-    socket.on("loaded", onLoadedEvent);
-    socket.on("rateLimit", onRateLimit);
-    socket.on("terminalResponse", onTerminalResponse);
-    socket.on("disableAccess", onDisableAccess);
+    socket.on("connect", onConnect)
+    socket.on("disconnect", onDisconnect)
+    socket.on("loaded", onLoadedEvent)
+    socket.on("rateLimit", onRateLimit)
+    socket.on("terminalResponse", onTerminalResponse)
+    socket.on("disableAccess", onDisableAccess)
 
     return () => {
-      socket.off("connect", onConnect);
-      socket.off("disconnect", onDisconnect);
-      socket.off("loaded", onLoadedEvent);
-      socket.off("rateLimit", onRateLimit);
-      socket.off("terminalResponse", onTerminalResponse);
-      socket.off("disableAccess", onDisableAccess);
-    };
+      socket.off("connect", onConnect)
+      socket.off("disconnect", onDisconnect)
+      socket.off("loaded", onLoadedEvent)
+      socket.off("rateLimit", onRateLimit)
+      socket.off("terminalResponse", onTerminalResponse)
+      socket.off("disableAccess", onDisableAccess)
+    }
     // }, []);
-  }, [terminals]);
+  }, [terminals])
 
   // Helper functions for tabs:
 
   // Select file and load content
   const selectFile = (tab: TTab) => {
-    if (tab.id === activeFileId) return;
+    if (tab.id === activeFileId) return
 
     setGenerate((prev) => {
       return {
         ...prev,
         show: false,
-      };
-    });
-    const exists = tabs.find((t) => t.id === tab.id);
+      }
+    })
+    const exists = tabs.find((t) => t.id === tab.id)
 
     setTabs((prev) => {
       if (exists) {
-        setActiveFileId(exists.id);
-        return prev;
+        setActiveFileId(exists.id)
+        return prev
       }
-      return [...prev, tab];
-    });
+      return [...prev, tab]
+    })
 
     socket.emit("getFile", tab.id, (response: string) => {
-      setActiveFileContent(response);
-    });
-    setEditorLanguage(processFileType(tab.name));
-    setActiveFileId(tab.id);
-  };
+      setActiveFileContent(response)
+    })
+    setEditorLanguage(processFileType(tab.name))
+    setActiveFileId(tab.id)
+  }
 
   // Close tab and remove from tabs
   const closeTab = (id: string) => {
-    const numTabs = tabs.length;
-    const index = tabs.findIndex((t) => t.id === id);
+    const numTabs = tabs.length
+    const index = tabs.findIndex((t) => t.id === id)
 
-    console.log("closing tab", id, index);
+    console.log("closing tab", id, index)
 
-    if (index === -1) return;
+    if (index === -1) return
 
     const nextId =
       activeFileId === id
@@ -451,49 +450,49 @@ export default function CodeEditor({
           : index < numTabs - 1
           ? tabs[index + 1].id
           : tabs[index - 1].id
-        : activeFileId;
+        : activeFileId
 
-    setTabs((prev) => prev.filter((t) => t.id !== id));
+    setTabs((prev) => prev.filter((t) => t.id !== id))
 
     if (!nextId) {
-      setActiveFileId("");
+      setActiveFileId("")
     } else {
-      const nextTab = tabs.find((t) => t.id === nextId);
+      const nextTab = tabs.find((t) => t.id === nextId)
       if (nextTab) {
-        selectFile(nextTab);
+        selectFile(nextTab)
       }
     }
-  };
+  }
 
   const closeTabs = (ids: string[]) => {
-    const numTabs = tabs.length;
+    const numTabs = tabs.length
 
-    if (numTabs === 0) return;
+    if (numTabs === 0) return
 
-    const allIndexes = ids.map((id) => tabs.findIndex((t) => t.id === id));
+    const allIndexes = ids.map((id) => tabs.findIndex((t) => t.id === id))
 
-    const indexes = allIndexes.filter((index) => index !== -1);
-    if (indexes.length === 0) return;
+    const indexes = allIndexes.filter((index) => index !== -1)
+    if (indexes.length === 0) return
 
-    console.log("closing tabs", ids, indexes);
+    console.log("closing tabs", ids, indexes)
 
-    const activeIndex = tabs.findIndex((t) => t.id === activeFileId);
+    const activeIndex = tabs.findIndex((t) => t.id === activeFileId)
 
-    const newTabs = tabs.filter((t) => !ids.includes(t.id));
-    setTabs(newTabs);
+    const newTabs = tabs.filter((t) => !ids.includes(t.id))
+    setTabs(newTabs)
 
     if (indexes.length === numTabs) {
-      setActiveFileId("");
+      setActiveFileId("")
     } else {
       const nextTab =
         newTabs.length > activeIndex
           ? newTabs[activeIndex]
-          : newTabs[newTabs.length - 1];
+          : newTabs[newTabs.length - 1]
       if (nextTab) {
-        selectFile(nextTab);
+        selectFile(nextTab)
       }
     }
-  };
+  }
 
   const handleRename = (
     id: string,
@@ -501,40 +500,40 @@ export default function CodeEditor({
     oldName: string,
     type: "file" | "folder"
   ) => {
-    const valid = validateName(newName, oldName, type);
+    const valid = validateName(newName, oldName, type)
     if (!valid.status) {
-      if (valid.message) toast.error("Invalid file name.");
-      return false;
+      if (valid.message) toast.error("Invalid file name.")
+      return false
     }
 
-    socket.emit("renameFile", id, newName);
+    socket.emit("renameFile", id, newName)
     setTabs((prev) =>
       prev.map((tab) => (tab.id === id ? { ...tab, name: newName } : tab))
-    );
+    )
 
-    return true;
-  };
+    return true
+  }
 
   const handleDeleteFile = (file: TFile) => {
     socket.emit("deleteFile", file.id, (response: (TFolder | TFile)[]) => {
-      setFiles(response);
-    });
-    closeTab(file.id);
-  };
+      setFiles(response)
+    })
+    closeTab(file.id)
+  }
 
   const handleDeleteFolder = (folder: TFolder) => {
-    setDeletingFolderId(folder.id);
-    console.log("deleting folder", folder.id);
+    setDeletingFolderId(folder.id)
+    console.log("deleting folder", folder.id)
 
     socket.emit("getFolder", folder.id, (response: string[]) =>
       closeTabs(response)
-    );
+    )
 
     socket.emit("deleteFolder", folder.id, (response: (TFolder | TFile)[]) => {
-      setFiles(response);
-      setDeletingFolderId("");
-    });
-  };
+      setFiles(response)
+      setDeletingFolderId("")
+    })
+  }
 
   // On disabled access for shared users, show un-interactable loading placeholder + info modal
   if (disableAccess.isDisabled)
@@ -547,7 +546,7 @@ export default function CodeEditor({
         />
         <Loading />
       </>
-    );
+    )
 
   return (
     <>
@@ -569,41 +568,41 @@ export default function CodeEditor({
             }}
             onExpand={() => {
               editorRef?.changeViewZones(function (changeAccessor) {
-                changeAccessor.removeZone(generate.id);
+                changeAccessor.removeZone(generate.id)
 
-                if (!generateRef.current) return;
+                if (!generateRef.current) return
                 const id = changeAccessor.addZone({
                   afterLineNumber: cursorLine,
                   heightInLines: 12,
                   domNode: generateRef.current,
-                });
+                })
                 setGenerate((prev) => {
-                  return { ...prev, id };
-                });
-              });
+                  return { ...prev, id }
+                })
+              })
             }}
             onAccept={(code: string) => {
-              const line = generate.line;
+              const line = generate.line
               setGenerate((prev) => {
                 return {
                   ...prev,
                   show: !prev.show,
-                };
-              });
-              const file = editorRef?.getValue();
+                }
+              })
+              const file = editorRef?.getValue()
 
-              const lines = file?.split("\n") || [];
-              lines.splice(line - 1, 0, code);
-              const updatedFile = lines.join("\n");
-              editorRef?.setValue(updatedFile);
+              const lines = file?.split("\n") || []
+              lines.splice(line - 1, 0, code)
+              const updatedFile = lines.join("\n")
+              editorRef?.setValue(updatedFile)
             }}
             onClose={() => {
               setGenerate((prev) => {
                 return {
                   ...prev,
                   show: !prev.show,
-                };
-              });
+                }
+              })
             }}
           />
         ) : null}
@@ -643,7 +642,7 @@ export default function CodeEditor({
                 saved={tab.saved}
                 selected={activeFileId === tab.id}
                 onClick={(e) => {
-                  selectFile(tab);
+                  selectFile(tab)
                 }}
                 onClose={() => closeTab(tab.id)}
               >
@@ -680,7 +679,7 @@ export default function CodeEditor({
                             ? { ...tab, saved: true }
                             : tab
                         )
-                      );
+                      )
                     } else {
                       setTabs((prev) =>
                         prev.map((tab) =>
@@ -688,7 +687,7 @@ export default function CodeEditor({
                             ? { ...tab, saved: false }
                             : tab
                         )
-                      );
+                      )
                     }
                   }}
                   options={{
@@ -732,8 +731,8 @@ export default function CodeEditor({
               <PreviewWindow
                 collapsed={isPreviewCollapsed}
                 open={() => {
-                  previewPanelRef.current?.expand();
-                  setIsPreviewCollapsed(false);
+                  previewPanelRef.current?.expand()
+                  setIsPreviewCollapsed(false)
                 }}
                 ip={ip}
               />
@@ -761,5 +760,5 @@ export default function CodeEditor({
         </ResizablePanel>
       </ResizablePanelGroup>
     </>
-  );
+  )
 }

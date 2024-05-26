@@ -1,13 +1,13 @@
-"use client";
+"use client"
 
-import { AnimatePresence, motion } from "framer-motion";
-import Image from "next/image";
-import { useEffect, useState } from "react";
-import ProjectCardDropdown from "./dropdown";
-import { Clock, Globe, Lock } from "lucide-react";
-import { Sandbox } from "@/lib/types";
-import { Card } from "@/components/ui/card";
-import { useRouter } from "next/navigation";
+import { AnimatePresence, motion } from "framer-motion"
+import Image from "next/image"
+import { useEffect, useState } from "react"
+import ProjectCardDropdown from "./dropdown"
+import { Clock, Globe, Lock } from "lucide-react"
+import { Sandbox } from "@/lib/types"
+import { Card } from "@/components/ui/card"
+import { useRouter } from "next/navigation"
 
 export default function ProjectCard({
   children,
@@ -16,33 +16,33 @@ export default function ProjectCard({
   onDelete,
   deletingId,
 }: {
-  children?: React.ReactNode;
-  sandbox: Sandbox;
-  onVisibilityChange: (sandbox: Sandbox) => void;
-  onDelete: (sandbox: Sandbox) => void;
-  deletingId: string;
+  children?: React.ReactNode
+  sandbox: Sandbox
+  onVisibilityChange: (sandbox: Sandbox) => void
+  onDelete: (sandbox: Sandbox) => void
+  deletingId: string
 }) {
-  const [hovered, setHovered] = useState(false);
-  const [date, setDate] = useState<string>();
-  const router = useRouter();
+  const [hovered, setHovered] = useState(false)
+  const [date, setDate] = useState<string>()
+  const router = useRouter()
 
   useEffect(() => {
-    const createdAt = new Date(sandbox.createdAt);
-    const now = new Date();
+    const createdAt = new Date(sandbox.createdAt)
+    const now = new Date()
     const diffInMinutes = Math.floor(
       (now.getTime() - createdAt.getTime()) / 60000
-    );
+    )
 
     if (diffInMinutes < 1) {
-      setDate("Now");
+      setDate("Now")
     } else if (diffInMinutes < 60) {
-      setDate(`${diffInMinutes}m ago`);
+      setDate(`${diffInMinutes}m ago`)
     } else if (diffInMinutes < 1440) {
-      setDate(`${Math.floor(diffInMinutes / 60)}h ago`);
+      setDate(`${Math.floor(diffInMinutes / 60)}h ago`)
     } else {
-      setDate(`${Math.floor(diffInMinutes / 1440)}d ago`);
+      setDate(`${Math.floor(diffInMinutes / 1440)}d ago`)
     }
-  }, [sandbox]);
+  }, [sandbox])
 
   return (
     <Card
@@ -52,7 +52,7 @@ export default function ProjectCard({
       onMouseLeave={() => setHovered(false)}
       className={`group/canvas-card p-4 h-48 flex flex-col justify-between items-start hover:border-muted-foreground/50 relative overflow-hidden transition-all`}
     >
-      {/* <AnimatePresence>
+      <AnimatePresence>
         {hovered && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -62,7 +62,7 @@ export default function ProjectCard({
             {children}
           </motion.div>
         )}
-      </AnimatePresence> */}
+      </AnimatePresence>
 
       <div className="space-x-2 flex items-center justify-start w-full z-10">
         <Image
@@ -101,5 +101,5 @@ export default function ProjectCard({
         </div>
       </div>
     </Card>
-  );
+  )
 }
