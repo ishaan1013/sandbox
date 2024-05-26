@@ -9,7 +9,7 @@ import {
   TerminalSquare,
   UnfoldVertical,
 } from "lucide-react";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 export default function PreviewWindow({
@@ -22,6 +22,7 @@ export default function PreviewWindow({
   ip: string;
 }) {
   const ref = useRef<HTMLIFrameElement>(null);
+  const [iframeKey, setIframeKey] = useState(0);
 
   return (
     <>
@@ -33,9 +34,9 @@ export default function PreviewWindow({
         <div className="h-8 rounded-md px-3 bg-secondary flex items-center w-full justify-between">
           <div className="text-xs">
             Preview
-            <span className="inline-block ml-2 items-center font-mono text-muted-foreground">
+            {/* <span className="inline-block ml-2 items-center font-mono text-muted-foreground">
               localhost:8000
-            </span>
+            </span> */}
           </div>
           <div className="flex space-x-1 translate-x-1">
             {collapsed ? (
@@ -45,13 +46,13 @@ export default function PreviewWindow({
             ) : (
               <>
                 {/* Todo, make this open inspector */}
-                <PreviewButton disabled onClick={() => {}}>
+                {/* <PreviewButton disabled onClick={() => {}}>
                   <TerminalSquare className="w-4 h-4" />
-                </PreviewButton>
+                </PreviewButton> */}
 
                 <PreviewButton
                   onClick={() => {
-                    navigator.clipboard.writeText(`http://${ip}:8000`);
+                    navigator.clipboard.writeText(`http://${ip}:3000`);
                     toast.info("Copied preview link to clipboard");
                   }}
                 >
@@ -59,9 +60,10 @@ export default function PreviewWindow({
                 </PreviewButton>
                 <PreviewButton
                   onClick={() => {
-                    if (ref.current) {
-                      ref.current.contentWindow?.location.reload();
-                    }
+                    // if (ref.current) {
+                    //   ref.current.contentWindow?.location.reload();
+                    // }
+                    setIframeKey((prev) => prev + 1);
                   }}
                 >
                   <RotateCw className="w-3 h-3" />
@@ -74,10 +76,11 @@ export default function PreviewWindow({
       {collapsed ? null : (
         <div className="w-full grow rounded-md overflow-hidden bg-foreground">
           <iframe
+            key={iframeKey}
             ref={ref}
             width={"100%"}
             height={"100%"}
-            src={`http://${ip}:8000`}
+            src={`http://${ip}:3000`}
           />
         </div>
       )}

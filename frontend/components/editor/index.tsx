@@ -34,55 +34,50 @@ export default function Editor({
       return;
     }
 
-    // startServer(sandboxData.id).then((response) => {
-    //   if (!response.success) {
-    //     toast.error(response.message);
-    //     setDidFail(true);
-    //   } else {
-    //     setIsServiceRunning(true);
+    startServer(sandboxData.id).then((response) => {
+      if (!response.success) {
+        toast.error(response.message);
+        setDidFail(true);
+      } else {
+        setIsServiceRunning(true);
 
-    //     checkServiceStatus(sandboxData.id)
-    //       .then(() => {
-    //         setIsDeploymentActive(true);
+        checkServiceStatus(sandboxData.id)
+          .then(() => {
+            setIsDeploymentActive(true);
 
-    //         getTaskIp(sandboxData.id)
-    //           .then((ip) => {
-    //             setTaskIp(ip);
-    //           })
-    //           .catch(() => {
-    //             setDidFail(true);
-    //             toast.error("An error occurred while getting your server IP.");
-    //           });
-    //       })
-    //       .catch(() => {
-    //         toast.error("An error occurred while initializing your server.");
-    //         setDidFail(true);
-    //       });
-    //   }
-    // });
+            getTaskIp(sandboxData.id)
+              .then((ip) => {
+                setTaskIp(ip);
+              })
+              .catch(() => {
+                setDidFail(true);
+                toast.error("An error occurred while getting your server IP.");
+              });
+          })
+          .catch(() => {
+            toast.error("An error occurred while initializing your server.");
+            setDidFail(true);
+          });
+      }
+    });
   }, []);
 
-  // if (didFail) return <Loading didFail={didFail} />;
-  // if (!isServiceRunning || !isDeploymentActive || !taskIp)
-  //   return (
-  //     <Loading
-  //       text="Creating sandbox resources"
-  //       description={
-  //         isDeploymentActive
-  //           ? "Preparing server networking..."
-  //           : isServiceRunning
-  //           ? "Initializing server, this could take a minute..."
-  //           : "Requesting your server creation..."
-  //       }
-  //     />
-  //   );
+  if (didFail) return <Loading didFail={didFail} />;
+  if (!isServiceRunning || !isDeploymentActive || !taskIp)
+    return (
+      <Loading
+        text="Creating sandbox resources"
+        description={
+          isDeploymentActive
+            ? "Preparing server networking..."
+            : isServiceRunning
+            ? "Initializing server, this could take a minute..."
+            : "Requesting your server creation..."
+        }
+      />
+    );
 
   return (
-    <CodeEditor
-      ip={"localhost"}
-      // ip={taskIp}
-      userData={userData}
-      sandboxData={sandboxData}
-    />
+    <CodeEditor ip={taskIp} userData={userData} sandboxData={sandboxData} />
   );
 }

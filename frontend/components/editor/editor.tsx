@@ -90,10 +90,6 @@ export default function CodeEditor({
       terminal: Terminal | null;
     }[]
   >([]);
-  const [activeTerminalId, setActiveTerminalId] = useState("");
-  const [creatingTerminal, setCreatingTerminal] = useState(false);
-  const [closingTerminal, setClosingTerminal] = useState("");
-  const activeTerminal = terminals.find((t) => t.id === activeTerminalId);
 
   const isOwner = sandboxData.userId === userData.id;
   const clerk = useClerk();
@@ -752,14 +748,7 @@ export default function CodeEditor({
                 <Terminals
                   terminals={terminals}
                   setTerminals={setTerminals}
-                  activeTerminalId={activeTerminalId}
-                  setActiveTerminalId={setActiveTerminalId}
                   socket={socket}
-                  activeTerminal={activeTerminal}
-                  creatingTerminal={creatingTerminal}
-                  setCreatingTerminal={setCreatingTerminal}
-                  closingTerminal={closingTerminal}
-                  setClosingTerminal={setClosingTerminal}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-lg font-medium text-muted-foreground/50 select-none">

@@ -237,7 +237,9 @@ export default {
 					const res = await db.query.user.findFirst({
 						where: (user, { eq }) => eq(user.id, id),
 						with: {
-							sandbox: true,
+							sandbox: {
+								orderBy: (sandbox, { desc }) => [desc(sandbox.createdAt)],
+							},
 							usersToSandboxes: true,
 						},
 					});

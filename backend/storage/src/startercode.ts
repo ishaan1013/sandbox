@@ -56,8 +56,9 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: 8000,
-  },
+    port: 3000,
+    host: "0.0.0.0",
+  }
 })
 `,
 		},
@@ -87,10 +88,12 @@ export default defineConfig({
   flex-direction: column;
   align-items: center;
   justify-content: center;
+
+  font-family: sans-serif;
 }
 
 h1 {
-  color: #fff;
+  color: #000;
   margin: 0;
 }
 

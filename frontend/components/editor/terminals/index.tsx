@@ -8,18 +8,12 @@ import { Loader2, Plus, SquareTerminal, TerminalSquare } from "lucide-react";
 import { Socket } from "socket.io-client";
 import { toast } from "sonner";
 import EditorTerminal from "./terminal";
+import { useState } from "react";
 
 export default function Terminals({
   terminals,
   setTerminals,
-  activeTerminalId,
-  setActiveTerminalId,
   socket,
-  activeTerminal,
-  creatingTerminal,
-  setCreatingTerminal,
-  closingTerminal,
-  setClosingTerminal,
 }: {
   terminals: { id: string; terminal: Terminal | null }[];
   setTerminals: React.Dispatch<
@@ -30,20 +24,13 @@ export default function Terminals({
       }[]
     >
   >;
-  activeTerminalId: string;
-  setActiveTerminalId: React.Dispatch<React.SetStateAction<string>>;
   socket: Socket;
-  activeTerminal:
-    | {
-        id: string;
-        terminal: Terminal | null;
-      }
-    | undefined;
-  creatingTerminal: boolean;
-  setCreatingTerminal: React.Dispatch<React.SetStateAction<boolean>>;
-  closingTerminal: string;
-  setClosingTerminal: React.Dispatch<React.SetStateAction<string>>;
 }) {
+  const [activeTerminalId, setActiveTerminalId] = useState("");
+  const [creatingTerminal, setCreatingTerminal] = useState(false);
+  const [closingTerminal, setClosingTerminal] = useState("");
+  const activeTerminal = terminals.find((t) => t.id === activeTerminalId);
+
   return (
     <>
       <div className="h-10 w-full overflow-auto flex gap-2 shrink-0 tab-scroll">

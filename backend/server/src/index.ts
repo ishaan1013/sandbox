@@ -51,19 +51,21 @@ const terminals: {
 
 const dirName = path.join(__dirname, "..");
 
-const handshakeSchema = z.object({
-  userId: z.string(),
-  sandboxId: z.string(),
-  EIO: z.string(),
-  transport: z.string(),
-});
-
 io.use(async (socket, next) => {
+  console.log("Middleware");
+
+  const handshakeSchema = z.object({
+    userId: z.string(),
+    sandboxId: z.string(),
+    EIO: z.string(),
+    transport: z.string(),
+  });
+
   const q = socket.handshake.query;
   const parseQuery = handshakeSchema.safeParse(q);
 
   if (!parseQuery.success) {
-    ("Invalid request.");
+    console.log("Invalid request.");
     next(new Error("Invalid request."));
     return;
   }
@@ -75,6 +77,7 @@ io.use(async (socket, next) => {
   const dbUserJSON = (await dbUser.json()) as User;
 
   if (!dbUserJSON) {
+    console.log("DB error.");
     next(new Error("DB error."));
     return;
   }
@@ -85,6 +88,7 @@ io.use(async (socket, next) => {
   );
 
   if (!sandbox && !sharedSandboxes) {
+    console.log("Invalid credentials.");
     next(new Error("Invalid credentials."));
     return;
   }
@@ -145,6 +149,7 @@ io.on("connection", async (socket) => {
 
   // todo: send diffs + debounce for efficiency
   socket.on("saveFile", async (fileId: string, body: string) => {
+    console.log("save");
     try {
       await saveFileRL.consume(data.userId, 1);
 
@@ -470,5 +475,5 @@ io.on("connection", async (socket) => {
 });
 
 httpServer.listen(port, () => {
-  console.log(`Server, running on port ${port}`);
+  console.log(`Server 123, running on port ${port}`);
 });
