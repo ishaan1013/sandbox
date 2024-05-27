@@ -23,7 +23,7 @@ npm run dev
 
 ### Backend
 
-The backend consists of a primary Express and Socket.io server, and 3 Cloudflare Workers microservices for the D1 database, R2 storage, and Workers AI. The D1 database also serves as a KV store for user sessions, and it contains a [service binding](https://developers.cloudflare.com/workers/runtime-apis/bindings/service-bindings/) to the R2 storage worker.
+The backend consists of a primary Express and Socket.io server, and 3 Cloudflare Workers microservices for the D1 database, R2 storage, and Workers AI. The D1 database also contains a [service binding](https://developers.cloudflare.com/workers/runtime-apis/bindings/service-bindings/) to the R2 storage worker.
 
 #### Socket.io server
 
@@ -145,7 +145,6 @@ It should be in the form `category(scope or module): message` in your commit mes
   - [D1 database](https://developers.cloudflare.com/d1/)
   - [R2 storage](https://developers.cloudflare.com/r2/)
   - [Workers AI](https://developers.cloudflare.com/workers-ai/)
-  - [Workers KV](https://developers.cloudflare.com/kv/)
 - [Express](https://expressjs.com/)
 - [Socket.io](https://socket.io/)
 - [Drizzle ORM](https://orm.drizzle.team/)

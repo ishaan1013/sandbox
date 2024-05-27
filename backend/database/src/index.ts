@@ -10,7 +10,6 @@ import { and, eq, sql } from "drizzle-orm"
 export interface Env {
 	DB: D1Database
 	STORAGE: any
-	KV: KVNamespace
 	KEY: string
 	STORAGE_WORKER_URL: string
 }
@@ -41,35 +40,7 @@ export default {
 
 		const db = drizzle(env.DB, { schema })
 
-		if (path === "/api/session") {
-			if (method === "PUT") {
-				const body = await request.json()
-				const schema = z.object({
-					userId: z.string(),
-					sandboxId: z.string(),
-				})
-
-				const { userId, sandboxId } = schema.parse(body)
-
-				await env.KV.put(userId, sandboxId)
-
-				return success
-			} else if (method === "GET") {
-				const params = url.searchParams
-				if (params.has("id")) {
-					const id = params.get("id") as string
-					const sandboxId = await env.KV.get(id)
-					return json({ sandboxId })
-				} else return invalidRequest
-			} else if (method === "DELETE") {
-				const params = url.searchParams
-				if (params.has("id")) {
-					const id = params.get("id") as string
-					await env.KV.delete(id)
-					return success
-				} else return invalidRequest
-			} else return methodNotAllowed
-		} else if (path === "/api/sandbox") {
+		if (path === "/api/sandbox") {
 			if (method === "GET") {
 				const params = url.searchParams
 				if (params.has("id")) {
