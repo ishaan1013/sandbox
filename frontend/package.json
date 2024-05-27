@@ -10,8 +10,6 @@
   },
   "dependencies": {
     "@atlaskit/pragmatic-drag-and-drop": "^1.1.7",
-    "@aws-sdk/client-ec2": "^3.582.0",
-    "@aws-sdk/client-ecs": "^3.577.0",
     "@clerk/nextjs": "^4.29.12",
     "@clerk/themes": "^1.7.12",
     "@hookform/resolvers": "^3.3.4",

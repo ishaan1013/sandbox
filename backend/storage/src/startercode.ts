@@ -1,8 +1,8 @@
 const startercode = {
 	node: [
-		{ name: 'index.js', body: `console.log("Hello World!")` },
+		{ name: "index.js", body: `console.log("Hello World!")` },
 		{
-			name: 'package.json',
+			name: "package.json",
 			body: `{
   "name": "nodejs",
   "version": "1.0.0",
@@ -19,7 +19,7 @@ const startercode = {
 	],
 	react: [
 		{
-			name: 'package.json',
+			name: "package.json",
 			body: `{
   "name": "react",
   "private": true,
@@ -48,7 +48,7 @@ const startercode = {
 }`,
 		},
 		{
-			name: 'vite.config.js',
+			name: "vite.config.js",
 			body: `import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
@@ -56,14 +56,14 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: 3000,
+    port: 5173,
     host: "0.0.0.0",
   }
 })
 `,
 		},
 		{
-			name: 'index.html',
+			name: "index.html",
 			body: `<!doctype html>
 <html lang="en">
   <head>
@@ -80,7 +80,7 @@ export default defineConfig({
 `,
 		},
 		{
-			name: 'src/App.css',
+			name: "src/App.css",
 			body: `div {
   width: 100%;
   height: 100vh;
@@ -108,7 +108,7 @@ button {
 }`,
 		},
 		{
-			name: 'src/App.jsx',
+			name: "src/App.jsx",
 			body: `import './App.css'
 import { useState } from 'react'
 
@@ -133,7 +133,7 @@ export default App
 `,
 		},
 		{
-			name: 'src/main.jsx',
+			name: "src/main.jsx",
 			body: `import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
@@ -146,6 +146,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 `,
 		},
 	],
-};
+}
 
-export default startercode;
+export default startercode

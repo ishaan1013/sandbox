@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 import {
   ChevronLeft,
@@ -8,21 +8,19 @@ import {
   RotateCw,
   TerminalSquare,
   UnfoldVertical,
-} from "lucide-react";
-import { useRef, useState } from "react";
-import { toast } from "sonner";
+} from "lucide-react"
+import { useRef, useState } from "react"
+import { toast } from "sonner"
 
 export default function PreviewWindow({
   collapsed,
   open,
-  ip,
 }: {
-  collapsed: boolean;
-  open: () => void;
-  ip: string;
+  collapsed: boolean
+  open: () => void
 }) {
-  const ref = useRef<HTMLIFrameElement>(null);
-  const [iframeKey, setIframeKey] = useState(0);
+  const ref = useRef<HTMLIFrameElement>(null)
+  const [iframeKey, setIframeKey] = useState(0)
 
   return (
     <>
@@ -32,12 +30,7 @@ export default function PreviewWindow({
         } select-none w-full flex gap-2`}
       >
         <div className="h-8 rounded-md px-3 bg-secondary flex items-center w-full justify-between">
-          <div className="text-xs">
-            Preview
-            {/* <span className="inline-block ml-2 items-center font-mono text-muted-foreground">
-              localhost:8000
-            </span> */}
-          </div>
+          <div className="text-xs">Preview</div>
           <div className="flex space-x-1 translate-x-1">
             {collapsed ? (
               <PreviewButton onClick={open}>
@@ -52,8 +45,8 @@ export default function PreviewWindow({
 
                 <PreviewButton
                   onClick={() => {
-                    navigator.clipboard.writeText(`http://${ip}:3000`);
-                    toast.info("Copied preview link to clipboard");
+                    navigator.clipboard.writeText(`http://localhost:5173`)
+                    toast.info("Copied preview link to clipboard")
                   }}
                 >
                   <Link className="w-4 h-4" />
@@ -63,7 +56,7 @@ export default function PreviewWindow({
                     // if (ref.current) {
                     //   ref.current.contentWindow?.location.reload();
                     // }
-                    setIframeKey((prev) => prev + 1);
+                    setIframeKey((prev) => prev + 1)
                   }}
                 >
                   <RotateCw className="w-3 h-3" />
@@ -80,12 +73,12 @@ export default function PreviewWindow({
             ref={ref}
             width={"100%"}
             height={"100%"}
-            src={`http://${ip}:3000`}
+            src={`http://localhost:5173`}
           />
         </div>
       )}
     </>
-  );
+  )
 }
 
 function PreviewButton({
@@ -93,9 +86,9 @@ function PreviewButton({
   disabled = false,
   onClick,
 }: {
-  children: React.ReactNode;
-  disabled?: boolean;
-  onClick: () => void;
+  children: React.ReactNode
+  disabled?: boolean
+  onClick: () => void
 }) {
   return (
     <div
@@ -106,5 +99,5 @@ function PreviewButton({
     >
       {children}
     </div>
-  );
+  )
 }

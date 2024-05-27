@@ -1,9 +1,9 @@
-import Image from "next/image";
-import Logo from "@/assets/logo.svg";
-import XLogo from "@/assets/x.svg";
-import Button from "@/components/ui/customButton";
-import { ChevronRight } from "lucide-react";
-import Link from "next/link";
+import Image from "next/image"
+import Logo from "@/assets/logo.svg"
+import XLogo from "@/assets/x.svg"
+import Button from "@/components/ui/customButton"
+import { ChevronRight } from "lucide-react"
+import Link from "next/link"
 
 export default function Landing() {
   return (
@@ -26,13 +26,11 @@ export default function Landing() {
           </div>
         </div>
         <h1 className="text-2xl font-medium text-center mt-16">
-          A Collaborative, AI-Powered, Auto-Scaling Code Editor
+          A Collaborative + AI-Powered Code Environment
         </h1>
         <div className="text-muted-foreground mt-4 text-center ">
           Sandbox is an open-source cloud-based code editing environment with
-          custom AI code autocompletion and real-time collaboration. The
-          infrastructure runs on Docker and AWS ECS to scale automatically based
-          on resource usage.
+          custom AI code autocompletion and real-time collaboration.
         </div>
         <div className="mt-8 flex space-x-4">
           <Link href="/sign-up">
@@ -50,5 +48,5 @@ export default function Landing() {
         <div className="aspect-video w-full rounded-lg bg-neutral-800 mt-12"></div>
       </div>
     </div>
-  );
+  )
 }

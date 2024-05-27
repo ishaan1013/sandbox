@@ -6,34 +6,9 @@ import {
   TFile,
   TFileData,
   TFolder,
-  User,
 } from "./types";
 
-import {
-  DeleteServiceCommand,
-  DescribeServicesCommand,
-  ECSClient,
-} from "@aws-sdk/client-ecs";
-
 dotenv.config();
-
-const client = new ECSClient({
-  region: "us-east-1",
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
-});
-
-export const testDescribe = async () => {
-  const command = new DescribeServicesCommand({
-    cluster: "Sandbox",
-    services: ["Sandbox"],
-  });
-  const response = await client.send(command);
-  console.log("describing: ", response);
-  return response;
-};
 
 export const getSandboxFiles = async (id: string) => {
   const res = await fetch(
@@ -175,19 +150,4 @@ export const getProjectSize = async (id: string) => {
     `https://storage.ishaan1013.workers.dev/api/size?sandboxId=${id}`
   );
   return (await res.json()).size;
-};
-
-export const stopServer = async (service: string) => {
-  const command = new DeleteServiceCommand({
-    cluster: process.env.AWS_ECS_CLUSTER!,
-    service,
-    force: true,
-  });
-
-  try {
-    const response = await client.send(command);
-    return response;
-  } catch (error) {
-    console.error("Error stopping server:", error);
-  }
 };

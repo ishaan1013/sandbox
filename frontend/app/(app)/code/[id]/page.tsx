@@ -4,6 +4,8 @@ import { Sandbox, User, UsersToSandboxes } from "@/lib/types"
 import { currentUser } from "@clerk/nextjs"
 import { notFound, redirect } from "next/navigation"
 import Editor from "@/components/editor"
+import Loading from "@/components/editor/loading"
+import dynamic from "next/dynamic"
 
 export const revalidate = 0
 
@@ -41,6 +43,11 @@ const getSharedUsers = async (usersToSandboxes: UsersToSandboxes[]) => {
   return shared
 }
 
+const CodeEditor = dynamic(() => import("@/components/editor"), {
+  ssr: false,
+  loading: () => <Loading />,
+})
+
 export default async function CodePage({ params }: { params: { id: string } }) {
   const user = await currentUser()
   const sandboxId = params.id
@@ -67,7 +74,7 @@ export default async function CodePage({ params }: { params: { id: string } }) {
       <Room id={sandboxId}>
         <Navbar userData={userData} sandboxData={sandboxData} shared={shared} />
         <div className="w-screen flex grow">
-          <Editor userData={userData} sandboxData={sandboxData} />
+          <CodeEditor userData={userData} sandboxData={sandboxData} />
         </div>
       </Room>
     </div>
