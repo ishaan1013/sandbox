@@ -83,6 +83,7 @@ export default function ShareSandboxModal({
           <div className="flex space-x-4 w-full">
             <Form {...form}>
               <form
+                autoComplete="off"
                 onSubmit={form.handleSubmit(onSubmit)}
                 className="flex w-full"
               >

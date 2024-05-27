@@ -35,9 +35,11 @@ import { ImperativePanelHandle } from "react-resizable-panels"
 export default function CodeEditor({
   userData,
   sandboxData,
+  reactDefinitionFile,
 }: {
   userData: User
   sandboxData: Sandbox
+  reactDefinitionFile: string
 }) {
   const socket = io(
     `http://localhost:${process.env.NEXT_PUBLIC_SERVER_PORT}?userId=${userData.id}&sandboxId=${sandboxData.id}`,

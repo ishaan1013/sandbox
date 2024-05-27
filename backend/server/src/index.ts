@@ -50,8 +50,6 @@ const terminals: {
 const dirName = path.join(__dirname, "..");
 
 io.use(async (socket, next) => {
-  console.log("Middleware");
-
   const handshakeSchema = z.object({
     userId: z.string(),
     sandboxId: z.string(),
@@ -63,7 +61,6 @@ io.use(async (socket, next) => {
   const parseQuery = handshakeSchema.safeParse(q);
 
   if (!parseQuery.success) {
-    console.log("Invalid request.");
     next(new Error("Invalid request."));
     return;
   }
@@ -80,7 +77,6 @@ io.use(async (socket, next) => {
   const dbUserJSON = (await dbUser.json()) as User;
 
   if (!dbUserJSON) {
-    console.log("DB error.");
     next(new Error("DB error."));
     return;
   }
@@ -91,7 +87,6 @@ io.use(async (socket, next) => {
   );
 
   if (!sandbox && !sharedSandboxes) {
-    console.log("Invalid credentials.");
     next(new Error("Invalid credentials."));
     return;
   }
@@ -123,10 +118,6 @@ io.on("connection", async (socket) => {
     }
   }
 
-  // console.log("describing service:");
-  // const describeService = await testDescribe();
-  // console.log(describeService);
-
   const sandboxFiles = await getSandboxFiles(data.sandboxId);
   sandboxFiles.fileData.forEach((file) => {
     const filePath = path.join(dirName, file.id);
@@ -152,7 +143,6 @@ io.on("connection", async (socket) => {
 
   // todo: send diffs + debounce for efficiency
   socket.on("saveFile", async (fileId: string, body: string) => {
-    console.log("save");
     try {
       await saveFileRL.consume(data.userId, 1);
 
@@ -330,7 +320,6 @@ io.on("connection", async (socket) => {
   });
 
   socket.on("createTerminal", (id: string, callback) => {
-    console.log("creating terminal", id);
     if (terminals[id] || Object.keys(terminals).length >= 4) {
       return;
     }
@@ -363,7 +352,6 @@ io.on("connection", async (socket) => {
   });
 
   socket.on("resizeTerminal", (dimensions: { cols: number; rows: number }) => {
-    console.log("resizeTerminal", dimensions);
     Object.values(terminals).forEach((t) => {
       t.terminal.resize(dimensions.cols, dimensions.rows);
     });
@@ -371,7 +359,6 @@ io.on("connection", async (socket) => {
 
   socket.on("terminalData", (id: string, data: string) => {
     if (!terminals[id]) {
-      console.log("terminal not found", id);
       return;
     }
 
@@ -403,7 +390,6 @@ io.on("connection", async (socket) => {
       instructions: string,
       callback
     ) => {
-      // Log code generation credit in DB
       const fetchPromise = fetch(
         `${process.env.DATABASE_WORKER_URL}/api/sandbox/generate`,
         {
@@ -436,13 +422,11 @@ io.on("connection", async (socket) => {
 
       const json = await generateCodeResponse.json();
 
-      console.log("Code generation response", json);
       callback({ response: json.response, success: true });
     }
   );
 
   socket.on("disconnect", async () => {
-    console.log("disconnected", data.userId, data.sandboxId);
     if (data.isOwner) {
       Object.entries(terminals).forEach((t) => {
         const { terminal, onData, onExit } = t[1];
@@ -477,5 +461,5 @@ io.on("connection", async (socket) => {
 });
 
 httpServer.listen(port, () => {
-  console.log(`Server 123, running on port ${port}`);
+  console.log(`Server running on port ${port}`);
 });

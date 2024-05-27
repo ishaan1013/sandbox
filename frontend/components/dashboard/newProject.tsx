@@ -203,7 +203,8 @@ export default function NewProjectModal({
             <Button disabled={loading} type="submit" className="w-full">
               {loading ? (
                 <>
-                  <Loader2 className="animate-spin mr-2 h-4 w-4" /> Loading...
+                  <Loader2 className="animate-spin mr-2 h-4 w-4" /> Creating
+                  project...
                 </>
               ) : (
                 "Submit"

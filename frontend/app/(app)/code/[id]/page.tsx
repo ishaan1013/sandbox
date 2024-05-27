@@ -3,9 +3,9 @@ import { Room } from "@/components/editor/live/room"
 import { Sandbox, User, UsersToSandboxes } from "@/lib/types"
 import { currentUser } from "@clerk/nextjs"
 import { notFound, redirect } from "next/navigation"
-import Editor from "@/components/editor"
 import Loading from "@/components/editor/loading"
 import dynamic from "next/dynamic"
+import fs from "fs"
 
 export const revalidate = 0
 
@@ -63,6 +63,14 @@ const CodeEditor = dynamic(() => import("@/components/editor"), {
   loading: () => <Loading />,
 })
 
+function getReactDefinitionFile() {
+  const reactDefinitionFile = fs.readFileSync(
+    "node_modules/@types/react/index.d.ts",
+    "utf8"
+  )
+  return reactDefinitionFile
+}
+
 export default async function CodePage({ params }: { params: { id: string } }) {
   const user = await currentUser()
   const sandboxId = params.id
@@ -86,12 +94,18 @@ export default async function CodePage({ params }: { params: { id: string } }) {
     return notFound()
   }
 
+  const reactDefinitionFile = getReactDefinitionFile()
+
   return (
     <div className="overflow-hidden overscroll-none w-screen flex flex-col h-screen bg-background">
       <Room id={sandboxId}>
         <Navbar userData={userData} sandboxData={sandboxData} shared={shared} />
         <div className="w-screen flex grow">
-          <CodeEditor userData={userData} sandboxData={sandboxData} />
+          <CodeEditor
+            userData={userData}
+            sandboxData={sandboxData}
+            reactDefinitionFile={reactDefinitionFile}
+          />
         </div>
       </Room>
     </div>
