@@ -13,7 +13,7 @@ cd frontend
 npm install
 ```
 
-Add the required environment variables in `.env` (example file provided in `.env.example`)
+Add the required environment variables in `.env` (example file provided in `.env.example`). You will need to make an account on [Clerk](https://clerk.com/) and [Liveblocks](https://liveblocks.io/) to get API keys.
 
 Then, run in development mode
 
@@ -53,12 +53,18 @@ cd backend/<database | storage | ai> # do these individually
 npm install
 ```
 
-For each, add the required environment variables in `.env` (example file provided in `.env.example`). For the AI worker, you can define any value you want for the `CF_AI_KEY` -- set this in other `.env` files to authorize access.
+For each, add the required environment variables in `wrangler.toml` (example file provided in `wrangler.example.toml`). For the AI worker, you can define any value you want for the `CF_AI_KEY` -- set this in other `.env` files to authorize access.
 
 Run in development mode
 
 ```bash
 npm run dev
+```
+
+Deploy to Cloudflare with wrangler
+
+```bash
+npx wrangler deploy
 ```
 
 ## Contributing
@@ -88,7 +94,7 @@ backend/
 | ------------------ | -------------------------------------------------------------------------- |
 | `frontend/www/app` | The Next.js application for the frontend.                                  |
 | `backend/server`   | The Express websocket server.                                              |
-| `backend/database` | API for interfacing with the D1 database (SQLite) and KV store.            |
+| `backend/database` | API for interfacing with the D1 database (SQLite).                         |
 | `backend/storage`  | API for interfacing with R2 storage. Service-bound to `/backend/database`. |
 | `backend/ai`       | API for making requests to Workers AI .                                    |
 
@@ -138,6 +144,7 @@ It should be in the form `category(scope or module): message` in your commit mes
 - [Shadcn UI](https://ui.shadcn.com/)
 - [Clerk](https://clerk.com/)
 - [Monaco](https://microsoft.github.io/monaco-editor/)
+- [Liveblocks](https://liveblocks.io/)
 
 ### Backend
 
