@@ -1,7 +1,7 @@
-"use client";
+"use client"
 
-import CustomButton from "@/components/ui/customButton";
-import { Button } from "@/components/ui/button";
+import CustomButton from "@/components/ui/customButton"
+import { Button } from "@/components/ui/button"
 import {
   Code2,
   FolderDot,
@@ -9,51 +9,51 @@ import {
   Plus,
   Settings,
   Users,
-} from "lucide-react";
-import { useEffect, useState } from "react";
-import { Sandbox } from "@/lib/types";
-import DashboardProjects from "./projects";
-import DashboardSharedWithMe from "./shared";
-import NewProjectModal from "./newProject";
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import AboutModal from "./about";
-import { toast } from "sonner";
+} from "lucide-react"
+import { useEffect, useState } from "react"
+import { Sandbox } from "@/lib/types"
+import DashboardProjects from "./projects"
+import DashboardSharedWithMe from "./shared"
+import NewProjectModal from "./newProject"
+import Link from "next/link"
+import { useRouter, useSearchParams } from "next/navigation"
+import AboutModal from "./about"
+import { toast } from "sonner"
 
-type TScreen = "projects" | "shared" | "settings" | "search";
+type TScreen = "projects" | "shared" | "settings" | "search"
 
 export default function Dashboard({
   sandboxes,
   shared,
 }: {
-  sandboxes: Sandbox[];
+  sandboxes: Sandbox[]
   shared: {
-    id: string;
-    name: string;
-    type: "react" | "node";
-    author: string;
-    sharedOn: Date;
-  }[];
+    id: string
+    name: string
+    type: "react" | "node"
+    author: string
+    sharedOn: Date
+  }[]
 }) {
-  const [screen, setScreen] = useState<TScreen>("projects");
+  const [screen, setScreen] = useState<TScreen>("projects")
 
-  const [newProjectModalOpen, setNewProjectModalOpen] = useState(false);
-  const [aboutModalOpen, setAboutModalOpen] = useState(false);
+  const [newProjectModalOpen, setNewProjectModalOpen] = useState(false)
+  const [aboutModalOpen, setAboutModalOpen] = useState(false)
 
   const activeScreen = (s: TScreen) => {
-    if (screen === s) return "justify-start";
-    else return "justify-start font-normal text-muted-foreground";
-  };
+    if (screen === s) return "justify-start"
+    else return "justify-start font-normal text-muted-foreground"
+  }
 
-  const searchParams = useSearchParams();
-  const q = searchParams.get("q");
-  const router = useRouter();
+  const searchParams = useSearchParams()
+  const q = searchParams.get("q")
+  const router = useRouter()
 
   useEffect(() => {
     if (!sandboxes) {
-      router.refresh();
+      router.refresh()
     }
-  }, [sandboxes]);
+  }, [sandboxes])
 
   return (
     <>
@@ -68,10 +68,10 @@ export default function Dashboard({
             <CustomButton
               onClick={() => {
                 if (sandboxes.length >= 8) {
-                  toast.error("You reached the maximum # of sandboxes.");
-                  return;
+                  toast.error("You reached the maximum # of sandboxes.")
+                  return
                 }
-                setNewProjectModalOpen(true);
+                setNewProjectModalOpen(true)
               }}
               className="mb-4"
             >
@@ -107,7 +107,7 @@ export default function Dashboard({
             <a target="_blank" href="https://github.com/ishaan1013/sandbox">
               <Button
                 variant="ghost"
-                className="justify-start font-normal text-muted-foreground"
+                className="justify-start w-full font-normal text-muted-foreground"
               >
                 <Code2 className="w-4 h-4 mr-2" />
                 GitHub Repository
@@ -134,5 +134,5 @@ export default function Dashboard({
         ) : screen === "settings" ? null : null}
       </div>
     </>
-  );
+  )
 }

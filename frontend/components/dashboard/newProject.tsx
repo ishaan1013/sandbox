@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 import {
   Dialog,
@@ -7,12 +7,12 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import Image from "next/image";
-import { useState } from "react";
-import { set, z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+} from "@/components/ui/dialog"
+import Image from "next/image"
+import { useState } from "react"
+import { set, z } from "zod"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
 
 import {
   Form,
@@ -22,29 +22,29 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { useUser } from "@clerk/nextjs";
-import { createSandbox } from "@/lib/actions";
-import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
-import { Button } from "../ui/button";
+} from "@/components/ui/select"
+import { useUser } from "@clerk/nextjs"
+import { createSandbox } from "@/lib/actions"
+import { useRouter } from "next/navigation"
+import { Loader2 } from "lucide-react"
+import { Button } from "../ui/button"
 
-type TOptions = "react" | "node" | "python" | "more";
+type TOptions = "react" | "node" | "python" | "more"
 
 const data: {
-  id: TOptions;
-  name: string;
-  icon: string;
-  description: string;
-  disabled: boolean;
+  id: TOptions
+  name: string
+  icon: string
+  description: string
+  disabled: boolean
 }[] = [
   {
     id: "react",
@@ -74,7 +74,7 @@ const data: {
     description: "More coming soon, feel free to contribute on GitHub",
     disabled: true,
   },
-];
+]
 
 const formSchema = z.object({
   name: z
@@ -86,20 +86,20 @@ const formSchema = z.object({
       "Name must be alphanumeric and can contain underscores"
     ),
   visibility: z.enum(["public", "private"]),
-});
+})
 
 export default function NewProjectModal({
   open,
   setOpen,
 }: {
-  open: boolean;
-  setOpen: (open: boolean) => void;
+  open: boolean
+  setOpen: (open: boolean) => void
 }) {
-  const [selected, setSelected] = useState<TOptions>("react");
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
+  const [selected, setSelected] = useState<TOptions>("react")
+  const [loading, setLoading] = useState(false)
+  const router = useRouter()
 
-  const user = useUser();
+  const user = useUser()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -107,23 +107,23 @@ export default function NewProjectModal({
       name: "",
       visibility: "public",
     },
-  });
+  })
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!user.isSignedIn) return;
+    if (!user.isSignedIn) return
 
-    const sandboxData = { type: selected, userId: user.user.id, ...values };
-    setLoading(true);
+    const sandboxData = { type: selected, userId: user.user.id, ...values }
+    setLoading(true)
 
-    const id = await createSandbox(sandboxData);
-    router.push(`/code/${id}`);
+    const id = await createSandbox(sandboxData)
+    router.push(`/code/${id}`)
   }
 
   return (
     <Dialog
       open={open}
       onOpenChange={(open: boolean) => {
-        if (!loading) setOpen(open);
+        if (!loading) setOpen(open)
       }}
     >
       <DialogContent>
@@ -152,7 +152,7 @@ export default function NewProjectModal({
         </div>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
+          <form autoComplete="off" onSubmit={form.handleSubmit(onSubmit)}>
             <FormField
               control={form.control}
               name="name"
@@ -191,6 +191,11 @@ export default function NewProjectModal({
                       <SelectItem value="private">Private</SelectItem>
                     </SelectContent>
                   </Select>
+                  <FormDescription>
+                    Note: All sandboxes cannot be seen by the public. Private
+                    sandboxes cannot be accessed by shared users that you add,
+                    while public sandboxes can.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -208,5 +213,5 @@ export default function NewProjectModal({
         </Form>
       </DialogContent>
     </Dialog>
-  );
+  )
 }
