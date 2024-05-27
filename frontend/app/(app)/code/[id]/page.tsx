@@ -11,7 +11,12 @@ export const revalidate = 0
 
 const getUserData = async (id: string) => {
   const userRes = await fetch(
-    `https://database.ishaan1013.workers.dev/api/user?id=${id}`
+    `${process.env.NEXT_PUBLIC_DATABASE_WORKER_URL}/api/user?id=${id}`,
+    {
+      headers: {
+        Authorization: `${process.env.NEXT_PUBLIC_WORKERS_KEY}`,
+      },
+    }
   )
   const userData: User = await userRes.json()
   return userData
@@ -19,7 +24,12 @@ const getUserData = async (id: string) => {
 
 const getSandboxData = async (id: string) => {
   const sandboxRes = await fetch(
-    `https://database.ishaan1013.workers.dev/api/sandbox?id=${id}`
+    `${process.env.NEXT_PUBLIC_DATABASE_WORKER_URL}/api/sandbox?id=${id}`,
+    {
+      headers: {
+        Authorization: `${process.env.NEXT_PUBLIC_WORKERS_KEY}`,
+      },
+    }
   )
   const sandboxData: Sandbox = await sandboxRes.json()
   return sandboxData
@@ -33,7 +43,12 @@ const getSharedUsers = async (usersToSandboxes: UsersToSandboxes[]) => {
   const shared = await Promise.all(
     usersToSandboxes.map(async (user) => {
       const userRes = await fetch(
-        `https://database.ishaan1013.workers.dev/api/user?id=${user.userId}`
+        `${process.env.NEXT_PUBLIC_DATABASE_WORKER_URL}/api/user?id=${user.userId}`,
+        {
+          headers: {
+            Authorization: `${process.env.NEXT_PUBLIC_WORKERS_KEY}`,
+          },
+        }
       )
       const userData: User = await userRes.json()
       return { id: userData.id, name: userData.name }

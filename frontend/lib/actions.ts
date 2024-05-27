@@ -9,11 +9,12 @@ export async function createSandbox(body: {
   visibility: string
 }) {
   const res = await fetch(
-    "https://database.ishaan1013.workers.dev/api/sandbox",
+    `${process.env.NEXT_PUBLIC_DATABASE_WORKER_URL}/api/sandbox`,
     {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `${process.env.NEXT_PUBLIC_WORKERS_KEY}`,
       },
       body: JSON.stringify(body),
     }
@@ -27,10 +28,11 @@ export async function updateSandbox(body: {
   name?: string
   visibility?: "public" | "private"
 }) {
-  await fetch("https://database.ishaan1013.workers.dev/api/sandbox", {
+  await fetch(`${process.env.NEXT_PUBLIC_DATABASE_WORKER_URL}/api/sandbox`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      Authorization: `${process.env.NEXT_PUBLIC_WORKERS_KEY}`,
     },
     body: JSON.stringify(body),
   })
@@ -39,20 +41,27 @@ export async function updateSandbox(body: {
 }
 
 export async function deleteSandbox(id: string) {
-  await fetch(`https://database.ishaan1013.workers.dev/api/sandbox?id=${id}`, {
-    method: "DELETE",
-  })
+  await fetch(
+    `${process.env.NEXT_PUBLIC_DATABASE_WORKER_URL}/api/sandbox?id=${id}`,
+    {
+      method: "DELETE",
+      headers: {
+        Authorization: `${process.env.NEXT_PUBLIC_WORKERS_KEY}`,
+      },
+    }
+  )
 
   revalidatePath("/dashboard")
 }
 
 export async function shareSandbox(sandboxId: string, email: string) {
   const res = await fetch(
-    "https://database.ishaan1013.workers.dev/api/sandbox/share",
+    `${process.env.NEXT_PUBLIC_DATABASE_WORKER_URL}/api/sandbox/share`,
     {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `${process.env.NEXT_PUBLIC_WORKERS_KEY}`,
       },
       body: JSON.stringify({ sandboxId, email }),
     }
@@ -68,13 +77,17 @@ export async function shareSandbox(sandboxId: string, email: string) {
 }
 
 export async function unshareSandbox(sandboxId: string, userId: string) {
-  await fetch("https://database.ishaan1013.workers.dev/api/sandbox/share", {
-    method: "DELETE",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ sandboxId, userId }),
-  })
+  await fetch(
+    `${process.env.NEXT_PUBLIC_DATABASE_WORKER_URL}/api/sandbox/share`,
+    {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `${process.env.NEXT_PUBLIC_WORKERS_KEY}`,
+      },
+      body: JSON.stringify({ sandboxId, userId }),
+    }
+  )
 
   revalidatePath(`/code/${sandboxId}`)
 }

@@ -12,7 +12,12 @@ dotenv.config();
 
 export const getSandboxFiles = async (id: string) => {
   const res = await fetch(
-    `https://storage.ishaan1013.workers.dev/api?sandboxId=${id}`
+    `${process.env.STORAGE_WORKER_URL}/api?sandboxId=${id}`,
+    {
+      headers: {
+        Authorization: `${process.env.WORKERS_KEY}`,
+      },
+    }
   );
   const data: R2Files = await res.json();
 
@@ -23,7 +28,12 @@ export const getSandboxFiles = async (id: string) => {
 
 export const getFolder = async (folderId: string) => {
   const res = await fetch(
-    `https://storage.ishaan1013.workers.dev/api?folderId=${folderId}`
+    `${process.env.STORAGE_WORKER_URL}/api?folderId=${folderId}`,
+    {
+      headers: {
+        Authorization: `${process.env.WORKERS_KEY}`,
+      },
+    }
   );
   const data: R2Files = await res.json();
 
@@ -88,7 +98,12 @@ const processFiles = async (paths: string[], id: string) => {
 const fetchFileContent = async (fileId: string): Promise<string> => {
   try {
     const fileRes = await fetch(
-      `https://storage.ishaan1013.workers.dev/api?fileId=${fileId}`
+      `${process.env.STORAGE_WORKER_URL}/api?fileId=${fileId}`,
+      {
+        headers: {
+          Authorization: `${process.env.WORKERS_KEY}`,
+        },
+      }
     );
     return await fileRes.text();
   } catch (error) {
@@ -98,10 +113,11 @@ const fetchFileContent = async (fileId: string): Promise<string> => {
 };
 
 export const createFile = async (fileId: string) => {
-  const res = await fetch(`https://storage.ishaan1013.workers.dev/api`, {
+  const res = await fetch(`${process.env.STORAGE_WORKER_URL}/api`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      Authorization: `${process.env.WORKERS_KEY}`,
     },
     body: JSON.stringify({ fileId }),
   });
@@ -113,10 +129,11 @@ export const renameFile = async (
   newFileId: string,
   data: string
 ) => {
-  const res = await fetch(`https://storage.ishaan1013.workers.dev/api/rename`, {
+  const res = await fetch(`${process.env.STORAGE_WORKER_URL}/api/rename`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      Authorization: `${process.env.WORKERS_KEY}`,
     },
     body: JSON.stringify({ fileId, newFileId, data }),
   });
@@ -124,10 +141,11 @@ export const renameFile = async (
 };
 
 export const saveFile = async (fileId: string, data: string) => {
-  const res = await fetch(`https://storage.ishaan1013.workers.dev/api/save`, {
+  const res = await fetch(`${process.env.STORAGE_WORKER_URL}/api/save`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      Authorization: `${process.env.WORKERS_KEY}`,
     },
     body: JSON.stringify({ fileId, data }),
   });
@@ -135,10 +153,11 @@ export const saveFile = async (fileId: string, data: string) => {
 };
 
 export const deleteFile = async (fileId: string) => {
-  const res = await fetch(`https://storage.ishaan1013.workers.dev/api`, {
+  const res = await fetch(`${process.env.STORAGE_WORKER_URL}/api`, {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
+      Authorization: `${process.env.WORKERS_KEY}`,
     },
     body: JSON.stringify({ fileId }),
   });
@@ -147,7 +166,12 @@ export const deleteFile = async (fileId: string) => {
 
 export const getProjectSize = async (id: string) => {
   const res = await fetch(
-    `https://storage.ishaan1013.workers.dev/api/size?sandboxId=${id}`
+    `${process.env.STORAGE_WORKER_URL}/api/size?sandboxId=${id}`,
+    {
+      headers: {
+        Authorization: `${process.env.WORKERS_KEY}`,
+      },
+    }
   );
   return (await res.json()).size;
 };

@@ -70,7 +70,12 @@ io.use(async (socket, next) => {
 
   const { sandboxId, userId } = parseQuery.data;
   const dbUser = await fetch(
-    `https://database.ishaan1013.workers.dev/api/user?id=${userId}`
+    `${process.env.DATABASE_WORKER_URL}/api/user?id=${userId}`,
+    {
+      headers: {
+        Authorization: `${process.env.WORKERS_KEY}`,
+      },
+    }
   );
   const dbUserJSON = (await dbUser.json()) as User;
 
@@ -400,11 +405,12 @@ io.on("connection", async (socket) => {
     ) => {
       // Log code generation credit in DB
       const fetchPromise = fetch(
-        `https://database.ishaan1013.workers.dev/api/sandbox/generate`,
+        `${process.env.DATABASE_WORKER_URL}/api/sandbox/generate`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `${process.env.WORKERS_KEY}`,
           },
           body: JSON.stringify({
             userId: data.userId,
@@ -414,7 +420,7 @@ io.on("connection", async (socket) => {
 
       // Generate code from cloudflare workers AI
       const generateCodePromise = fetch(
-        `https://ai.ishaan1013.workers.dev/api?fileName=${fileName}&code=${code}&line=${line}&instructions=${instructions}`,
+        `${process.env.AI_WORKER_URL}/api?fileName=${fileName}&code=${code}&line=${line}&instructions=${instructions}`,
         {
           headers: {
             "Content-Type": "application/json",

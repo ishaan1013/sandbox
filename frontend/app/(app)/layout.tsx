@@ -1,30 +1,36 @@
-import { User } from "@/lib/types";
-import { currentUser } from "@clerk/nextjs";
-import { redirect } from "next/navigation";
+import { User } from "@/lib/types"
+import { currentUser } from "@clerk/nextjs"
+import { redirect } from "next/navigation"
 
 export default async function AppAuthLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
-  const user = await currentUser();
+  const user = await currentUser()
 
   if (!user) {
-    redirect("/");
+    redirect("/")
   }
 
   const dbUser = await fetch(
-    `https://database.ishaan1013.workers.dev/api/user?id=${user.id}`
-  );
-  const dbUserJSON = (await dbUser.json()) as User;
+    `${process.env.NEXT_PUBLIC_DATABASE_WORKER_URL}/api/user?id=${user.id}`,
+    {
+      headers: {
+        Authorization: `${process.env.NEXT_PUBLIC_WORKERS_KEY}`,
+      },
+    }
+  )
+  const dbUserJSON = (await dbUser.json()) as User
 
   if (!dbUserJSON.id) {
     const res = await fetch(
-      "https://database.ishaan1013.workers.dev/api/user",
+      `${process.env.NEXT_PUBLIC_DATABASE_WORKER_URL}/api/user`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `${process.env.NEXT_PUBLIC_WORKERS_KEY}`,
         },
         body: JSON.stringify({
           id: user.id,
@@ -32,8 +38,8 @@ export default async function AppAuthLayout({
           email: user.emailAddresses[0].emailAddress,
         }),
       }
-    );
+    )
   }
 
-  return <>{children}</>;
+  return <>{children}</>
 }

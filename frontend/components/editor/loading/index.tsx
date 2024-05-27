@@ -51,8 +51,7 @@ export default function Loading({
             </DialogTitle>
             {didFail ? (
               <DialogDescription className="pt-2">
-                Try again in a minute, or contact @ishaandey_ on Twitter/X if it
-                still doesn't work.
+                Try again soon.
               </DialogDescription>
             ) : description ? (
               <DialogDescription className="pt-2">

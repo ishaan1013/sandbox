@@ -10,3 +10,7 @@ services = [{ binding = "STORAGE", service = "storage" }]
 binding = "DB"
 database_name = ""
 database_id = ""
+
+[vars]
+KEY = ""
+STORAGE_WORKER_URL = ""

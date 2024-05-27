@@ -75,13 +75,17 @@ export default function ShareSandboxModal({
             {data.visibility === "private" ? (
               <DialogDescription className="text-sm text-muted-foreground">
                 This sandbox is private. Making it public will allow shared
-                users to view and collaborate. You can still share & manage access below.
+                users to view and collaborate. You can still share & manage
+                access below.
               </DialogDescription>
             ) : null}
           </DialogHeader>
           <div className="flex space-x-4 w-full">
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="flex w-full">
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="flex w-full"
+              >
                 <FormField
                   control={form.control}
                   name="email"
@@ -101,7 +105,8 @@ export default function ShareSandboxModal({
                 <Button disabled={loading} type="submit" className="">
                   {loading ? (
                     <>
-                      <Loader2 className="animate-spin mr-2 h-4 w-4" /> Loading...
+                      <Loader2 className="animate-spin mr-2 h-4 w-4" />{" "}
+                      Loading...
                     </>
                   ) : (
                     <>
@@ -111,11 +116,19 @@ export default function ShareSandboxModal({
                 </Button>
               </form>
             </Form>
-            <Button onClick={() => {
-              navigator.clipboard.writeText(`https://s.ishaand.com/code/${data.id}`)
-              toast.success("Link copied to clipboard.")
-            }} size="icon" disabled={loading} variant="outline" className="shrink-0">
-                  <Link className="h-4 w-4" />
+            <Button
+              onClick={() => {
+                navigator.clipboard.writeText(
+                  `${process.env.NEXT_PUBLIC_APP_URL}/code/${data.id}`
+                )
+                toast.success("Link copied to clipboard.")
+              }}
+              size="icon"
+              disabled={loading}
+              variant="outline"
+              className="shrink-0"
+            >
+              <Link className="h-4 w-4" />
             </Button>
           </div>
         </div>

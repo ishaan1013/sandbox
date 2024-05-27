@@ -11,3 +11,6 @@ workers_dev = true
 binding = 'R2'
 bucket_name = ''
 preview_bucket_name = ''
+
+[vars]
+KEY = ''

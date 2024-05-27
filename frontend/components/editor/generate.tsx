@@ -60,9 +60,7 @@ export default function GenerateInput({
     regenerate?: boolean
   }) => {
     if (user.generations >= 10) {
-      toast.error(
-        "You reached the maximum # of generations. Contact @ishaandey_ on X/Twitter to reset :)"
-      )
+      toast.error("You reached the maximum # of generations.")
       return
     }
 
