@@ -7,11 +7,18 @@ import {
 } from "@/liveblocks.config"
 import { colors } from "@/lib/colors"
 
-export function Cursors({ yProvider }: { yProvider: TypedLiveblocksProvider }) {
+export function Cursors({
+  yProvider,
+  userInfo,
+}: {
+  yProvider: TypedLiveblocksProvider
+  userInfo: {
+    name: string
+    email: string
+    color: "red" | "orange" | "yellow" | "green" | "blue" | "purple" | "pink"
+  }
+}) {
   // Get user info from Liveblocks authentication endpoint
-  const userInfo = useSelf((me) => me.info)
-
-  if (!userInfo) return null
 
   const [awarenessUsers, setAwarenessUsers] = useState<AwarenessList>([])
 

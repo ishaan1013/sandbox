@@ -1,15 +1,17 @@
-import Image from "next/image";
-import Logo from "@/assets/logo.svg";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Loader2, X } from "lucide-react";
+"use client"
+
+import Image from "next/image"
+import Logo from "@/assets/logo.svg"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Loader2, X } from "lucide-react"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { useEffect, useState } from "react";
+} from "@/components/ui/dialog"
+import { useEffect, useState } from "react"
 
 export default function Loading({
   didFail = false,
@@ -17,18 +19,18 @@ export default function Loading({
   text = "",
   description = "",
 }: {
-  didFail?: boolean;
-  withNav?: boolean;
-  text?: string;
-  description?: string;
+  didFail?: boolean
+  withNav?: boolean
+  text?: string
+  description?: string
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false)
 
   useEffect(() => {
     if (text) {
-      setOpen(true);
+      setOpen(true)
     }
-  }, [text]);
+  }, [text])
 
   return (
     <div className="overflow-hidden overscroll-none w-screen flex flex-col justify-center items-center z-0 h-screen bg-background relative">
@@ -98,5 +100,5 @@ export default function Loading({
         </div>
       </div>
     </div>
-  );
+  )
 }

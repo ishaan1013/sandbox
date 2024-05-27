@@ -11,7 +11,7 @@ import * as Y from "yjs"
 import LiveblocksProvider from "@liveblocks/yjs"
 import { MonacoBinding } from "y-monaco"
 import { Awareness } from "y-protocols/awareness"
-import { TypedLiveblocksProvider, useRoom } from "@/liveblocks.config"
+import { TypedLiveblocksProvider, useRoom, useSelf } from "@/liveblocks.config"
 
 import {
   ResizableHandle,
@@ -94,6 +94,7 @@ export default function CodeEditor({
   // Liveblocks hooks
   const room = useRoom()
   const [provider, setProvider] = useState<TypedLiveblocksProvider>()
+  const userInfo = useSelf((me) => me.info)
 
   // Refs for libraries / features
   const editorContainerRef = useRef<HTMLDivElement>(null)
@@ -262,6 +263,14 @@ export default function CodeEditor({
     }
 
     if (!ai) return
+
+    const model = editorRef?.getModel()
+    const line = model?.getLineContent(cursorLine)
+
+    if (line === undefined || line.trim() !== "") {
+      decorations.instance?.clear()
+      return
+    }
 
     if (decorations.instance) {
       decorations.instance.set(decorations.options)
@@ -663,7 +672,9 @@ export default function CodeEditor({
             ) : // Note clerk.loaded is required here due to a bug: https://github.com/clerk/javascript/issues/1643
             clerk.loaded ? (
               <>
-                {provider ? <Cursors yProvider={provider} /> : null}
+                {provider && userInfo ? (
+                  <Cursors yProvider={provider} userInfo={userInfo} />
+                ) : null}
                 <Editor
                   height="100%"
                   language={editorLanguage}

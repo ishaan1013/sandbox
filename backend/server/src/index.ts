@@ -17,8 +17,6 @@ import {
   getSandboxFiles,
   renameFile,
   saveFile,
-  stopServer,
-  testDescribe,
 } from "./utils";
 import { IDisposable, IPty, spawn } from "node-pty";
 import {
@@ -453,24 +451,22 @@ io.on("connection", async (socket) => {
       );
     }
 
-    const sockets = await io.fetchSockets();
-    if (inactivityTimeout) {
-      clearTimeout(inactivityTimeout);
-    }
-    if (sockets.length === 0) {
-      console.log("STARTING TIMER");
-      inactivityTimeout = setTimeout(() => {
-        io.fetchSockets().then(async (sockets) => {
-          if (sockets.length === 0) {
-            console.log("Closing server due to inactivity.");
-            const res = await stopServer(data.sandboxId);
-            console.log("Server stopped", res);
-          }
-        });
-      }, 20000);
-    } else {
-      console.log("number of sockets", sockets.length);
-    }
+    // const sockets = await io.fetchSockets();
+    // if (inactivityTimeout) {
+    //   clearTimeout(inactivityTimeout);
+    // }
+    // if (sockets.length === 0) {
+    //   console.log("STARTING TIMER");
+    //   inactivityTimeout = setTimeout(() => {
+    //     io.fetchSockets().then(async (sockets) => {
+    //       if (sockets.length === 0) {
+    //         console.log("Server stopped", res);
+    //       }
+    //     });
+    //   }, 20000);
+    // } else {
+    //   console.log("number of sockets", sockets.length);
+    // }
   });
 });
 

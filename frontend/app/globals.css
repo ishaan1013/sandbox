@@ -102,10 +102,6 @@
 .inline-decoration::before {
   content: "Generate";
   color: #525252;
-  /* border: 1px solid #525252; */
-  /* padding: 2px 4px; */
-  /* border-radius: 4px; */
-  margin-left: 36px;
 }
 .inline-decoration::after {
   content: "⌘G";
