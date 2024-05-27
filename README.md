@@ -149,9 +149,3 @@ It should be in the form `category(scope or module): message` in your commit mes
 - [Express](https://expressjs.com/)
 - [Socket.io](https://socket.io/)
 - [Drizzle ORM](https://orm.drizzle.team/)
-
-### Infra / Hosting
-
-- [Vercel](https://vercel.com/)
-- [Docker](https://www.docker.com/)
-- [AWS ECS + Fargate](https://aws.amazon.com/ecs/)
