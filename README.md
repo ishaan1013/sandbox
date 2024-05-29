@@ -1,5 +1,7 @@
 # Sandbox 📦🪄
 
+Demo video coming soon 🤫
+
 Sandbox is an open-source cloud-based code editing environment with custom AI code autocompletion and real-time collaboration.
 
 ## Running Locally
