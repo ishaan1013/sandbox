@@ -45,7 +45,6 @@ export default function Landing() {
             <ChevronRight className="h-4 w-4 ml-1 transition-all group-hover:translate-x-1" />
           </a>
         </div>
-        <div className="aspect-video w-full rounded-lg bg-neutral-800 mt-12"></div>
       </div>
     </div>
   )
