@@ -46,7 +46,9 @@ Run in development mode
 npm run dev
 ```
 
-### Cloudflare Workers (Database, Storage, AI)
+This directory is dockerized, so feel free to deploy a container on any platform of your choice! I chose not to deploy this project for public access due to costs & safety, but deploying your own for personal use should be no problem.
+
+#### Cloudflare Workers (Database, Storage, AI)
 
 Directories:
 
