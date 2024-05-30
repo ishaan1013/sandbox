@@ -48,14 +48,28 @@ npm run dev
 
 ### Cloudflare Workers (Database, Storage, AI)
 
+Directories:
+
+- `/backend/database`: D1 database
+- `/backend/storage`: R2 storage
+- `/backend/ai`: Workers AI
+
 Install dependencies
 
 ```bash
-cd backend/<database | storage | ai> # do these individually
+cd backend/database
+npm install
+
+cd ../storage
+npm install
+
+cd ../ai
 npm install
 ```
 
-For each, add the required environment variables in `wrangler.toml` (example file provided in `wrangler.example.toml`). For the AI worker, you can define any value you want for the `CF_AI_KEY` -- set this in other `.env` files to authorize access.
+Read the [documentation](https://developers.cloudflare.com/workers/) to learn more about workers.
+
+For each directory, add the required environment variables in `wrangler.toml` (example file provided in `wrangler.example.toml`). For the AI worker, you can define any value you want for the `CF_AI_KEY` -- set this in other `.env` files to authorize access.
 
 Run in development mode
 
@@ -63,11 +77,13 @@ Run in development mode
 npm run dev
 ```
 
-Deploy to Cloudflare with wrangler
+Deploy to Cloudflare with [Wrangler](https://developers.cloudflare.com/workers/wrangler/install-and-update/)
 
 ```bash
 npx wrangler deploy
 ```
+
+---
 
 ## Contributing
 
@@ -94,7 +110,7 @@ backend/
 
 | Path               | Description                                                                |
 | ------------------ | -------------------------------------------------------------------------- |
-| `frontend/www/app` | The Next.js application for the frontend.                                  |
+| `frontend`         | The Next.js application for the frontend.                                  |
 | `backend/server`   | The Express websocket server.                                              |
 | `backend/database` | API for interfacing with the D1 database (SQLite).                         |
 | `backend/storage`  | API for interfacing with R2 storage. Service-bound to `/backend/database`. |
@@ -136,6 +152,8 @@ It should be in the form `category(scope or module): message` in your commit mes
   categories
 
   e.g. `feat(editor): improve tab switching speed`
+
+---
 
 ## Tech stack
 
