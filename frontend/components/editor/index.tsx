@@ -23,7 +23,12 @@ import Tab from "../ui/tab"
 import Sidebar from "./sidebar"
 import GenerateInput from "./generate"
 import { Sandbox, User, TFile, TFolder, TTab } from "@/lib/types"
-import { addNew, processFileType, validateName } from "@/lib/utils"
+import {
+  addNew,
+  processFileType,
+  validateName,
+  getFileCacheKey,
+} from "@/lib/utils"
 import { Cursors } from "./live/cursors"
 import { Terminal } from "@xterm/xterm"
 import DisableAccessModal from "./live/disableModal"
@@ -419,7 +424,8 @@ export default function CodeEditor({
   // Select file and load content
   const selectFile = (tab: TTab) => {
     if (tab.id === activeFileId) return
-
+    const fileCacheKey = getFileCacheKey(tab.id)
+    const isCached = localStorage.getItem(fileCacheKey) !== null
     setGenerate((prev) => {
       return {
         ...prev,
@@ -435,9 +441,12 @@ export default function CodeEditor({
       }
       return [...prev, tab]
     })
-
+    if (isCached) {
+      setActiveFileContent(localStorage.getItem(fileCacheKey)!) // using the stale-while-revalidate caching pattern
+    }
     socket.emit("getFile", tab.id, (response: string) => {
       setActiveFileContent(response)
+      localStorage.setItem(fileCacheKey, response)
     })
     setEditorLanguage(processFileType(tab.name))
     setActiveFileId(tab.id)
@@ -692,6 +701,10 @@ export default function CodeEditor({
                         )
                       )
                     } else {
+                      localStorage.setItem(
+                        getFileCacheKey(activeFileId),
+                        value ?? ""
+                      )
                       setTabs((prev) =>
                         prev.map((tab) =>
                           tab.id === activeFileId
