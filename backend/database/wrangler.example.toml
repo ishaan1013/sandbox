@@ -6,11 +6,14 @@ compatibility_flags = ["nodejs_compat"]
 
 services = [{ binding = "STORAGE", service = "storage" }]
 
+# Create a new D1 database using the Wrangler CLI and fill in database_name and database_id.
 [[d1_databases]]
 binding = "DB"
 database_name = ""
 database_id = ""
 
+# Set STORAGE_WORKER_URL after deploying the worker.
+# Set KEY to be the same as KEY in /backend/storage/wrangler.toml.
 [vars]
 KEY = ""
 STORAGE_WORKER_URL = ""

@@ -4,13 +4,16 @@ main = "src/index.ts"
 compatibility_date = "2024-04-05"
 compatibility_flags = ["nodejs_compat"]
 
+# Fill in the account ID from the Cloudflare dashboard below.
 account_id = ""
 workers_dev = true
 
+# Deploy an R2 bucket from the Cloudflare dashboard and fill in bucket_name.
 [[r2_buckets]]
 binding = 'R2'
 bucket_name = ''
 preview_bucket_name = ''
 
+# KEY is required but can be set to any secret string.
 [vars]
 KEY = ''
