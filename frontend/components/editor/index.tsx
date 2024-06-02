@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState,useCallback } from "react"
 import monaco from "monaco-editor"
 import Editor, { BeforeMount, OnMount } from "@monaco-editor/react"
 import { io } from "socket.io-client"
@@ -23,7 +23,7 @@ import Tab from "../ui/tab"
 import Sidebar from "./sidebar"
 import GenerateInput from "./generate"
 import { Sandbox, User, TFile, TFolder, TTab } from "@/lib/types"
-import { addNew, processFileType, validateName } from "@/lib/utils"
+import { addNew, processFileType, validateName , debounce} from "@/lib/utils"
 import { Cursors } from "./live/cursors"
 import { Terminal } from "@xterm/xterm"
 import DisableAccessModal from "./live/disableModal"
@@ -105,6 +105,7 @@ export default function CodeEditor({
   const generateWidgetRef = useRef<HTMLDivElement>(null)
   const previewPanelRef = useRef<ImperativePanelHandle>(null)
   const editorPanelRef = useRef<ImperativePanelHandle>(null)
+
 
   // Pre-mount editor keybindings
   const handleEditorWillMount: BeforeMount = (monaco) => {
@@ -289,27 +290,33 @@ export default function CodeEditor({
     }
   }, [decorations.options])
 
-  // Save file keybinding logic effect
+  const debouncedSaveData = useCallback(
+    debounce((value: string | undefined, activeFileId: string | undefined) => {
+      setTabs((prev) =>
+        prev.map((tab) =>
+          tab.id === activeFileId ? { ...tab, saved: true } : tab
+        )
+      );
+      console.log(`Saving file...${activeFileId}`);
+      socket.emit("saveFile", activeFileId, value);
+    }, Number(process.env.FILE_SAVE_DEBOUNCE_DELAY)||1000),
+    [socket]
+  );
+  
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
+      // Save file keybinding logic effect
       if (e.key === "s" && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault()
-
-        setTabs((prev) =>
-          prev.map((tab) =>
-            tab.id === activeFileId ? { ...tab, saved: true } : tab
-          )
-        )
-
-        socket.emit("saveFile", activeFileId, editorRef?.getValue())
+        e.preventDefault();
+        debouncedSaveData(editorRef?.getValue(), activeFileId);
       }
-    }
-    document.addEventListener("keydown", down)
-
+    };
+    document.addEventListener("keydown", down);
+  
     return () => {
-      document.removeEventListener("keydown", down)
-    }
-  }, [tabs, activeFileId])
+      document.removeEventListener("keydown", down);
+    };
+  }, [activeFileId, tabs, debouncedSaveData]);
 
   // Liveblocks live collaboration setup effect
   useEffect(() => {
