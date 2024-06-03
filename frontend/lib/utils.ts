@@ -61,3 +61,7 @@ export function addNew(
     ])
   }
 }
+
+export function getFileCacheKey(id: string) {
+  return `file-content-${id}`
+}
