@@ -6,6 +6,8 @@ Sandbox is an open-source cloud-based code editing environment with custom AI co
 
 Check out the [Twitter thread](https://x.com/ishaandey_/status/1796338262002573526) with the demo video!
 
+Check out this [guide](https://dev.to/jamesmurdza/how-to-setup-ishaan1013sandbox-locally-503p) made by [@jamesmurdza](https://x.com/jamesmurdza) on setting it up locally!
+
 ## Running Locally
 
 ### Frontend
