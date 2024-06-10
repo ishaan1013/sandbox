@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "sqlite",
-  "id": "6570ba20-a672-400c-8147-7ba533784918",
+  "id": "70e3d022-aed8-4464-9063-c92113b4ebe2",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "sandbox": {
@@ -31,6 +31,13 @@
         "visibility": {
           "name": "visibility",
           "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "integer",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -93,6 +100,21 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
+        },
+        "image": {
+          "name": "image",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "generations": {
+          "name": "generations",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": 0
         }
       },
       "indexes": {
@@ -123,6 +145,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true,
+          "autoincrement": false
+        },
+        "sharedOn": {
+          "name": "sharedOn",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
           "autoincrement": false
         }
       },
