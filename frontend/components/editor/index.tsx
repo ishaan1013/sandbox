@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { SetStateAction, useCallback, useEffect, useRef, useState } from "react"
 import monaco from "monaco-editor"
 import Editor, { BeforeMount, OnMount } from "@monaco-editor/react"
 import { io } from "socket.io-client"
@@ -23,7 +23,7 @@ import Tab from "../ui/tab"
 import Sidebar from "./sidebar"
 import GenerateInput from "./generate"
 import { Sandbox, User, TFile, TFolder, TTab } from "@/lib/types"
-import { addNew, processFileType, validateName } from "@/lib/utils"
+import { addNew, processFileType, validateName, debounce } from "@/lib/utils"
 import { Cursors } from "./live/cursors"
 import { Terminal } from "@xterm/xterm"
 import DisableAccessModal from "./live/disableModal"
@@ -290,26 +290,32 @@ export default function CodeEditor({
   }, [decorations.options])
 
   // Save file keybinding logic effect
+  const debouncedSaveData = useCallback(
+    debounce((value: string | undefined, activeFileId: string | undefined) => {
+      setTabs((prev) =>
+        prev.map((tab) =>
+          tab.id === activeFileId ? { ...tab, saved: true } : tab
+        )
+      );
+      console.log(`Saving file...${activeFileId}`);
+      socket.emit("saveFile", activeFileId, value);
+    }, Number(process.env.FILE_SAVE_DEBOUNCE_DELAY)||1000),
+    [socket]
+  );
+
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.key === "s" && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault()
-
-        setTabs((prev) =>
-          prev.map((tab) =>
-            tab.id === activeFileId ? { ...tab, saved: true } : tab
-          )
-        )
-
-        socket.emit("saveFile", activeFileId, editorRef?.getValue())
+        e.preventDefault();
+        debouncedSaveData(editorRef?.getValue(), activeFileId);
       }
-    }
-    document.addEventListener("keydown", down)
+    };
+    document.addEventListener("keydown", down);
 
     return () => {
-      document.removeEventListener("keydown", down)
-    }
-  }, [tabs, activeFileId])
+      document.removeEventListener("keydown", down);
+    };
+  }, [activeFileId, tabs, debouncedSaveData]);
 
   // Liveblocks live collaboration setup effect
   useEffect(() => {
@@ -417,31 +423,44 @@ export default function CodeEditor({
   // Helper functions for tabs:
 
   // Select file and load content
-  const selectFile = (tab: TTab) => {
-    if (tab.id === activeFileId) return
 
-    setGenerate((prev) => {
-      return {
-        ...prev,
-        show: false,
-      }
-    })
-    const exists = tabs.find((t) => t.id === tab.id)
+  // Initialize debounced function once
+  const fileCache = useRef(new Map());
 
+  // Debounced function to get file content
+  const debouncedGetFile = useCallback(
+    debounce((tabId, callback) => {
+      socket.emit('getFile', tabId, callback);
+    }, 300), // 300ms debounce delay, adjust as needed
+    []
+  );
+
+  const selectFile = useCallback((tab: TTab) => {
+    if (tab.id === activeFileId) return;
+
+    setGenerate((prev) => ({ ...prev, show: false }));
+
+    const exists = tabs.find((t) => t.id === tab.id);
     setTabs((prev) => {
       if (exists) {
-        setActiveFileId(exists.id)
-        return prev
+        setActiveFileId(exists.id);
+        return prev;
       }
-      return [...prev, tab]
-    })
+      return [...prev, tab];
+    });
 
-    socket.emit("getFile", tab.id, (response: string) => {
-      setActiveFileContent(response)
-    })
-    setEditorLanguage(processFileType(tab.name))
-    setActiveFileId(tab.id)
-  }
+    if (fileCache.current.has(tab.id)) {
+      setActiveFileContent(fileCache.current.get(tab.id));
+    } else {
+      debouncedGetFile(tab.id, (response: SetStateAction<string>) => {
+        fileCache.current.set(tab.id, response);
+        setActiveFileContent(response);
+      });
+    }
+
+    setEditorLanguage(processFileType(tab.name));
+    setActiveFileId(tab.id);
+  }, [activeFileId, tabs, debouncedGetFile]);
 
   // Close tab and remove from tabs
   const closeTab = (id: string) => {
@@ -772,3 +791,4 @@ export default function CodeEditor({
     </>
   )
 }
+
