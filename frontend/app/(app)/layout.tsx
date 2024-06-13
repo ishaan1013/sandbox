@@ -21,6 +21,8 @@ export default async function AppAuthLayout({
       },
     }
   )
+  console.log(dbUser)
+  console.log(user.id)
   const dbUserJSON = (await dbUser.json()) as User
 
   if (!dbUserJSON.id) {
