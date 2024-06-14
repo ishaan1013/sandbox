@@ -1,4 +1,3 @@
-import fs from "fs";
 import os from "os";
 import path from "path";
 import cors from "cors";
@@ -19,7 +18,7 @@ import {
   saveFile,
 } from "./fileoperations";
 import { LockManager } from "./utils";
-import { Sandbox, Terminal } from "e2b";
+import { Sandbox, Terminal, FilesystemManager } from "e2b";
 import {
   MAX_BODY_SIZE,
   createFileRL,
@@ -48,7 +47,13 @@ const containers: Record<string, Sandbox> = {};
 const connections: Record<string, number> = {};
 const terminals: Record<string, Terminal> = {};
 
-const dirName = path.join(__dirname, "..");
+const dirName = "/home/user";
+
+const moveFile = async (filesystem: FilesystemManager, filePath: string, newFilePath: string) => {
+  const fileContents = await filesystem.readBytes(filePath)
+  await filesystem.writeBytes(newFilePath, fileContents);
+  await filesystem.remove(filePath);
+}
 
 io.use(async (socket, next) => {
   const handshakeSchema = z.object({
@@ -134,12 +139,10 @@ io.on("connection", async (socket) => {
   });
 
   const sandboxFiles = await getSandboxFiles(data.sandboxId);
-  sandboxFiles.fileData.forEach((file) => {
+  sandboxFiles.fileData.forEach(async (file) => {
     const filePath = path.join(dirName, file.id);
-    fs.mkdirSync(path.dirname(filePath), { recursive: true });
-    fs.writeFile(filePath, file.data, function (err) {
-      if (err) throw err;
-    });
+    await containers[data.sandboxId].filesystem.makeDir(path.dirname(filePath));
+    await containers[data.sandboxId].filesystem.write(filePath, file.data);
   });
 
   socket.emit("loaded", sandboxFiles.files);
@@ -173,9 +176,7 @@ io.on("connection", async (socket) => {
       if (!file) return;
       file.data = body;
 
-      fs.writeFile(path.join(dirName, file.id), body, function (err) {
-        if (err) throw err;
-      });
+      await containers[data.sandboxId].filesystem.write(path.join(dirName, file.id), body);
       await saveFile(fileId, body);
     } catch (e) {
       io.emit("rateLimit", "Rate limited: file saving. Please slow down.");
@@ -189,13 +190,11 @@ io.on("connection", async (socket) => {
     const parts = fileId.split("/");
     const newFileId = folderId + "/" + parts.pop();
 
-    fs.rename(
+    await moveFile(
+      containers[data.sandboxId].filesystem,
       path.join(dirName, fileId),
-      path.join(dirName, newFileId),
-      function (err) {
-        if (err) throw err;
-      }
-    );
+      path.join(dirName, newFileId)
+    )
 
     file.id = newFileId;
 
@@ -221,9 +220,7 @@ io.on("connection", async (socket) => {
 
       const id = `projects/${data.sandboxId}/${name}`;
 
-      fs.writeFile(path.join(dirName, id), "", function (err) {
-        if (err) throw err;
-      });
+      await containers[data.sandboxId].filesystem.write(path.join(dirName, id), "");
 
       sandboxFiles.files.push({
         id,
@@ -250,9 +247,7 @@ io.on("connection", async (socket) => {
 
       const id = `projects/${data.sandboxId}/${name}`;
 
-      fs.mkdir(path.join(dirName, id), { recursive: true }, function (err) {
-        if (err) throw err;
-      });
+      await containers[data.sandboxId].filesystem.makeDir(path.join(dirName, id));
 
       callback();
     } catch (e) {
@@ -272,13 +267,12 @@ io.on("connection", async (socket) => {
       const newFileId =
         parts.slice(0, parts.length - 1).join("/") + "/" + newName;
 
-      fs.rename(
+
+      await moveFile(
+        containers[data.sandboxId].filesystem,
         path.join(dirName, fileId),
-        path.join(dirName, newFileId),
-        function (err) {
-          if (err) throw err;
-        }
-      );
+        path.join(dirName, newFileId)
+      )
       await renameFile(fileId, newFileId, file.data);
     } catch (e) {
       io.emit("rateLimit", "Rate limited: file renaming. Please slow down.");
@@ -292,9 +286,7 @@ io.on("connection", async (socket) => {
       const file = sandboxFiles.fileData.find((f) => f.id === fileId);
       if (!file) return;
 
-      fs.unlink(path.join(dirName, fileId), function (err) {
-        if (err) throw err;
-      });
+      await containers[data.sandboxId].filesystem.remove(path.join(dirName, fileId));
       sandboxFiles.fileData = sandboxFiles.fileData.filter(
         (f) => f.id !== fileId
       );
@@ -317,9 +309,7 @@ io.on("connection", async (socket) => {
 
     await Promise.all(
       files.map(async (file) => {
-        fs.unlink(path.join(dirName, file), function (err) {
-          if (err) throw err;
-        });
+        await containers[data.sandboxId].filesystem.remove(path.join(dirName, file));
 
         sandboxFiles.fileData = sandboxFiles.fileData.filter(
           (f) => f.id !== file
@@ -348,6 +338,7 @@ io.on("connection", async (socket) => {
           size: { cols: 80, rows: 20 },
           onExit: () => console.log("Terminal exited", id),
         });
+        await terminals[id].sendData(`cd "${path.join(dirName, "projects", data.sandboxId)}"\r`)
         await terminals[id].sendData("export PS1='user> '\rclear\r");
         console.log("Created terminal", id);
       } catch (error) {
