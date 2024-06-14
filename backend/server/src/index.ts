@@ -432,11 +432,12 @@ io.on("connection", async (socket) => {
 
   socket.on("disconnect", async () => {
     if (data.isOwner) {
-      Object.entries(terminals).forEach((t) => {
-        const terminal = t[1];
-        terminal.kill();
-        delete terminals[t[0]];
-      });
+      await Promise.all(
+        Object.entries(terminals).map(async ([key, terminal]) => {
+          await terminal.kill();
+          delete terminals[key];
+        })
+      );
 
       await lockManager.acquireLock(data.sandboxId, async () => {
         try {
