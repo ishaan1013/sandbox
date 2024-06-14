@@ -45,6 +45,7 @@ let inactivityTimeout: NodeJS.Timeout | null = null;
 let isOwnerConnected = false;
 
 const containers: Record<string, Sandbox> = {};
+const connections: Record<string, number> = {};
 const terminals: Record<string, Terminal> = {};
 
 const dirName = path.join(__dirname, "..");
@@ -113,6 +114,7 @@ io.on("connection", async (socket) => {
 
   if (data.isOwner) {
     isOwnerConnected = true;
+    connections[data.sandboxId] = (connections[data.sandboxId] ?? 0) + 1;
   } else {
     if (!isOwnerConnected) {
       socket.emit("disableAccess", "The sandbox owner is not connected.");
@@ -432,6 +434,10 @@ io.on("connection", async (socket) => {
 
   socket.on("disconnect", async () => {
     if (data.isOwner) {
+      connections[data.sandboxId]--;
+    }
+
+    if (data.isOwner && connections[data.sandboxId] <= 0) {
       await Promise.all(
         Object.entries(terminals).map(async ([key, terminal]) => {
           await terminal.kill();
