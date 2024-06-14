@@ -17,8 +17,9 @@ import {
   getSandboxFiles,
   renameFile,
   saveFile,
-} from "./utils";
-import { IDisposable, IPty, spawn } from "node-pty";
+} from "./fileoperations";
+import { LockManager } from "./utils";
+import { Sandbox, Terminal } from "e2b";
 import {
   MAX_BODY_SIZE,
   createFileRL,
