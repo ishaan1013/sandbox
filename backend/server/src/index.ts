@@ -132,6 +132,7 @@ io.on("connection", async (socket) => {
       if (!containers[data.sandboxId]) {
         containers[data.sandboxId] = await Sandbox.create();
         console.log("Created container ", data.sandboxId);
+        io.emit("previewURL", "https://" + containers[data.sandboxId].getHostname(5173));
       }
     } catch (error) {
       console.error("Error creating container ", data.sandboxId, error);

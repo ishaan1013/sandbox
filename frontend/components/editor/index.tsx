@@ -94,6 +94,9 @@ export default function CodeEditor({
     }[]
   >([])
 
+  // Preview state
+  const [previewURL, setPreviewURL] = useState<string>("");
+
   const isOwner = sandboxData.userId === userData.id
   const clerk = useClerk()
 
@@ -413,6 +416,7 @@ export default function CodeEditor({
     socketRef.current?.on("rateLimit", onRateLimit)
     socketRef.current?.on("terminalResponse", onTerminalResponse)
     socketRef.current?.on("disableAccess", onDisableAccess)
+    socketRef.current?.on("previewURL", setPreviewURL)
 
     return () => {
       socketRef.current?.off("connect", onConnect)
@@ -421,6 +425,7 @@ export default function CodeEditor({
       socketRef.current?.off("rateLimit", onRateLimit)
       socketRef.current?.off("terminalResponse", onTerminalResponse)
       socketRef.current?.off("disableAccess", onDisableAccess)
+      socketRef.current?.off("previewURL", setPreviewURL)
     }
     // }, []);
   }, [terminals])
@@ -769,6 +774,7 @@ export default function CodeEditor({
                   previewPanelRef.current?.expand()
                   setIsPreviewCollapsed(false)
                 }}
+                src={previewURL}
               />
             </ResizablePanel>
             <ResizableHandle />
