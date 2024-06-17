@@ -46,7 +46,7 @@ export default function CodeEditor({
   // Initialize socket connection if it doesn't exist
   if (!socketRef.current) {
     socketRef.current = io(
-      `http://localhost:${process.env.NEXT_PUBLIC_SERVER_PORT}?userId=${userData.id}&sandboxId=${sandboxData.id}`,
+      `${window.location.protocol}//${window.location.hostname}:${process.env.NEXT_PUBLIC_SERVER_PORT}?userId=${userData.id}&sandboxId=${sandboxData.id}`,
       {
         timeout: 2000,
       }
