@@ -391,7 +391,7 @@ export default function CodeEditor({
       setFiles(files)
     }
 
-    const onRateLimit = (message: string) => {
+    const onError = (message: string) => {
       toast.error(message)
     }
 
@@ -413,7 +413,7 @@ export default function CodeEditor({
     socketRef.current?.on("connect", onConnect)
     socketRef.current?.on("disconnect", onDisconnect)
     socketRef.current?.on("loaded", onLoadedEvent)
-    socketRef.current?.on("rateLimit", onRateLimit)
+    socketRef.current?.on("error", onError)
     socketRef.current?.on("terminalResponse", onTerminalResponse)
     socketRef.current?.on("disableAccess", onDisableAccess)
     socketRef.current?.on("previewURL", setPreviewURL)
@@ -422,7 +422,7 @@ export default function CodeEditor({
       socketRef.current?.off("connect", onConnect)
       socketRef.current?.off("disconnect", onDisconnect)
       socketRef.current?.off("loaded", onLoadedEvent)
-      socketRef.current?.off("rateLimit", onRateLimit)
+      socketRef.current?.off("error", onError)
       socketRef.current?.off("terminalResponse", onTerminalResponse)
       socketRef.current?.off("disableAccess", onDisableAccess)
       socketRef.current?.off("previewURL", setPreviewURL)
