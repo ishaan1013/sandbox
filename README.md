@@ -29,7 +29,9 @@ npm run dev
 
 ### Backend
 
-The backend consists of a primary Express and Socket.io server, and 3 Cloudflare Workers microservices for the D1 database, R2 storage, and Workers AI. The D1 database also contains a [service binding](https://developers.cloudflare.com/workers/runtime-apis/bindings/service-bindings/) to the R2 storage worker.
+The backend consists of a primary Express and Socket.io server, and 3 Cloudflare Workers microservices for the D1 database, R2 storage, and Workers AI. The D1 database also contains a [service binding](https://developers.cloudflare.com/workers/runtime-apis/bindings/service-bindings/) to the R2 storage worker. Each open sandbox instantiates a secure Linux sandboxes on E2B, which is used for the terminal and live preview.
+
+You will need to make an account on [E2B](https://e2b.dev/) to get an API key.
 
 #### Socket.io server
 
@@ -181,3 +183,4 @@ It should be in the form `category(scope or module): message` in your commit mes
 - [Express](https://expressjs.com/)
 - [Socket.io](https://socket.io/)
 - [Drizzle ORM](https://orm.drizzle.team/)
+- [E2B](https://e2b.dev/)
