@@ -15,9 +15,11 @@ import { toast } from "sonner"
 export default function PreviewWindow({
   collapsed,
   open,
+  src
 }: {
   collapsed: boolean
   open: () => void
+  src: string
 }) {
   const ref = useRef<HTMLIFrameElement>(null)
   const [iframeKey, setIframeKey] = useState(0)
@@ -45,7 +47,7 @@ export default function PreviewWindow({
 
                 <PreviewButton
                   onClick={() => {
-                    navigator.clipboard.writeText(`http://localhost:5173`)
+                    navigator.clipboard.writeText(src)
                     toast.info("Copied preview link to clipboard")
                   }}
                 >
@@ -73,7 +75,7 @@ export default function PreviewWindow({
             ref={ref}
             width={"100%"}
             height={"100%"}
-            src={`http://localhost:5173`}
+            src={src}
           />
         </div>
       )}

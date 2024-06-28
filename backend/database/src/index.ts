@@ -110,8 +110,13 @@ export default {
 				const body = await request.json()
 				const { type, name, userId, visibility } = initSchema.parse(body)
 
-				const allSandboxes = await db.select().from(sandbox).all()
-				if (allSandboxes.length >= 8) {
+				const userSandboxes = await db
+					.select()
+					.from(sandbox)
+					.where(eq(sandbox.userId, userId))
+					.all()
+
+				if (userSandboxes.length >= 8) {
 					return new Response("You reached the maximum # of sandboxes.", {
 						status: 400,
 					})
