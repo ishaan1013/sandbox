@@ -192,6 +192,8 @@ io.on("connection", async (socket) => {
 
     // todo: send diffs + debounce for efficiency
     socket.on("saveFile", async (fileId: string, body: string) => {
+      if (!fileId) return; // handles saving when no file is open
+
       try {
         if (Buffer.byteLength(body, "utf-8") > MAX_BODY_SIZE) {
           socket.emit(
