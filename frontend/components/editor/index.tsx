@@ -35,11 +35,9 @@ import { ImperativePanelHandle } from "react-resizable-panels"
 export default function CodeEditor({
   userData,
   sandboxData,
-  reactDefinitionFile,
 }: {
   userData: User
   sandboxData: Sandbox
-  reactDefinitionFile: string
 }) {
   const socketRef = useRef<Socket | null>(null);
 
