@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/layout/themeProvider"
 import { ClerkProvider } from "@clerk/nextjs"
 import { Toaster } from "@/components/ui/sonner"
 import { Analytics } from "@vercel/analytics/react"
+import { PHProvider } from "./providers"
 
 export const metadata: Metadata = {
   title: "Sandbox",
@@ -20,18 +21,20 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
-        <body>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="dark"
-            forcedTheme="dark"
-            disableTransitionOnChange
-          >
-            {children}
-            <Analytics />
-            <Toaster position="bottom-left" richColors />
-          </ThemeProvider>
-        </body>
+        <PHProvider>
+          <body>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="dark"
+              forcedTheme="dark"
+              disableTransitionOnChange
+            >
+              {children}
+              <Analytics />
+              <Toaster position="bottom-left" richColors />
+            </ThemeProvider>
+          </body>
+        </PHProvider>
       </html>
     </ClerkProvider>
   )
