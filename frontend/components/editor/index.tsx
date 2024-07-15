@@ -397,7 +397,7 @@ export default function CodeEditor({
         providerData.binding = undefined;
       }
     };
-  }, [editorRef, room, activeFileContent]);
+  }, [room, activeFileContent]);
 
     // Added this effect to clean up when the component unmounts
     useEffect(() => {
