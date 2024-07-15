@@ -104,6 +104,16 @@ export default function CodeEditor({
   const room = useRoom()
   const [provider, setProvider] = useState<TypedLiveblocksProvider>()
   const userInfo = useSelf((me) => me.info)
+  
+  // Liveblocks providers map to prevent reinitializing providers
+  type ProviderData = {
+    provider: LiveblocksProvider<never, never, never, never>;
+    yDoc: Y.Doc;
+    yText: Y.Text;
+    binding?: MonacoBinding;
+    onSync: (isSynced: boolean) => void;
+  };
+  const providersMap = useRef(new Map<string, ProviderData>());
 
   // Refs for libraries / features
   const editorContainerRef = useRef<HTMLDivElement>(null)
@@ -332,43 +342,77 @@ export default function CodeEditor({
 
     if (!editorRef || !tab || !model) return
 
-    const yDoc = new Y.Doc()
-    const yText = yDoc.getText(tab.id)
-    const yProvider: any = new LiveblocksProvider(room, yDoc)
+    let providerData: ProviderData;
+  
+    // When a file is opened for the first time, create a new provider and store in providersMap.
+    if (!providersMap.current.has(tab.id)) {
+      const yDoc = new Y.Doc();
+      const yText = yDoc.getText(tab.id);
+      const yProvider = new LiveblocksProvider(room, yDoc);
 
-    const onSync = (isSynced: boolean) => {
-      if (isSynced) {
-        const text = yText.toString()
-        if (text === "") {
-          if (activeFileContent) {
-            yText.insert(0, activeFileContent)
-          } else {
-            setTimeout(() => {
-              yText.insert(0, editorRef.getValue())
-            }, 0)
+      // Inserts the file content into the editor once when the tab is changed.
+      const onSync = (isSynced: boolean) => {
+        if (isSynced) {
+          const text = yText.toString()
+          if (text === "") {
+            if (activeFileContent) {
+              yText.insert(0, activeFileContent)
+            } else {
+              setTimeout(() => {
+                yText.insert(0, editorRef.getValue())
+              }, 0)
+            }
           }
         }
       }
+
+      yProvider.on("sync", onSync)
+
+      // Save the provider to the map.
+      providerData = { provider: yProvider, yDoc, yText, onSync };
+      providersMap.current.set(tab.id, providerData);
+
+    } else {
+      // When a tab is opened that has been open before, reuse the existing provider.
+      providerData = providersMap.current.get(tab.id)!;
     }
-
-    yProvider.on("sync", onSync)
-
-    setProvider(yProvider)
 
     const binding = new MonacoBinding(
-      yText,
+      providerData.yText,
       model,
       new Set([editorRef]),
-      yProvider.awareness as Awareness
-    )
+      providerData.provider.awareness as unknown as Awareness
+    );
+
+    providerData.binding = binding;
+  
+    setProvider(providerData.provider);
 
     return () => {
-      yDoc.destroy()
-      yProvider.destroy()
-      binding.destroy()
-      yProvider.off("sync", onSync)
-    }
-  }, [editorRef, room, activeFileContent])
+      // Cleanup logic
+      if (binding) {
+        binding.destroy();
+      }
+      if (providerData.binding) {
+        providerData.binding = undefined;
+      }
+    };
+  }, [editorRef, room, activeFileContent, activeFileId, tabs]);
+
+    // Added this effect to clean up when the component unmounts
+    useEffect(() => {
+      return () => {
+        // Clean up all providers when the component unmounts
+        providersMap.current.forEach((data) => {
+          if (data.binding) {
+            data.binding.destroy();
+          }
+          data.provider.disconnect();
+          data.yDoc.destroy();
+        });
+        providersMap.current.clear();
+      };
+    }, []);
 
   // Connection/disconnection effect
   useEffect(() => {
