@@ -11,6 +11,7 @@ import { useState } from "react";
 import EditSandboxModal from "./edit";
 import ShareSandboxModal from "./share";
 import { Avatars } from "../live/avatars";
+import DeployButtonModal from "./deploy";
 
 export default function Navbar({
   userData,
@@ -66,10 +67,13 @@ export default function Navbar({
           <Avatars />
 
           {isOwner ? (
-            <Button variant="outline" onClick={() => setIsShareOpen(true)}>
-              <Users className="w-4 h-4 mr-2" />
-              Share
-            </Button>
+            <>
+              <DeployButtonModal />
+              <Button variant="outline" onClick={() => setIsShareOpen(true)}>
+                <Users className="w-4 h-4 mr-2" />
+                Share
+              </Button>
+            </>
           ) : null}
           <UserButton userData={userData} />
         </div>
