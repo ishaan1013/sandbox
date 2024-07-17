@@ -63,14 +63,6 @@ const CodeEditor = dynamic(() => import("@/components/editor"), {
   loading: () => <Loading />,
 })
 
-function getReactDefinitionFile() {
-  const reactDefinitionFile = fs.readFileSync(
-    "node_modules/@types/react/index.d.ts",
-    "utf8"
-  )
-  return reactDefinitionFile
-}
-
 export default async function CodePage({ params }: { params: { id: string } }) {
   const user = await currentUser()
   const sandboxId = params.id
@@ -94,8 +86,6 @@ export default async function CodePage({ params }: { params: { id: string } }) {
     return notFound()
   }
 
-  const reactDefinitionFile = getReactDefinitionFile()
-
   return (
     <div className="overflow-hidden overscroll-none w-screen flex flex-col h-screen bg-background">
       <Room id={sandboxId}>
@@ -104,7 +94,6 @@ export default async function CodePage({ params }: { params: { id: string } }) {
           <CodeEditor
             userData={userData}
             sandboxData={sandboxData}
-            reactDefinitionFile={reactDefinitionFile}
           />
         </div>
       </Room>
