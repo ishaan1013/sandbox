@@ -5,6 +5,7 @@ import express, { Express } from "express";
 import dotenv from "dotenv";
 import { createServer } from "http";
 import { Server } from "socket.io";
+import net from "net";
 
 import { z } from "zod";
 import { User } from "./types";
@@ -111,6 +112,21 @@ io.use(async (socket, next) => {
 });
 
 const lockManager = new LockManager();
+
+const client = net.createConnection(
+  { path: "/var/run/remote-dokku.sock" },
+  () => {
+    console.log("Connected to Dokku server");
+  }
+);
+
+client.on("end", () => {
+  console.log("Disconnected from Dokku server");
+});
+
+client.on("error", (err) => {
+  console.error(`Dokku Client error: ${err}`);
+});
 
 io.on("connection", async (socket) => {
   try {
@@ -251,6 +267,38 @@ io.on("connection", async (socket) => {
           console.error("Error moving file:", e);
           io.emit("error", `Error: file moving. ${e.message ?? e}`);
         }
+      }
+    );
+
+    interface DokkuResponse {
+      ok: boolean;
+      output: string;
+    }
+
+    interface CallbackResponse {
+      success: boolean;
+      apps?: string[];
+      message?: string;
+    }
+
+    socket.on(
+      "list",
+      async (callback: (response: CallbackResponse) => void) => {
+        console.log("Retrieving apps list...");
+        client.on("data", (data) => {
+          const response = data.toString();
+          const parsedData: DokkuResponse = JSON.parse(response);
+          if (parsedData.ok) {
+            const appsList = parsedData.output.split("\n").slice(1); // Split by newline and ignore the first line (header)
+            callback({ success: true, apps: appsList });
+          } else {
+            callback({
+              success: false,
+              message: "Failed to retrieve apps list",
+            });
+          }
+        });
+        client.write("apps:list\n");
       }
     );
 

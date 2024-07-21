@@ -1,0 +1,21 @@
+{
+    "name": "socket-io-test",
+    "version": "1.0.0",
+    "description": "A test script for socket.io-client using ES6 modules and TypeScript",
+    "main": "dist/index.js",
+    "type": "module",
+    "scripts": {
+        "build": "tsc",
+        "start": "npm run build && node dist/index.js"
+    },
+    "author": "Your Name",
+    "license": "ISC",
+    "dependencies": {
+        "dotenv": "^16.4.5",
+        "socket.io-client": "^4.7.5"
+    },
+    "devDependencies": {
+        "typescript": "^5.0.0",
+        "ts-node": "^10.9.2"
+    }
+}
