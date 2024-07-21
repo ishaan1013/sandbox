@@ -5,7 +5,8 @@ import express, { Express } from "express";
 import dotenv from "dotenv";
 import { createServer } from "http";
 import { Server } from "socket.io";
-import net from "net";
+import { DokkuClient, SSHConfig } from "./DokkuClient";
+import fs from "fs";
 
 import { z } from "zod";
 import { User } from "./types";
@@ -113,20 +114,17 @@ io.use(async (socket, next) => {
 
 const lockManager = new LockManager();
 
-const client = net.createConnection(
-  { path: "/var/run/remote-dokku.sock" },
-  () => {
-    console.log("Connected to Dokku server");
-  }
-);
+if (!process.env.DOKKU_HOST) throw new Error('Environment variable DOKKU_HOST is not defined');
+if (!process.env.DOKKU_USERNAME) throw new Error('Environment variable DOKKU_USERNAME is not defined');
+if (!process.env.DOKKU_KEY) throw new Error('Environment variable DOKKU_KEY is not defined');
 
-client.on("end", () => {
-  console.log("Disconnected from Dokku server");
+const client = new DokkuClient({
+  host: process.env.DOKKU_HOST,
+  username: process.env.DOKKU_USERNAME,
+  privateKey: fs.readFileSync(process.env.DOKKU_KEY),
 });
 
-client.on("error", (err) => {
-  console.error(`Dokku Client error: ${err}`);
-});
+client.connect();
 
 io.on("connection", async (socket) => {
   try {
@@ -270,11 +268,6 @@ io.on("connection", async (socket) => {
       }
     );
 
-    interface DokkuResponse {
-      ok: boolean;
-      output: string;
-    }
-
     interface CallbackResponse {
       success: boolean;
       apps?: string[];
@@ -285,20 +278,17 @@ io.on("connection", async (socket) => {
       "list",
       async (callback: (response: CallbackResponse) => void) => {
         console.log("Retrieving apps list...");
-        client.on("data", (data) => {
-          const response = data.toString();
-          const parsedData: DokkuResponse = JSON.parse(response);
-          if (parsedData.ok) {
-            const appsList = parsedData.output.split("\n").slice(1); // Split by newline and ignore the first line (header)
-            callback({ success: true, apps: appsList });
-          } else {
-            callback({
-              success: false,
-              message: "Failed to retrieve apps list",
-            });
-          }
-        });
-        client.write("apps:list\n");
+        try {
+          callback({
+            success: true,
+            apps: await client.listApps()
+          });
+        } catch (error) {
+          callback({
+            success: false,
+            message: "Failed to retrieve apps list",
+          });
+        }
       }
     );
 
