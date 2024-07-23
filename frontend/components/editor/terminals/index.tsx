@@ -2,34 +2,53 @@
 
 import { Button } from "@/components/ui/button";
 import Tab from "@/components/ui/tab";
-import { closeTerminal, createTerminal } from "@/lib/terminal";
 import { Terminal } from "@xterm/xterm";
 import { Loader2, Plus, SquareTerminal, TerminalSquare } from "lucide-react";
-import { Socket } from "socket.io-client";
 import { toast } from "sonner";
 import EditorTerminal from "./terminal";
-import { useState } from "react";
+import { useTerminal } from "@/context/TerminalContext";
+import { useEffect } from "react";
 
-export default function Terminals({
-  terminals,
-  setTerminals,
-  socket,
-}: {
-  terminals: { id: string; terminal: Terminal | null }[];
-  setTerminals: React.Dispatch<
-    React.SetStateAction<
-      {
-        id: string;
-        terminal: Terminal | null;
-      }[]
-    >
-  >;
-  socket: Socket;
-}) {
-  const [activeTerminalId, setActiveTerminalId] = useState("");
-  const [creatingTerminal, setCreatingTerminal] = useState(false);
-  const [closingTerminal, setClosingTerminal] = useState("");
+export default function Terminals() {
+  const {
+    terminals,
+    setTerminals,
+    socket,
+    createNewTerminal,
+    closeTerminal,
+    activeTerminalId,
+    setActiveTerminalId,
+    creatingTerminal,
+  } = useTerminal();
+
   const activeTerminal = terminals.find((t) => t.id === activeTerminalId);
+
+  // Effect to set the active terminal when a new one is created
+  useEffect(() => {
+    if (terminals.length > 0 && !activeTerminalId) {
+      setActiveTerminalId(terminals[terminals.length - 1].id);
+    }
+  }, [terminals, activeTerminalId, setActiveTerminalId]);
+
+  const handleCreateTerminal = () => {
+    if (terminals.length >= 4) {
+      toast.error("You reached the maximum # of terminals.");
+      return;
+    }
+    createNewTerminal();
+  };
+
+  const handleCloseTerminal = (termId: string) => {
+    closeTerminal(termId);
+    if (activeTerminalId === termId) {
+      const remainingTerminals = terminals.filter(t => t.id !== termId);
+      if (remainingTerminals.length > 0) {
+        setActiveTerminalId(remainingTerminals[0].id);
+      } else {
+        setActiveTerminalId("");
+      }
+    }
+  };
 
   return (
     <>
@@ -37,20 +56,8 @@ export default function Terminals({
         {terminals.map((term) => (
           <Tab
             key={term.id}
-            creating={creatingTerminal}
             onClick={() => setActiveTerminalId(term.id)}
-            onClose={() =>
-              closeTerminal({
-                term,
-                terminals,
-                setTerminals,
-                setActiveTerminalId,
-                setClosingTerminal,
-                socket,
-                activeTerminalId,
-              })
-            }
-            closing={closingTerminal === term.id}
+            onClose={() => handleCloseTerminal(term.id)}
             selected={activeTerminalId === term.id}
           >
             <SquareTerminal className="w-4 h-4 mr-2" />
@@ -59,18 +66,7 @@ export default function Terminals({
         ))}
         <Button
           disabled={creatingTerminal}
-          onClick={() => {
-            if (terminals.length >= 4) {
-              toast.error("You reached the maximum # of terminals.");
-              return;
-            }
-            createTerminal({
-              setTerminals,
-              setActiveTerminalId,
-              setCreatingTerminal,
-              socket,
-            });
-          }}
+          onClick={handleCreateTerminal}
           size="smIcon"
           variant={"secondary"}
           className={`font-normal shrink-0 select-none text-muted-foreground disabled:opacity-50`}
@@ -92,10 +88,10 @@ export default function Terminals({
               term={term.terminal}
               setTerm={(t: Terminal) => {
                 setTerminals((prev) =>
-                  prev.map((term) =>
-                    term.id === activeTerminalId
-                      ? { ...term, terminal: t }
-                      : term
+                  prev.map((prevTerm) =>
+                    prevTerm.id === term.id
+                      ? { ...prevTerm, terminal: t }
+                      : prevTerm
                   )
                 );
               }}

@@ -31,6 +31,8 @@ import Loading from "./loading"
 import PreviewWindow from "./preview"
 import Terminals from "./terminals"
 import { ImperativePanelHandle } from "react-resizable-panels"
+import { PreviewProvider, usePreview } from '@/context/PreviewContext';
+import { useTerminal } from '@/context/TerminalContext'; 
 
 export default function CodeEditor({
   userData,
@@ -50,8 +52,17 @@ export default function CodeEditor({
       {
         timeout: 2000,
       }
-    );}
+    );
+  }
 
+  //Terminalcontext functionsand effects
+  const { setUserAndSandboxId } = useTerminal();
+
+  useEffect(() => {
+    setUserAndSandboxId(userData.id, sandboxData.id);
+  }, [userData.id, sandboxData.id, setUserAndSandboxId]);
+
+  //Preview Button state
   const [isPreviewCollapsed, setIsPreviewCollapsed] = useState(true)
   const [disableAccess, setDisableAccess] = useState({
     isDisabled: false,
@@ -104,7 +115,7 @@ export default function CodeEditor({
   const room = useRoom()
   const [provider, setProvider] = useState<TypedLiveblocksProvider>()
   const userInfo = useSelf((me) => me.info)
-  
+
   // Liveblocks providers map to prevent reinitializing providers
   type ProviderData = {
     provider: LiveblocksProvider<never, never, never, never>;
@@ -317,7 +328,7 @@ export default function CodeEditor({
       console.log(`Saving file...${activeFileId}`);
       console.log(`Saving file...${value}`);
       socketRef.current?.emit("saveFile", activeFileId, value);
-    }, Number(process.env.FILE_SAVE_DEBOUNCE_DELAY)||1000),
+    }, Number(process.env.FILE_SAVE_DEBOUNCE_DELAY) || 1000),
     [socketRef]
   );
 
@@ -343,7 +354,7 @@ export default function CodeEditor({
     if (!editorRef || !tab || !model) return
 
     let providerData: ProviderData;
-  
+
     // When a file is opened for the first time, create a new provider and store in providersMap.
     if (!providersMap.current.has(tab.id)) {
       const yDoc = new Y.Doc();
@@ -385,7 +396,7 @@ export default function CodeEditor({
     );
 
     providerData.binding = binding;
-  
+
     setProvider(providerData.provider);
 
     return () => {
@@ -399,25 +410,25 @@ export default function CodeEditor({
     };
   }, [room, activeFileContent]);
 
-    // Added this effect to clean up when the component unmounts
-    useEffect(() => {
-      return () => {
-        // Clean up all providers when the component unmounts
-        providersMap.current.forEach((data) => {
-          if (data.binding) {
-            data.binding.destroy();
-          }
-          data.provider.disconnect();
-          data.yDoc.destroy();
-        });
-        providersMap.current.clear();
-      };
-    }, []);
+  // Added this effect to clean up when the component unmounts
+  useEffect(() => {
+    return () => {
+      // Clean up all providers when the component unmounts
+      providersMap.current.forEach((data) => {
+        if (data.binding) {
+          data.binding.destroy();
+        }
+        data.provider.disconnect();
+        data.yDoc.destroy();
+      });
+      providersMap.current.clear();
+    };
+  }, []);
 
   // Connection/disconnection effect
   useEffect(() => {
     socketRef.current?.connect()
-    
+
     return () => {
       socketRef.current?.disconnect()
     }
@@ -425,7 +436,7 @@ export default function CodeEditor({
 
   // Socket event listener effect
   useEffect(() => {
-    const onConnect = () => {}
+    const onConnect = () => { }
 
     const onDisconnect = () => {
       setTerminals([])
@@ -530,8 +541,8 @@ export default function CodeEditor({
         ? numTabs === 1
           ? null
           : index < numTabs - 1
-          ? tabs[index + 1].id
-          : tabs[index - 1].id
+            ? tabs[index + 1].id
+            : tabs[index - 1].id
         : activeFileId
 
     setTabs((prev) => prev.filter((t) => t.id !== id))
@@ -624,7 +635,7 @@ export default function CodeEditor({
         <DisableAccessModal
           message={disableAccess.message}
           open={disableAccess.isDisabled}
-          setOpen={() => {}}
+          setOpen={() => { }}
         />
         <Loading />
       </>
@@ -633,216 +644,211 @@ export default function CodeEditor({
   return (
     <>
       {/* Copilot DOM elements */}
-      <div ref={generateRef} />
-      <div className="z-50 p-1" ref={generateWidgetRef}>
-        {generate.show && ai ? (
-          <GenerateInput
-            user={userData}
-            socket={socketRef.current}
-            width={generate.width - 90}
-            data={{
-              fileName: tabs.find((t) => t.id === activeFileId)?.name ?? "",
-              code: editorRef?.getValue() ?? "",
-              line: generate.line,
-            }}
-            editor={{
-              language: editorLanguage,
-            }}
-            onExpand={() => {
-              editorRef?.changeViewZones(function (changeAccessor) {
-                changeAccessor.removeZone(generate.id)
+      <PreviewProvider>
+        <div ref={generateRef} />
+        <div className="z-50 p-1" ref={generateWidgetRef}>
+          {generate.show && ai ? (
+            <GenerateInput
+              user={userData}
+              socket={socketRef.current}
+              width={generate.width - 90}
+              data={{
+                fileName: tabs.find((t) => t.id === activeFileId)?.name ?? "",
+                code: editorRef?.getValue() ?? "",
+                line: generate.line,
+              }}
+              editor={{
+                language: editorLanguage,
+              }}
+              onExpand={() => {
+                editorRef?.changeViewZones(function (changeAccessor) {
+                  changeAccessor.removeZone(generate.id)
 
-                if (!generateRef.current) return
-                const id = changeAccessor.addZone({
-                  afterLineNumber: cursorLine,
-                  heightInLines: 12,
-                  domNode: generateRef.current,
+                  if (!generateRef.current) return
+                  const id = changeAccessor.addZone({
+                    afterLineNumber: cursorLine,
+                    heightInLines: 12,
+                    domNode: generateRef.current,
+                  })
+                  setGenerate((prev) => {
+                    return { ...prev, id }
+                  })
                 })
+              }}
+              onAccept={(code: string) => {
+                const line = generate.line
                 setGenerate((prev) => {
-                  return { ...prev, id }
+                  return {
+                    ...prev,
+                    show: !prev.show,
+                  }
                 })
-              })
-            }}
-            onAccept={(code: string) => {
-              const line = generate.line
-              setGenerate((prev) => {
-                return {
-                  ...prev,
-                  show: !prev.show,
-                }
-              })
-              const file = editorRef?.getValue()
+                const file = editorRef?.getValue()
 
-              const lines = file?.split("\n") || []
-              lines.splice(line - 1, 0, code)
-              const updatedFile = lines.join("\n")
-              editorRef?.setValue(updatedFile)
-            }}
-            onClose={() => {
-              setGenerate((prev) => {
-                return {
-                  ...prev,
-                  show: !prev.show,
-                }
-              })
-            }}
-          />
-        ) : null}
-      </div>
+                const lines = file?.split("\n") || []
+                lines.splice(line - 1, 0, code)
+                const updatedFile = lines.join("\n")
+                editorRef?.setValue(updatedFile)
+              }}
+              onClose={() => {
+                setGenerate((prev) => {
+                  return {
+                    ...prev,
+                    show: !prev.show,
+                  }
+                })
+              }}
+            />
+          ) : null}
+        </div>
 
-      {/* Main editor components */}
-      <Sidebar
-        sandboxData={sandboxData}
-        files={files}
-        selectFile={selectFile}
-        handleRename={handleRename}
-        handleDeleteFile={handleDeleteFile}
-        handleDeleteFolder={handleDeleteFolder}
-        socket={socketRef.current}
-        setFiles={setFiles}
-        addNew={(name, type) => addNew(name, type, setFiles, sandboxData)}
-        deletingFolderId={deletingFolderId}
-        // AI Copilot Toggle
-        ai={ai}
-        setAi={setAi}
-      />
+        {/* Main editor components */}
+        <Sidebar
+          sandboxData={sandboxData}
+          files={files}
+          selectFile={selectFile}
+          handleRename={handleRename}
+          handleDeleteFile={handleDeleteFile}
+          handleDeleteFolder={handleDeleteFolder}
+          socket={socketRef.current}
+          setFiles={setFiles}
+          addNew={(name, type) => addNew(name, type, setFiles, sandboxData)}
+          deletingFolderId={deletingFolderId}
+          // AI Copilot Toggle
+          ai={ai}
+          setAi={setAi}
+        />
 
-      {/* Shadcn resizeable panels: https://ui.shadcn.com/docs/components/resizable */}
-      <ResizablePanelGroup direction="horizontal">
-        <ResizablePanel
-          className="p-2 flex flex-col"
-          maxSize={80}
-          minSize={30}
-          defaultSize={60}
-          ref={editorPanelRef}
-        >
-          <div className="h-10 w-full flex gap-2 overflow-auto tab-scroll">
-            {/* File tabs */}
-            {tabs.map((tab) => (
-              <Tab
-                key={tab.id}
-                saved={tab.saved}
-                selected={activeFileId === tab.id}
-                onClick={(e) => {
-                  selectFile(tab)
-                }}
-                onClose={() => closeTab(tab.id)}
-              >
-                {tab.name}
-              </Tab>
-            ))}
-          </div>
-          {/* Monaco editor */}
-          <div
-            ref={editorContainerRef}
-            className="grow w-full overflow-hidden rounded-md relative"
+        {/* Shadcn resizeable panels: https://ui.shadcn.com/docs/components/resizable */}
+        <ResizablePanelGroup direction="horizontal">
+          <ResizablePanel
+            className="p-2 flex flex-col"
+            maxSize={80}
+            minSize={30}
+            defaultSize={60}
+            ref={editorPanelRef}
           >
-            {!activeFileId ? (
-              <>
-                <div className="w-full h-full flex items-center justify-center text-xl font-medium text-muted-foreground/50 select-none">
-                  <FileJson className="w-6 h-6 mr-3" />
-                  No file selected.
-                </div>
-              </>
-            ) : // Note clerk.loaded is required here due to a bug: https://github.com/clerk/javascript/issues/1643
-            clerk.loaded ? (
-              <>
-                {provider && userInfo ? (
-                  <Cursors yProvider={provider} userInfo={userInfo} />
-                ) : null}
-                <Editor
-                  height="100%"
-                  language={editorLanguage}
-                  beforeMount={handleEditorWillMount}
-                  onMount={handleEditorMount}
-                  onChange={(value) => {
-                    if (value === activeFileContent) {
-                      setTabs((prev) =>
-                        prev.map((tab) =>
-                          tab.id === activeFileId
-                            ? { ...tab, saved: true }
-                            : tab
-                        )
-                      )
-                    } else {
-                      setTabs((prev) =>
-                        prev.map((tab) =>
-                          tab.id === activeFileId
-                            ? { ...tab, saved: false }
-                            : tab
-                        )
-                      )
-                    }
+            <div className="h-10 w-full flex gap-2 overflow-auto tab-scroll">
+              {/* File tabs */}
+              {tabs.map((tab) => (
+                <Tab
+                  key={tab.id}
+                  saved={tab.saved}
+                  selected={activeFileId === tab.id}
+                  onClick={(e) => {
+                    selectFile(tab)
                   }}
-                  options={{
-                    tabSize: 2,
-                    minimap: {
-                      enabled: false,
-                    },
-                    padding: {
-                      bottom: 4,
-                      top: 4,
-                    },
-                    scrollBeyondLastLine: false,
-                    fixedOverflowWidgets: true,
-                    fontFamily: "var(--font-geist-mono)",
-                  }}
-                  theme="vs-dark"
-                  value={activeFileContent}
-                />
-              </>
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-xl font-medium text-muted-foreground/50 select-none">
-                <Loader2 className="animate-spin w-6 h-6 mr-3" />
-                Waiting for Clerk to load...
-              </div>
-            )}
-          </div>
-        </ResizablePanel>
-        <ResizableHandle />
-        <ResizablePanel defaultSize={40}>
-          <ResizablePanelGroup direction="vertical">
-            <ResizablePanel
-              ref={previewPanelRef}
-              defaultSize={4}
-              collapsedSize={4}
-              minSize={25}
-              collapsible
-              className="p-2 flex flex-col"
-              onCollapse={() => setIsPreviewCollapsed(true)}
-              onExpand={() => setIsPreviewCollapsed(false)}
+                  onClose={() => closeTab(tab.id)}
+                >
+                  {tab.name}
+                </Tab>
+              ))}
+            </div>
+            {/* Monaco editor */}
+            <div
+              ref={editorContainerRef}
+              className="grow w-full overflow-hidden rounded-md relative"
             >
-              <PreviewWindow
-                collapsed={isPreviewCollapsed}
-                open={() => {
-                  previewPanelRef.current?.expand()
-                  setIsPreviewCollapsed(false)
-                }}
-                src={previewURL}
-              />
-            </ResizablePanel>
-            <ResizableHandle />
-            <ResizablePanel
-              defaultSize={50}
-              minSize={20}
-              className="p-2 flex flex-col"
-            >
-              {isOwner ? (
-                <Terminals
-                  terminals={terminals}
-                  setTerminals={setTerminals}
-                  socket={socketRef.current}
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-lg font-medium text-muted-foreground/50 select-none">
-                  <TerminalSquare className="w-4 h-4 mr-2" />
-                  No terminal access.
-                </div>
-              )}
-            </ResizablePanel>
-          </ResizablePanelGroup>
-        </ResizablePanel>
-      </ResizablePanelGroup>
+              {!activeFileId ? (
+                <>
+                  <div className="w-full h-full flex items-center justify-center text-xl font-medium text-muted-foreground/50 select-none">
+                    <FileJson className="w-6 h-6 mr-3" />
+                    No file selected.
+                  </div>
+                </>
+              ) : // Note clerk.loaded is required here due to a bug: https://github.com/clerk/javascript/issues/1643
+                clerk.loaded ? (
+                  <>
+                    {provider && userInfo ? (
+                      <Cursors yProvider={provider} userInfo={userInfo} />
+                    ) : null}
+                    <Editor
+                      height="100%"
+                      language={editorLanguage}
+                      beforeMount={handleEditorWillMount}
+                      onMount={handleEditorMount}
+                      onChange={(value) => {
+                        if (value === activeFileContent) {
+                          setTabs((prev) =>
+                            prev.map((tab) =>
+                              tab.id === activeFileId
+                                ? { ...tab, saved: true }
+                                : tab
+                            )
+                          )
+                        } else {
+                          setTabs((prev) =>
+                            prev.map((tab) =>
+                              tab.id === activeFileId
+                                ? { ...tab, saved: false }
+                                : tab
+                            )
+                          )
+                        }
+                      }}
+                      options={{
+                        tabSize: 2,
+                        minimap: {
+                          enabled: false,
+                        },
+                        padding: {
+                          bottom: 4,
+                          top: 4,
+                        },
+                        scrollBeyondLastLine: false,
+                        fixedOverflowWidgets: true,
+                        fontFamily: "var(--font-geist-mono)",
+                      }}
+                      theme="vs-dark"
+                      value={activeFileContent}
+                    />
+                  </>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-xl font-medium text-muted-foreground/50 select-none">
+                    <Loader2 className="animate-spin w-6 h-6 mr-3" />
+                    Waiting for Clerk to load...
+                  </div>
+                )}
+            </div>
+          </ResizablePanel>
+          <ResizableHandle />
+          <ResizablePanel defaultSize={40}>
+            <ResizablePanelGroup direction="vertical">
+              <ResizablePanel
+                ref={usePreview().previewPanelRef}
+                defaultSize={4}
+                collapsedSize={4}
+                minSize={25}
+                collapsible
+                className="p-2 flex flex-col"
+                onCollapse={() => setIsPreviewCollapsed(true)}
+                onExpand={() => setIsPreviewCollapsed(false)}
+              >
+                <PreviewWindow
+                  open={() => {
+                    usePreview().previewPanelRef.current?.expand()
+                    setIsPreviewCollapsed(false)
+                  } } collapsed={isPreviewCollapsed} src={previewURL}/>
+              </ResizablePanel>
+              <ResizableHandle />
+              <ResizablePanel
+                defaultSize={50}
+                minSize={20}
+                className="p-2 flex flex-col"
+              >
+                {isOwner ? (
+                  <Terminals />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-lg font-medium text-muted-foreground/50 select-none">
+                    <TerminalSquare className="w-4 h-4 mr-2" />
+                    No terminal access.
+                  </div>
+                )}
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      </PreviewProvider>
     </>
   )
 }
