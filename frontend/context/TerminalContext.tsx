@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { Terminal } from '@xterm/xterm';
-import { createTerminal as createTerminalHelper, closeTerminal as closeTerminalHelper } from '@/lib/terminal'; // Adjust the import path as necessary
+import { createTerminal as createTerminalHelper, closeTerminal as closeTerminalHelper } from '@/lib/terminal';
 
 interface TerminalContextType {
   socket: Socket | null;

@@ -38,26 +38,15 @@ export default function Terminals() {
     createNewTerminal();
   };
 
-  const handleCloseTerminal = (termId: string) => {
-    closeTerminal(termId);
-    if (activeTerminalId === termId) {
-      const remainingTerminals = terminals.filter(t => t.id !== termId);
-      if (remainingTerminals.length > 0) {
-        setActiveTerminalId(remainingTerminals[0].id);
-      } else {
-        setActiveTerminalId("");
-      }
-    }
-  };
-
   return (
     <>
       <div className="h-10 w-full overflow-auto flex gap-2 shrink-0 tab-scroll">
         {terminals.map((term) => (
           <Tab
             key={term.id}
+            creating={creatingTerminal}
             onClick={() => setActiveTerminalId(term.id)}
-            onClose={() => handleCloseTerminal(term.id)}
+            onClose={() => closeTerminal(term.id)}
             selected={activeTerminalId === term.id}
           >
             <SquareTerminal className="w-4 h-4 mr-2" />
@@ -88,10 +77,10 @@ export default function Terminals() {
               term={term.terminal}
               setTerm={(t: Terminal) => {
                 setTerminals((prev) =>
-                  prev.map((prevTerm) =>
-                    prevTerm.id === term.id
-                      ? { ...prevTerm, terminal: t }
-                      : prevTerm
+                  prev.map((term) =>
+                    term.id === activeTerminalId
+                      ? { ...term, terminal: t }
+                      : term
                   )
                 );
               }}

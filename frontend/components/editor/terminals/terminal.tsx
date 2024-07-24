@@ -74,6 +74,20 @@ export default function EditorTerminal({
     };
   }, [term, terminalRef.current]);
 
+  useEffect(() => {
+    if (!term) return;  
+    const handleTerminalResponse = (response: { id: string; data: string }) => {
+      if (response.id === id) {
+        term.write(response.data);
+      }
+    };
+    socket.on("terminalResponse", handleTerminalResponse);
+  
+    return () => {
+      socket.off("terminalResponse", handleTerminalResponse);
+    };
+  }, [term, id, socket]);
+
   return (
     <>
       <div
