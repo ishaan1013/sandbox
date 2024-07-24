@@ -11,7 +11,7 @@ interface CallbackResponse {
 }
 
 let socketRef: Socket = io(
-  `http://localhost:4000?userId=user_2hFB6KcK6bb3Gx9241UXsxFq4kO&sandboxId=aabuk4vneecj2csni24kpabv`,
+  `http://localhost:4000?userId=user_2hFB6KcK6bb3Gx9241UXsxFq4kO&sandboxId=v30a2c48xal03tzio7mapt19`,
   {
     timeout: 2000,
   }
@@ -24,6 +24,14 @@ socketRef.on("connect", async () => {
   socketRef.emit("list", (response: CallbackResponse) => {
     if (response.success) {
       console.log("List of apps:", response.apps);
+    } else {
+      console.log("Error:", response.message);
+    }
+  });
+
+  socketRef.emit("deploy", (response: CallbackResponse) => {
+    if (response.success) {
+      console.log("It worked!");
     } else {
       console.log("Error:", response.message);
     }
