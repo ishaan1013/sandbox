@@ -17,6 +17,7 @@
     "e2b": "^0.16.1",
     "express": "^4.19.2",
     "rate-limiter-flexible": "^5.0.3",
+    "simple-git": "^3.25.0",
     "socket.io": "^4.7.5",
     "ssh2": "^1.15.0",
     "zod": "^3.22.4"

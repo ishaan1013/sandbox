@@ -1,11 +1,11 @@
-import os from "os";
 import path from "path";
 import cors from "cors";
 import express, { Express } from "express";
 import dotenv from "dotenv";
 import { createServer } from "http";
 import { Server } from "socket.io";
-import { DokkuClient, SSHConfig } from "./DokkuClient";
+import { DokkuClient } from "./DokkuClient";
+import { SecureGitClient, FileData } from "./SecureGitClient";
 import fs from "fs";
 
 import { z } from "zod";
@@ -125,6 +125,11 @@ const client = new DokkuClient({
 });
 
 client.connect();
+
+const git = new SecureGitClient(
+  "dokku@gitwit.app",
+  process.env.DOKKU_KEY
+)
 
 io.on("connection", async (socket) => {
   try {
@@ -287,6 +292,33 @@ io.on("connection", async (socket) => {
           callback({
             success: false,
             message: "Failed to retrieve apps list",
+          });
+        }
+      }
+    );
+
+    socket.on(
+      "deploy",
+      async (callback: (response: CallbackResponse) => void) => {
+        try {
+          // Push the project files to the Dokku server
+          console.log("Deploying project ${data.sandboxId}...");
+          // Remove the /project/[id]/ component of each file path:
+          const fixedFilePaths = sandboxFiles.fileData.map((file) => {
+            return {
+              ...file,
+              id: file.id.split("/").slice(2).join("/"),
+            };
+          });
+          // Push all files to Dokku.
+          await git.pushFiles(fixedFilePaths, data.sandboxId);
+          callback({
+            success: true,
+          });
+        } catch (error) {
+          callback({
+            success: false,
+            message: "Failed to deploy project: " + error,
           });
         }
       }
