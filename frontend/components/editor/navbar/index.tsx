@@ -11,6 +11,7 @@ import { useState } from "react";
 import EditSandboxModal from "./edit";
 import ShareSandboxModal from "./share";
 import { Avatars } from "../live/avatars";
+import RunButtonModal from "./run";
 import DeployButtonModal from "./deploy";
 
 export default function Navbar({
@@ -20,15 +21,13 @@ export default function Navbar({
 }: {
   userData: User;
   sandboxData: Sandbox;
-  shared: {
-    id: string;
-    name: string;
-  }[];
+  shared: { id: string; name: string }[];
 }) {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
+  const [isRunning, setIsRunning] = useState(false);
 
-  const isOwner = sandboxData.userId === userData.id;
+  const isOwner = sandboxData.userId === userData.id;;
 
   return (
     <>
@@ -63,16 +62,20 @@ export default function Navbar({
             ) : null}
           </div>
         </div>
+        <RunButtonModal
+          isRunning={isRunning}
+          setIsRunning={setIsRunning}
+        />
         <div className="flex items-center h-full space-x-4">
           <Avatars />
 
           {isOwner ? (
             <>
-              <DeployButtonModal />
-              <Button variant="outline" onClick={() => setIsShareOpen(true)}>
-                <Users className="w-4 h-4 mr-2" />
-                Share
-              </Button>
+            <DeployButtonModal />
+            <Button variant="outline" onClick={() => setIsShareOpen(true)}>
+              <Users className="w-4 h-4 mr-2" />
+              Share
+            </Button>
             </>
           ) : null}
           <UserButton userData={userData} />
