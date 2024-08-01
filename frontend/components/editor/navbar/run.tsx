@@ -36,7 +36,7 @@ export default function RunButtonModal({
       console.log('Opening Preview Window');
 
       if (terminals.length < 4) {
-        createNewTerminal();
+        createNewTerminal("yarn install && yarn start");
       } else {
         toast.error("You reached the maximum # of terminals.");
         console.error('Maximum number of terminals reached.');

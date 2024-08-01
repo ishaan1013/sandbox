@@ -13,7 +13,7 @@ interface TerminalContextType {
   setActiveTerminalId: React.Dispatch<React.SetStateAction<string>>;
   creatingTerminal: boolean;
   setCreatingTerminal: React.Dispatch<React.SetStateAction<boolean>>;
-  createNewTerminal: () => void;
+  createNewTerminal: (command?: string) => Promise<void>;
   closeTerminal: (id: string) => void;
   setUserAndSandboxId: (userId: string, sandboxId: string) => void;
 }
@@ -50,7 +50,7 @@ export const TerminalProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [userId, sandboxId]);
 
-  const createNewTerminal = async () => {
+  const createNewTerminal = async (command?: string): Promise<void> => {
     if (!socket) return;
     setCreatingTerminal(true);
     try {
@@ -58,6 +58,7 @@ export const TerminalProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setTerminals,
         setActiveTerminalId,
         setCreatingTerminal,
+        command,
         socket,
       });
     } catch (error) {

@@ -8,6 +8,7 @@ export const createTerminal = ({
   setTerminals,
   setActiveTerminalId,
   setCreatingTerminal,
+  command,
   socket,
 }: {
   setTerminals: React.Dispatch<React.SetStateAction<{
@@ -16,6 +17,7 @@ export const createTerminal = ({
 }[]>>;
   setActiveTerminalId: React.Dispatch<React.SetStateAction<string>>;
   setCreatingTerminal: React.Dispatch<React.SetStateAction<boolean>>;
+  command?: string;
   socket: Socket;
 
 }) => {
@@ -29,6 +31,7 @@ export const createTerminal = ({
   setTimeout(() => {
     socket.emit("createTerminal", id, () => {
       setCreatingTerminal(false);
+      if (command) socket.emit("terminalData", id, command + "\n");
     });
   }, 1000);
 };
