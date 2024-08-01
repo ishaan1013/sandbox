@@ -114,22 +114,24 @@ io.use(async (socket, next) => {
 
 const lockManager = new LockManager();
 
-if (!process.env.DOKKU_HOST) throw new Error('Environment variable DOKKU_HOST is not defined');
-if (!process.env.DOKKU_USERNAME) throw new Error('Environment variable DOKKU_USERNAME is not defined');
-if (!process.env.DOKKU_KEY) throw new Error('Environment variable DOKKU_KEY is not defined');
+if (!process.env.DOKKU_HOST) console.error('Environment variable DOKKU_HOST is not defined');
+if (!process.env.DOKKU_USERNAME) console.error('Environment variable DOKKU_USERNAME is not defined');
+if (!process.env.DOKKU_KEY) console.error('Environment variable DOKKU_KEY is not defined');
 
-const client = new DokkuClient({
-  host: process.env.DOKKU_HOST,
-  username: process.env.DOKKU_USERNAME,
-  privateKey: fs.readFileSync(process.env.DOKKU_KEY),
-});
+const client =
+  process.env.DOKKU_HOST && process.env.DOKKU_KEY && process.env.DOKKU_USERNAME
+    ? new DokkuClient({
+        host: process.env.DOKKU_HOST,
+        username: process.env.DOKKU_USERNAME,
+        privateKey: fs.readFileSync(process.env.DOKKU_KEY),
+      })
+    : null;
+client?.connect();
 
-client.connect();
-
-const git = new SecureGitClient(
+const git = process.env.DOKKU_KEY ? new SecureGitClient(
   "dokku@gitwit.app",
   process.env.DOKKU_KEY
-)
+) : null;
 
 io.on("connection", async (socket) => {
   try {
@@ -280,6 +282,7 @@ io.on("connection", async (socket) => {
       async (callback: (response: CallbackResponse) => void) => {
         console.log("Retrieving apps list...");
         try {
+          if (!client) throw Error("Failed to retrieve apps list: No Dokku client")
           callback({
             success: true,
             apps: await client.listApps()
@@ -299,6 +302,7 @@ io.on("connection", async (socket) => {
         try {
           // Push the project files to the Dokku server
           console.log("Deploying project ${data.sandboxId}...");
+          if (!git) throw Error("Failed to retrieve apps list: No git client")
           // Remove the /project/[id]/ component of each file path:
           const fixedFilePaths = sandboxFiles.fileData.map((file) => {
             return {
