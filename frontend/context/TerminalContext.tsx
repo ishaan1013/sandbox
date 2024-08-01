@@ -31,7 +31,7 @@ export const TerminalProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   useEffect(() => {
     if (userId && sandboxId) {
       console.log("Initializing socket connection...");
-      const newSocket = io(`${window.location.protocol}//${window.location.hostname}:${process.env.NEXT_PUBLIC_SERVER_PORT}?userId=${userId}&sandboxId=${sandboxId}`);
+      const newSocket = io(`${process.env.NEXT_PUBLIC_SERVER_URL}?userId=${userId}&sandboxId=${sandboxId}`);
       console.log("Socket instance:", newSocket);
       setSocket(newSocket);
 
