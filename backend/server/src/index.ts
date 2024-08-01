@@ -158,7 +158,7 @@ io.on("connection", async (socket) => {
           console.log("Created container ", data.sandboxId);
           io.emit(
             "previewURL",
-            "https://" + containers[data.sandboxId].getHostname(5173)
+            "https://" + containers[data.sandboxId].getHostname(3000)
           );
         }
       } catch (e: any) {
