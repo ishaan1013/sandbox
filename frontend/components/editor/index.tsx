@@ -106,6 +106,13 @@ export default function CodeEditor({
   // Preview state
   const [previewURL, setPreviewURL] = useState<string>("");
 
+  const loadPreviewURL = (url: string) => {
+    // This will cause a reload if previewURL changed.
+    setPreviewURL(url);
+    // If the URL didn't change, still reload the preview.
+    previewWindowRef.current?.refreshIframe();
+  }
+
   const isOwner = sandboxData.userId === userData.id
   const clerk = useClerk()
 
@@ -131,6 +138,7 @@ export default function CodeEditor({
   const generateWidgetRef = useRef<HTMLDivElement>(null)
   const previewPanelRef = useRef<ImperativePanelHandle>(null)
   const editorPanelRef = useRef<ImperativePanelHandle>(null)
+  const previewWindowRef = useRef<{ refreshIframe: () => void }>(null)
 
   // Pre-mount editor keybindings
   const handleEditorWillMount: BeforeMount = (monaco) => {
@@ -467,7 +475,7 @@ export default function CodeEditor({
     socketRef.current?.on("error", onError)
     socketRef.current?.on("terminalResponse", onTerminalResponse)
     socketRef.current?.on("disableAccess", onDisableAccess)
-    socketRef.current?.on("previewURL", setPreviewURL)
+    socketRef.current?.on("previewURL", loadPreviewURL)
 
     return () => {
       socketRef.current?.off("connect", onConnect)
@@ -476,7 +484,7 @@ export default function CodeEditor({
       socketRef.current?.off("error", onError)
       socketRef.current?.off("terminalResponse", onTerminalResponse)
       socketRef.current?.off("disableAccess", onDisableAccess)
-      socketRef.current?.off("previewURL", setPreviewURL)
+      socketRef.current?.off("previewURL", loadPreviewURL)
     }
     // }, []);
   }, [terminals])
@@ -824,7 +832,7 @@ export default function CodeEditor({
                   open={() => {
                     usePreview().previewPanelRef.current?.expand()
                     setIsPreviewCollapsed(false)
-                  } } collapsed={isPreviewCollapsed} src={previewURL}/>
+                  } } collapsed={isPreviewCollapsed} src={previewURL} ref={previewWindowRef} />
               </ResizablePanel>
               <ResizableHandle />
               <ResizablePanel

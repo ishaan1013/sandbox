@@ -5,10 +5,10 @@ import {
   RotateCw,
   TerminalSquare,
 } from "lucide-react"
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState, useImperativeHandle, forwardRef } from "react"
 import { toast } from "sonner"
 
-export default function PreviewWindow({
+export default forwardRef(function PreviewWindow({
   collapsed,
   open,
   src
@@ -16,9 +16,19 @@ export default function PreviewWindow({
   collapsed: boolean
   open: () => void
   src: string
-}) {
-  const ref = useRef<HTMLIFrameElement>(null)
+},
+ref: React.Ref<{
+  refreshIframe: () => void
+}>) {
+  const frameRef = useRef<HTMLIFrameElement>(null)
   const [iframeKey, setIframeKey] = useState(0)
+  const refreshIframe = () => {
+    setIframeKey(prev => prev + 1)
+  }
+  // Refresh the preview when the URL changes. 
+  useEffect(refreshIframe, [src])
+  // Expose refreshIframe method to the parent.
+  useImperativeHandle(ref, () => ({ refreshIframe }))
 
   return (
     <>
@@ -49,14 +59,7 @@ export default function PreviewWindow({
                 >
                   <Link className="w-4 h-4" />
                 </PreviewButton>
-                <PreviewButton
-                  onClick={() => {
-                    // if (ref.current) {
-                    //   ref.current.contentWindow?.location.reload();
-                    // }
-                    setIframeKey((prev) => prev + 1)
-                  }}
-                >
+                <PreviewButton onClick={refreshIframe}>
                   <RotateCw className="w-3 h-3" />
                 </PreviewButton>
               </>
@@ -68,7 +71,7 @@ export default function PreviewWindow({
         <div className="w-full grow rounded-md overflow-hidden bg-foreground">
           <iframe
             key={iframeKey}
-            ref={ref}
+            ref={frameRef}
             width={"100%"}
             height={"100%"}
             src={src}
@@ -77,7 +80,7 @@ export default function PreviewWindow({
       )}
     </>
   )
-}
+})
 
 function PreviewButton({
   children,
