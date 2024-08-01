@@ -55,7 +55,6 @@ export default function EditorTerminal({
     fitAddon.fit();
 
     const disposableOnData = term.onData((data) => {
-      console.log("terminalData", id, data);
       socket.emit("terminalData", id, data);
     });
 
@@ -73,6 +72,20 @@ export default function EditorTerminal({
       disposableOnResize.dispose();
     };
   }, [term, terminalRef.current]);
+
+  useEffect(() => {
+    if (!term) return;  
+    const handleTerminalResponse = (response: { id: string; data: string }) => {
+      if (response.id === id) {
+        term.write(response.data);
+      }
+    };
+    socket.on("terminalResponse", handleTerminalResponse);
+  
+    return () => {
+      socket.off("terminalResponse", handleTerminalResponse);
+    };
+  }, [term, id, socket]);
 
   return (
     <>

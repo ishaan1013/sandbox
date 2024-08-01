@@ -1,10 +1,12 @@
-import os from "os";
 import path from "path";
 import cors from "cors";
 import express, { Express } from "express";
 import dotenv from "dotenv";
 import { createServer } from "http";
 import { Server } from "socket.io";
+import { DokkuClient } from "./DokkuClient";
+import { SecureGitClient, FileData } from "./SecureGitClient";
+import fs from "fs";
 
 import { z } from "zod";
 import { User } from "./types";
@@ -112,6 +114,23 @@ io.use(async (socket, next) => {
 
 const lockManager = new LockManager();
 
+if (!process.env.DOKKU_HOST) throw new Error('Environment variable DOKKU_HOST is not defined');
+if (!process.env.DOKKU_USERNAME) throw new Error('Environment variable DOKKU_USERNAME is not defined');
+if (!process.env.DOKKU_KEY) throw new Error('Environment variable DOKKU_KEY is not defined');
+
+const client = new DokkuClient({
+  host: process.env.DOKKU_HOST,
+  username: process.env.DOKKU_USERNAME,
+  privateKey: fs.readFileSync(process.env.DOKKU_KEY),
+});
+
+client.connect();
+
+const git = new SecureGitClient(
+  "dokku@gitwit.app",
+  process.env.DOKKU_KEY
+)
+
 io.on("connection", async (socket) => {
   try {
     if (inactivityTimeout) clearTimeout(inactivityTimeout);
@@ -137,10 +156,6 @@ io.on("connection", async (socket) => {
         if (!containers[data.sandboxId]) {
           containers[data.sandboxId] = await Sandbox.create();
           console.log("Created container ", data.sandboxId);
-          io.emit(
-            "previewURL",
-            "https://" + containers[data.sandboxId].getHostname(5173)
-          );
         }
       } catch (e: any) {
         console.error(`Error creating container ${data.sandboxId}:`, e);
@@ -250,6 +265,57 @@ io.on("connection", async (socket) => {
         } catch (e: any) {
           console.error("Error moving file:", e);
           io.emit("error", `Error: file moving. ${e.message ?? e}`);
+        }
+      }
+    );
+
+    interface CallbackResponse {
+      success: boolean;
+      apps?: string[];
+      message?: string;
+    }
+
+    socket.on(
+      "list",
+      async (callback: (response: CallbackResponse) => void) => {
+        console.log("Retrieving apps list...");
+        try {
+          callback({
+            success: true,
+            apps: await client.listApps()
+          });
+        } catch (error) {
+          callback({
+            success: false,
+            message: "Failed to retrieve apps list",
+          });
+        }
+      }
+    );
+
+    socket.on(
+      "deploy",
+      async (callback: (response: CallbackResponse) => void) => {
+        try {
+          // Push the project files to the Dokku server
+          console.log("Deploying project ${data.sandboxId}...");
+          // Remove the /project/[id]/ component of each file path:
+          const fixedFilePaths = sandboxFiles.fileData.map((file) => {
+            return {
+              ...file,
+              id: file.id.split("/").slice(2).join("/"),
+            };
+          });
+          // Push all files to Dokku.
+          await git.pushFiles(fixedFilePaths, data.sandboxId);
+          callback({
+            success: true,
+          });
+        } catch (error) {
+          callback({
+            success: false,
+            message: "Failed to deploy project: " + error,
+          });
         }
       }
     );
@@ -422,8 +488,26 @@ io.on("connection", async (socket) => {
         await lockManager.acquireLock(data.sandboxId, async () => {
           try {
             terminals[id] = await containers[data.sandboxId].terminal.start({
-              onData: (data: string) => {
-                io.emit("terminalResponse", { id, data });
+              onData: (responseData: string) => {
+                io.emit("terminalResponse", { id, data: responseData });
+
+                function extractPortNumber(inputString: string) {
+                  // Remove ANSI escape codes
+                  const cleanedString = inputString.replace(/\x1B\[[0-9;]*m/g, '');
+                  // Regular expression to match port number
+                  const regex = /http:\/\/localhost:(\d+)/;
+                  // If a match is found, return the port number
+                  const match = cleanedString.match(regex);
+                  return match ? match[1] :  null;
+                }
+                const port = parseInt(extractPortNumber(responseData) ?? "");
+                if (port) {
+                  io.emit(
+                    "previewURL",
+                    "https://" + containers[data.sandboxId].getHostname(port)
+                  );
+                }
+
               },
               size: { cols: 80, rows: 20 },
               onExit: () => console.log("Terminal exited", id),
