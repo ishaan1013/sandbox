@@ -156,10 +156,6 @@ io.on("connection", async (socket) => {
         if (!containers[data.sandboxId]) {
           containers[data.sandboxId] = await Sandbox.create();
           console.log("Created container ", data.sandboxId);
-          io.emit(
-            "previewURL",
-            "https://" + containers[data.sandboxId].getHostname(3000)
-          );
         }
       } catch (e: any) {
         console.error(`Error creating container ${data.sandboxId}:`, e);
@@ -492,8 +488,26 @@ io.on("connection", async (socket) => {
         await lockManager.acquireLock(data.sandboxId, async () => {
           try {
             terminals[id] = await containers[data.sandboxId].terminal.start({
-              onData: (data: string) => {
-                io.emit("terminalResponse", { id, data });
+              onData: (responseData: string) => {
+                io.emit("terminalResponse", { id, data: responseData });
+
+                function extractPortNumber(inputString: string) {
+                  // Remove ANSI escape codes
+                  const cleanedString = inputString.replace(/\x1B\[[0-9;]*m/g, '');
+                  // Regular expression to match port number
+                  const regex = /http:\/\/localhost:(\d+)/;
+                  // If a match is found, return the port number
+                  const match = cleanedString.match(regex);
+                  return match ? match[1] :  null;
+                }
+                const port = parseInt(extractPortNumber(responseData) ?? "");
+                if (port) {
+                  io.emit(
+                    "previewURL",
+                    "https://" + containers[data.sandboxId].getHostname(port)
+                  );
+                }
+
               },
               size: { cols: 80, rows: 20 },
               onExit: () => console.log("Terminal exited", id),
