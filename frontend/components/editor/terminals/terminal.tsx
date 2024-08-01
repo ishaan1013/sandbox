@@ -55,7 +55,6 @@ export default function EditorTerminal({
     fitAddon.fit();
 
     const disposableOnData = term.onData((data) => {
-      console.log("terminalData", id, data);
       socket.emit("terminalData", id, data);
     });
 
