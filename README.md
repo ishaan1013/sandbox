@@ -10,6 +10,8 @@ Check out this [guide](https://dev.to/jamesmurdza/how-to-setup-ishaan1013sandbox
 
 ## Running Locally
 
+> Note: For links in `.env` files, do not include a trailing slash
+
 ### Frontend
 
 Install dependencies
