@@ -165,6 +165,8 @@ It should be in the form `category(scope or module): message` in your commit mes
 
 ## Tech stack
 
+![sandbox-tech](https://github.com/user-attachments/assets/87a77032-1c04-47e8-8e2a-8c65dc1ae130)
+
 ### Frontend
 
 - [Next.js](https://nextjs.org/)
