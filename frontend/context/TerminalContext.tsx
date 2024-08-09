@@ -16,6 +16,7 @@ interface TerminalContextType {
   createNewTerminal: (command?: string) => Promise<void>;
   closeTerminal: (id: string) => void;
   setUserAndSandboxId: (userId: string, sandboxId: string) => void;
+  deploy: (callback: () => void) => void;
 }
 
 const TerminalContext = createContext<TerminalContextType | undefined>(undefined);
@@ -89,6 +90,14 @@ export const TerminalProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setSandboxId(newSandboxId);
   };
 
+  const deploy = (callback: () => void) => {
+    if (!socket) console.error("Couldn't deploy: No socket");
+    console.log("Deploying...")
+    socket?.emit("deploy", () => {
+      callback();
+    });
+  }
+
   const value = {
     socket,
     terminals,
@@ -100,6 +109,7 @@ export const TerminalProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     createNewTerminal,
     closeTerminal,
     setUserAndSandboxId,
+    deploy
   };
 
   return (

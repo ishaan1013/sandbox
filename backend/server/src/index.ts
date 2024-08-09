@@ -128,8 +128,8 @@ const client =
     : null;
 client?.connect();
 
-const git = process.env.DOKKU_KEY ? new SecureGitClient(
-  "dokku@gitwit.app",
+const git = process.env.DOKKU_HOST && process.env.DOKKU_KEY ? new SecureGitClient(
+  `dokku@${process.env.DOKKU_HOST}`,
   process.env.DOKKU_KEY
 ) : null;
 
