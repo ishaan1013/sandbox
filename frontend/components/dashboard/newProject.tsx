@@ -37,43 +37,41 @@ import { useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
 import { Button } from "../ui/button"
 
-type TOptions = "react" | "node" | "python" | "more"
-
 const data: {
-  id: TOptions
+  id: string
   name: string
   icon: string
   description: string
   disabled: boolean
 }[] = [
   {
-    id: "react",
+    id: "reactjs",
     name: "React",
     icon: "/project-icons/react.svg",
     description: "A JavaScript library for building user interfaces",
     disabled: false,
   },
   {
-    id: "node",
-    name: "Node",
+    id: "vanillajs",
+    name: "HTML/JS",
+    icon: "/project-icons/more.svg",
+    description: "More coming soon, feel free to contribute on GitHub",
+    disabled: false,
+  },
+  {
+    id: "nextjs",
+    name: "NextJS",
     icon: "/project-icons/node.svg",
     description: "A JavaScript runtime built on the V8 JavaScript engine",
     disabled: false,
   },
   {
-    id: "python",
-    name: "Python",
+    id: "streamlit",
+    name: "Streamlit",
     icon: "/project-icons/python.svg",
-    description: "A high-level, general-purpose language, coming soon",
-    disabled: true,
-  },
-  {
-    id: "more",
-    name: "More Languages",
-    icon: "/project-icons/more.svg",
-    description: "More coming soon, feel free to contribute on GitHub",
-    disabled: true,
-  },
+    description: "A JavaScript runtime built on the V8 JavaScript engine",
+    disabled: false,
+  }
 ]
 
 const formSchema = z.object({
