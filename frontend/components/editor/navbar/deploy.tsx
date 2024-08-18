@@ -24,9 +24,9 @@ export default function DeployButtonModal({
     } else {
       console.log("Starting deployment...");
       setIsDeploying(true);
-      // deploy(() => {
-      //   setIsDeploying(false);
-      // });
+      deploy(() => {
+        setIsDeploying(false);
+      });
     }
   };
 
