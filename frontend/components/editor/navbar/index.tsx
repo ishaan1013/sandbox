@@ -71,7 +71,10 @@ export default function Navbar({
 
           {isOwner ? (
             <>
-            <DeployButtonModal />
+            <DeployButtonModal 
+            data={sandboxData}
+            userData={userData}
+            />
             <Button variant="outline" onClick={() => setIsShareOpen(true)}>
               <Users className="w-4 h-4 mr-2" />
               Share
