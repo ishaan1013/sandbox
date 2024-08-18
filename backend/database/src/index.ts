@@ -101,7 +101,7 @@ export default {
 				return success
 			} else if (method === "PUT") {
 				const initSchema = z.object({
-					type: z.enum(["react", "node"]),
+					type: z.string(),
 					name: z.string(),
 					userId: z.string(),
 					visibility: z.enum(["public", "private"]),

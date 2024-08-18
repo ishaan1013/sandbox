@@ -137,7 +137,7 @@ export default {
 		} else if (path === "/api/init" && method === "POST") {
 			const initSchema = z.object({
 				sandboxId: z.string(),
-				type: z.enum(["react", "node"]),
+				type: z.string(),
 			})
 
 			const body = await request.json()
