@@ -26,6 +26,7 @@ export class SecureGitClient {
       console.log(`Temporary directory created: ${tempDir}`);
 
       // Write files to the temporary directory
+      console.log(`Writing ${fileData.length} files.`);
       for (const { id, data } of fileData) {
         const filePath = path.join(tempDir, id);
         const dirPath = path.dirname(filePath);
@@ -33,8 +34,6 @@ export class SecureGitClient {
         if (!fs.existsSync(dirPath)) {
           fs.mkdirSync(dirPath, { recursive: true });
         }
-      
-        console.log("Writing ", filePath, data);
         fs.writeFileSync(filePath, data);
       }
 
@@ -43,7 +42,10 @@ export class SecureGitClient {
         config: [
           'core.sshCommand=ssh -i ' + this.sshKeyPath + ' -o IdentitiesOnly=yes'
         ]
-      });
+      }).outputHandler((_command, stdout, stderr) => {
+        stdout.pipe(process.stdout);
+        stderr.pipe(process.stderr);
+     });;
 
       // Initialize a new Git repository
       await git.init();
