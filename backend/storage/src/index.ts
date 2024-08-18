@@ -1,5 +1,4 @@
 import { z } from "zod"
-import startercode from "./startercode"
 
 export interface Env {
 	R2: R2Bucket
@@ -143,13 +142,19 @@ export default {
 			const body = await request.json()
 			const { sandboxId, type } = initSchema.parse(body)
 
-			console.log(startercode[type])
+			console.log(`Copying template: ${type}`);
 
-			await Promise.all(
-				startercode[type].map(async (file) => {
-					await env.R2.put(`projects/${sandboxId}/${file.name}`, file.body)
-				})
-			)
+			const templateDirectory = `templates/${type}`;
+
+			// List all objects under the directory
+			const { objects } = await env.R2.list({ prefix: templateDirectory });
+
+			// Copy each object to the new directory
+			for (const { key } of objects) {
+				const destinationKey = key.replace(templateDirectory, `projects/${sandboxId}`);
+				const fileBody = await env.R2.get(key).then(res => res?.body ?? "");
+				await env.R2.put(destinationKey, fileBody);
+			}
 
 			return success
 		} else {
