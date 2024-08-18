@@ -60,7 +60,7 @@ export class SecureGitClient {
       await git.commit("Add files.");
 
       // Push the changes to the remote repository
-      await git.push("origin", "master");
+      await git.push("origin", "master", {'--force': null});
 
       console.log("Files successfully pushed to the repository");
 
