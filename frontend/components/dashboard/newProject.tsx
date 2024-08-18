@@ -93,7 +93,7 @@ export default function NewProjectModal({
   open: boolean
   setOpen: (open: boolean) => void
 }) {
-  const [selected, setSelected] = useState<TOptions>("react")
+  const [selected, setSelected] = useState("react")
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
