@@ -55,7 +55,7 @@ const processFiles = async (paths: string[], id: string) => {
 
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i];
-      const isFile = i === parts.length - 1 && part.includes(".");
+      const isFile = i === parts.length - 1 && part.length;
       const existing = current.children.find((child) => child.name === part);
 
       if (existing) {
