@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { CanvasRevealEffect } from "./projectCard/revealEffect";
 
-const colors = {
+const colors: { [key: string]: number[][] } = {
   react: [
     [71, 207, 237],
     [30, 126, 148],
