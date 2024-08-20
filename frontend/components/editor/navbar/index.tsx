@@ -65,6 +65,7 @@ export default function Navbar({
         <RunButtonModal
           isRunning={isRunning}
           setIsRunning={setIsRunning}
+          sandboxData={sandboxData}
         />
         <div className="flex items-center h-full space-x-4">
           <Avatars />
