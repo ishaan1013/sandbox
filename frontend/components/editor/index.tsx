@@ -3,7 +3,6 @@
 import { SetStateAction, useCallback, useEffect, useRef, useState } from "react"
 import monaco from "monaco-editor"
 import Editor, { BeforeMount, OnMount } from "@monaco-editor/react"
-import { Socket, io } from "socket.io-client"
 import { toast } from "sonner"
 import { useClerk } from "@clerk/nextjs"
 
@@ -32,7 +31,7 @@ import PreviewWindow from "./preview"
 import Terminals from "./terminals"
 import { ImperativePanelHandle } from "react-resizable-panels"
 import { PreviewProvider, usePreview } from '@/context/PreviewContext';
-import { useTerminal } from '@/context/TerminalContext'; 
+import { useSocket } from "@/context/SocketContext"
 
 export default function CodeEditor({
   userData,
@@ -41,24 +40,16 @@ export default function CodeEditor({
   userData: User
   sandboxData: Sandbox
 }) {
-  const socketRef = useRef<Socket | null>(null);
 
-  // Initialize socket connection if it doesn't exist
-  if (!socketRef.current) {
-    socketRef.current = io(
-      `${process.env.NEXT_PUBLIC_SERVER_URL}?userId=${userData.id}&sandboxId=${sandboxData.id}`,
-      {
-        timeout: 2000,
-      }
-    );
-  }
-
-  //Terminalcontext functionsand effects
-  const { setUserAndSandboxId } = useTerminal();
+  //SocketContext functions and effects
+  const { socket, setUserAndSandboxId } = useSocket();
 
   useEffect(() => {
-    setUserAndSandboxId(userData.id, sandboxData.id);
-  }, [userData.id, sandboxData.id, setUserAndSandboxId]);
+    // Check if socket is null, and initialize it by setting userId and sandboxId
+    if (!socket && userData.id && sandboxData.id) {
+      setUserAndSandboxId(userData.id, sandboxData.id);
+    }
+  }, [socket, userData.id, sandboxData.id, setUserAndSandboxId]);
 
   //Preview Button state
   const [isPreviewCollapsed, setIsPreviewCollapsed] = useState(true)
@@ -120,7 +111,7 @@ export default function CodeEditor({
   const room = useRoom()
   const [provider, setProvider] = useState<TypedLiveblocksProvider>()
   const userInfo = useSelf((me) => me.info)
-  
+
   // Liveblocks providers map to prevent reinitializing providers
   type ProviderData = {
     provider: LiveblocksProvider<never, never, never, never>;
@@ -333,9 +324,9 @@ export default function CodeEditor({
       );
       console.log(`Saving file...${activeFileId}`);
       console.log(`Saving file...${value}`);
-      socketRef.current?.emit("saveFile", activeFileId, value);
+      socket?.emit("saveFile", activeFileId, value);
     }, Number(process.env.FILE_SAVE_DEBOUNCE_DELAY) || 1000),
-    [socketRef]
+    [socket]
   );
 
   useEffect(() => {
@@ -432,9 +423,9 @@ export default function CodeEditor({
 
   // Connection/disconnection effect
   useEffect(() => {
-    socketRef.current?.connect()
+    socket?.connect()
     return () => {
-      socketRef.current?.disconnect()
+      socket?.disconnect()
     }
   }, [])
 
@@ -469,22 +460,22 @@ export default function CodeEditor({
         })
     }
 
-    socketRef.current?.on("connect", onConnect)
-    socketRef.current?.on("disconnect", onDisconnect)
-    socketRef.current?.on("loaded", onLoadedEvent)
-    socketRef.current?.on("error", onError)
-    socketRef.current?.on("terminalResponse", onTerminalResponse)
-    socketRef.current?.on("disableAccess", onDisableAccess)
-    socketRef.current?.on("previewURL", loadPreviewURL)
+    socket?.on("connect", onConnect)
+    socket?.on("disconnect", onDisconnect)
+    socket?.on("loaded", onLoadedEvent)
+    socket?.on("error", onError)
+    socket?.on("terminalResponse", onTerminalResponse)
+    socket?.on("disableAccess", onDisableAccess)
+    socket?.on("previewURL", loadPreviewURL)
 
     return () => {
-      socketRef.current?.off("connect", onConnect)
-      socketRef.current?.off("disconnect", onDisconnect)
-      socketRef.current?.off("loaded", onLoadedEvent)
-      socketRef.current?.off("error", onError)
-      socketRef.current?.off("terminalResponse", onTerminalResponse)
-      socketRef.current?.off("disableAccess", onDisableAccess)
-      socketRef.current?.off("previewURL", loadPreviewURL)
+      socket?.off("connect", onConnect)
+      socket?.off("disconnect", onDisconnect)
+      socket?.off("loaded", onLoadedEvent)
+      socket?.off("error", onError)
+      socket?.off("terminalResponse", onTerminalResponse)
+      socket?.off("disableAccess", onDisableAccess)
+      socket?.off("previewURL", loadPreviewURL)
     }
     // }, []);
   }, [terminals])
@@ -499,7 +490,7 @@ export default function CodeEditor({
   // Debounced function to get file content
   const debouncedGetFile = useCallback(
     debounce((tabId, callback) => {
-      socketRef.current?.emit('getFile', tabId, callback);
+      socket?.emit('getFile', tabId, callback);
     }, 300), // 300ms debounce delay, adjust as needed
     []
   );
@@ -603,7 +594,7 @@ export default function CodeEditor({
       return false
     }
 
-    socketRef.current?.emit("renameFile", id, newName)
+    socket?.emit("renameFile", id, newName)
     setTabs((prev) =>
       prev.map((tab) => (tab.id === id ? { ...tab, name: newName } : tab))
     )
@@ -612,7 +603,7 @@ export default function CodeEditor({
   }
 
   const handleDeleteFile = (file: TFile) => {
-    socketRef.current?.emit("deleteFile", file.id, (response: (TFolder | TFile)[]) => {
+    socket?.emit("deleteFile", file.id, (response: (TFolder | TFile)[]) => {
       setFiles(response)
     })
     closeTab(file.id)
@@ -622,11 +613,11 @@ export default function CodeEditor({
     setDeletingFolderId(folder.id)
     console.log("deleting folder", folder.id)
 
-    socketRef.current?.emit("getFolder", folder.id, (response: string[]) =>
+    socket?.emit("getFolder", folder.id, (response: string[]) =>
       closeTabs(response)
     )
 
-    socketRef.current?.emit("deleteFolder", folder.id, (response: (TFolder | TFile)[]) => {
+    socket?.emit("deleteFolder", folder.id, (response: (TFolder | TFile)[]) => {
       setFiles(response)
       setDeletingFolderId("")
     })
@@ -654,7 +645,7 @@ export default function CodeEditor({
           {generate.show && ai ? (
             <GenerateInput
               user={userData}
-              socket={socketRef.current}
+              socket={socket!}
               width={generate.width - 90}
               data={{
                 fileName: tabs.find((t) => t.id === activeFileId)?.name ?? "",
@@ -714,7 +705,7 @@ export default function CodeEditor({
           handleRename={handleRename}
           handleDeleteFile={handleDeleteFile}
           handleDeleteFolder={handleDeleteFolder}
-          socket={socketRef.current}
+          socket={socket!}
           setFiles={setFiles}
           addNew={(name, type) => addNew(name, type, setFiles, sandboxData)}
           deletingFolderId={deletingFolderId}
@@ -832,7 +823,7 @@ export default function CodeEditor({
                   open={() => {
                     usePreview().previewPanelRef.current?.expand()
                     setIsPreviewCollapsed(false)
-                  } } collapsed={isPreviewCollapsed} src={previewURL} ref={previewWindowRef} />
+                  }} collapsed={isPreviewCollapsed} src={previewURL} ref={previewWindowRef} />
               </ResizablePanel>
               <ResizableHandle />
               <ResizablePanel

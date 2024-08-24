@@ -7,7 +7,8 @@ import { ClerkProvider } from "@clerk/nextjs"
 import { Toaster } from "@/components/ui/sonner"
 import { Analytics } from "@vercel/analytics/react"
 import { TerminalProvider } from '@/context/TerminalContext';
-import { PreviewProvider } from "@/context/PreviewContext"
+import { PreviewProvider } from "@/context/PreviewContext";
+import { SocketProvider } from '@/context/SocketContext'
 
 export const metadata: Metadata = {
   title: "Sandbox",
@@ -15,7 +16,7 @@ export const metadata: Metadata = {
 }
 
 export default function RootLayout({
-  children,
+  children
 }: Readonly<{
   children: React.ReactNode
 }>) {
@@ -29,11 +30,13 @@ export default function RootLayout({
             forcedTheme="dark"
             disableTransitionOnChange
           >
+            <SocketProvider>
             <PreviewProvider>
             <TerminalProvider>
             {children}
             </TerminalProvider>
             </PreviewProvider>
+            </SocketProvider>
             <Analytics />
             <Toaster position="bottom-left" richColors />
           </ThemeProvider>
