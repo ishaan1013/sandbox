@@ -44,7 +44,7 @@ export default function RunButtonModal({
             "pip install -r requirements.txt && streamlit run main.py --server.runOnSave true"
           );
         } else {
-          createNewTerminal("yarn install && yarn start");
+          createNewTerminal("yarn install && yarn dev");
         }
       } else {
         toast.error("You reached the maximum # of terminals.");
