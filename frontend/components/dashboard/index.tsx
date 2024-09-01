@@ -49,10 +49,8 @@ export default function Dashboard({
   const q = searchParams.get("q")
   const router = useRouter()
 
-  useEffect(() => {
-    if (!sandboxes) {
-      router.refresh()
-    }
+  useEffect(() => { // update the dashboard to show a new project
+      router.refresh() 
   }, [sandboxes])
 
   return (

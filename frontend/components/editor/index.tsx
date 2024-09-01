@@ -45,9 +45,13 @@ export default function CodeEditor({
   const { socket, setUserAndSandboxId } = useSocket();
 
   useEffect(() => {
-    // Check if socket is null, and initialize it by setting userId and sandboxId
-    if (!socket && userData.id && sandboxData.id) {
-      setUserAndSandboxId(userData.id, sandboxData.id);
+    // Ensure userData.id and sandboxData.id are available before attempting to connect
+    if (userData.id && sandboxData.id) {
+      // Check if the socket is not initialized or not connected
+      if (!socket || (socket && !socket.connected)) {
+        // Initialize socket connection
+        setUserAndSandboxId(userData.id, sandboxData.id);
+      }
     }
   }, [socket, userData.id, sandboxData.id, setUserAndSandboxId]);
 
@@ -477,8 +481,7 @@ export default function CodeEditor({
       socket?.off("disableAccess", onDisableAccess)
       socket?.off("previewURL", loadPreviewURL)
     }
-    // }, []);
-  }, [terminals])
+  }, [socket, terminals, setTerminals, setFiles, toast, setDisableAccess, isOwner, loadPreviewURL]);
 
   // Helper functions for tabs:
 
