@@ -8,12 +8,15 @@ import { toast } from "sonner";
 import EditorTerminal from "./terminal";
 import { useTerminal } from "@/context/TerminalContext";
 import { useEffect } from "react";
+import { useSocket } from "@/context/SocketContext"
 
 export default function Terminals() {
+
+  const { socket } = useSocket();
+
   const {
     terminals,
     setTerminals,
-    socket,
     createNewTerminal,
     closeTerminal,
     activeTerminalId,
