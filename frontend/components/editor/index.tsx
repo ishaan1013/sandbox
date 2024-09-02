@@ -491,14 +491,13 @@ export default function CodeEditor({
   const fileCache = useRef(new Map());
 
   // Debounced function to get file content
-  const debouncedGetFile = useCallback(
-    debounce((tabId, callback) => {
-      socket?.emit('getFile', tabId, callback);
-    }, 300), // 300ms debounce delay, adjust as needed
-    []
-  );
+  const debouncedGetFile = 
+  (tabId: any, callback: any) => {
+    socket?.emit('getFile', tabId, callback);
+  } // 300ms debounce delay, adjust as needed
 
-  const selectFile = useCallback((tab: TTab) => {
+  const selectFile = (tab: TTab) => {
+
     if (tab.id === activeFileId) return;
 
     setGenerate((prev) => ({ ...prev, show: false }));
@@ -523,7 +522,7 @@ export default function CodeEditor({
 
     setEditorLanguage(processFileType(tab.name));
     setActiveFileId(tab.id);
-  }, [activeFileId, tabs, debouncedGetFile]);
+  };
 
   // Close tab and remove from tabs
   const closeTab = (id: string) => {
