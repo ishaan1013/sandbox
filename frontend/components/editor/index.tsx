@@ -431,7 +431,7 @@ export default function CodeEditor({
     return () => {
       socket?.disconnect()
     }
-  }, [])
+  }, [socket])
 
   // Socket event listener effect
   useEffect(() => {
