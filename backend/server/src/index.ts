@@ -20,7 +20,11 @@ import {
   saveFile,
 } from "./fileoperations";
 import { LockManager } from "./utils";
-import { Sandbox, Terminal, FilesystemManager } from "e2b";
+
+import { Sandbox, Filesystem } from "e2b";
+
+import { Terminal } from "./Terminal"
+
 import {
   MAX_BODY_SIZE,
   createFileRL,
@@ -52,12 +56,12 @@ const terminals: Record<string, Terminal> = {};
 const dirName = "/home/user";
 
 const moveFile = async (
-  filesystem: FilesystemManager,
+  filesystem: Filesystem,
   filePath: string,
   newFilePath: string
 ) => {
-  const fileContents = await filesystem.readBytes(filePath);
-  await filesystem.writeBytes(newFilePath, fileContents);
+  const fileContents = await filesystem.read(filePath);
+  await filesystem.write(newFilePath, fileContents);
   await filesystem.remove(filePath);
 };
 
@@ -156,7 +160,7 @@ io.on("connection", async (socket) => {
     await lockManager.acquireLock(data.sandboxId, async () => {
       try {
         if (!containers[data.sandboxId]) {
-          containers[data.sandboxId] = await Sandbox.create();
+          containers[data.sandboxId] = await Sandbox.create({ timeoutMs: 1200000 });
           console.log("Created container ", data.sandboxId);
         }
       } catch (e: any) {
@@ -167,7 +171,7 @@ io.on("connection", async (socket) => {
 
     // Change the owner of the project directory to user
     const fixPermissions = async () => {
-      await containers[data.sandboxId].process.startAndWait(
+      await containers[data.sandboxId].commands.run(
         `sudo chown -R user "${path.join(dirName, "projects", data.sandboxId)}"`
       );
     };
@@ -175,10 +179,14 @@ io.on("connection", async (socket) => {
     const sandboxFiles = await getSandboxFiles(data.sandboxId);
     sandboxFiles.fileData.forEach(async (file) => {
       const filePath = path.join(dirName, file.id);
-      await containers[data.sandboxId].filesystem.makeDir(
-        path.dirname(filePath)
-      );
-      await containers[data.sandboxId].filesystem.write(filePath, file.data);
+      try {
+        await containers[data.sandboxId].files.makeDir(
+          path.dirname(filePath)
+        );
+      } catch (e: any) {
+        console.log("Failed to create directory: " + e);
+      }
+      await containers[data.sandboxId].files.write(filePath, file.data);
     });
     fixPermissions();
 
@@ -231,7 +239,7 @@ io.on("connection", async (socket) => {
         if (!file) return;
         file.data = body;
 
-        await containers[data.sandboxId].filesystem.write(
+        await containers[data.sandboxId].files.write(
           path.join(dirName, file.id),
           body
         );
@@ -253,7 +261,7 @@ io.on("connection", async (socket) => {
           const newFileId = folderId + "/" + parts.pop();
 
           await moveFile(
-            containers[data.sandboxId].filesystem,
+            containers[data.sandboxId].files,
             path.join(dirName, fileId),
             path.join(dirName, newFileId)
           );
@@ -346,7 +354,7 @@ io.on("connection", async (socket) => {
 
         const id = `projects/${data.sandboxId}/${name}`;
 
-        await containers[data.sandboxId].filesystem.write(
+        await containers[data.sandboxId].files.write(
           path.join(dirName, id),
           ""
         );
@@ -383,7 +391,7 @@ io.on("connection", async (socket) => {
 
         const id = `projects/${data.sandboxId}/${name}`;
 
-        await containers[data.sandboxId].filesystem.makeDir(
+        await containers[data.sandboxId].files.makeDir(
           path.join(dirName, id)
         );
 
@@ -412,7 +420,7 @@ io.on("connection", async (socket) => {
           parts.slice(0, parts.length - 1).join("/") + "/" + newName;
 
         await moveFile(
-          containers[data.sandboxId].filesystem,
+          containers[data.sandboxId].files,
           path.join(dirName, fileId),
           path.join(dirName, newFileId)
         );
@@ -435,7 +443,7 @@ io.on("connection", async (socket) => {
         const file = sandboxFiles.fileData.find((f) => f.id === fileId);
         if (!file) return;
 
-        await containers[data.sandboxId].filesystem.remove(
+        await containers[data.sandboxId].files.remove(
           path.join(dirName, fileId)
         );
         sandboxFiles.fileData = sandboxFiles.fileData.filter(
@@ -462,7 +470,7 @@ io.on("connection", async (socket) => {
 
         await Promise.all(
           files.map(async (file) => {
-            await containers[data.sandboxId].filesystem.remove(
+            await containers[data.sandboxId].files.remove(
               path.join(dirName, file)
             );
 
@@ -491,35 +499,36 @@ io.on("connection", async (socket) => {
 
         await lockManager.acquireLock(data.sandboxId, async () => {
           try {
-            terminals[id] = await containers[data.sandboxId].terminal.start({
-              onData: (responseData: string) => {
-                io.emit("terminalResponse", { id, data: responseData });
+            terminals[id] = new Terminal(containers[data.sandboxId])
+            await terminals[id].init({
+              onData: (responseString: string) => {
+                io.emit("terminalResponse", { id, data: responseString });
 
                 function extractPortNumber(inputString: string) {
                   // Remove ANSI escape codes
                   const cleanedString = inputString.replace(/\x1B\[[0-9;]*m/g, '');
+
                   // Regular expression to match port number
                   const regex = /http:\/\/localhost:(\d+)/;
                   // If a match is found, return the port number
                   const match = cleanedString.match(regex);
-                  return match ? match[1] :  null;
+                  return match ? match[1] : null;
                 }
-                const port = parseInt(extractPortNumber(responseData) ?? "");
+                const port = parseInt(extractPortNumber(responseString) ?? "");
                 if (port) {
                   io.emit(
                     "previewURL",
-                    "https://" + containers[data.sandboxId].getHostname(port)
+                    "https://" + containers[data.sandboxId].getHost(port)
                   );
                 }
-
               },
-              size: { cols: 80, rows: 20 },
-              onExit: () => console.log("Terminal exited", id),
+              cols: 80,
+              rows: 20,
+              //onExit: () => console.log("Terminal exited", id),
             });
-            await terminals[id].sendData(
-              `cd "${path.join(dirName, "projects", data.sandboxId)}"\r`
+            terminals[id].sendData(
+              `cd "${path.join(dirName, "projects", data.sandboxId)}"\rexport PS1='user> '\rclear\r`
             );
-            await terminals[id].sendData("export PS1='user> '\rclear\r");
             console.log("Created terminal", id);
           } catch (e: any) {
             console.error(`Error creating terminal ${id}:`, e);
@@ -548,7 +557,7 @@ io.on("connection", async (socket) => {
       }
     );
 
-    socket.on("terminalData", (id: string, data: string) => {
+    socket.on("terminalData", async (id: string, data: string) => {
       try {
         if (!terminals[id]) {
           return;
@@ -567,7 +576,7 @@ io.on("connection", async (socket) => {
           return;
         }
 
-        await terminals[id].kill();
+        await terminals[id].close();
         delete terminals[id];
 
         callback();
@@ -636,7 +645,7 @@ io.on("connection", async (socket) => {
         if (data.isOwner && connections[data.sandboxId] <= 0) {
           await Promise.all(
             Object.entries(terminals).map(async ([key, terminal]) => {
-              await terminal.kill();
+              await terminal.close();
               delete terminals[key];
             })
           );
@@ -644,7 +653,7 @@ io.on("connection", async (socket) => {
           await lockManager.acquireLock(data.sandboxId, async () => {
             try {
               if (containers[data.sandboxId]) {
-                await containers[data.sandboxId].close();
+                await containers[data.sandboxId].kill();
                 delete containers[data.sandboxId];
                 console.log("Closed container", data.sandboxId);
               }
