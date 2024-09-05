@@ -93,6 +93,17 @@ export default function GenerateInput({
     }
   }, [code])
 
+  useEffect(() => {
+    //listen to when Esc key is pressed and close the modal
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose()
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [])
+
   return (
     <div className="w-full pr-4 space-y-2">
       <div className="flex items-center font-sans space-x-2">

@@ -2,18 +2,19 @@ import { type ClassValue, clsx } from "clsx"
 // import { toast } from "sonner"
 import { twMerge } from "tailwind-merge"
 import { Sandbox, TFile, TFolder } from "./types"
+import fileExtToLang from "./file-extension-to-language.json"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
 export function processFileType(file: string) {
-  const ending = file.split(".").pop()
+  const extension = file.split(".").pop()
+  const fileExtToLangMap = fileExtToLang as Record<string, string>
+  if (extension && fileExtToLangMap[extension]) {
+    return fileExtToLangMap[extension]
+  }
 
-  if (ending === "ts" || ending === "tsx") return "typescript"
-  if (ending === "js" || ending === "jsx") return "javascript"
-
-  if (ending) return ending
   return "plaintext"
 }
 
@@ -62,12 +63,15 @@ export function addNew(
   }
 }
 
-export function debounce<T extends (...args: any[]) => void>(func: T, wait: number): T {
-  let timeout: NodeJS.Timeout | null = null;
+export function debounce<T extends (...args: any[]) => void>(
+  func: T,
+  wait: number
+): T {
+  let timeout: NodeJS.Timeout | null = null
   return function (...args: Parameters<T>) {
-      if (timeout) {
-          clearTimeout(timeout);
-      }
-      timeout = setTimeout(() => func(...args), wait);
-  } as T;
+    if (timeout) {
+      clearTimeout(timeout)
+    }
+    timeout = setTimeout(() => func(...args), wait)
+  } as T
 }
