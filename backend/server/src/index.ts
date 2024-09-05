@@ -568,7 +568,7 @@ io.on("connection", async (socket) => {
           return;
         }
 
-        terminals[id].sendData(data);
+        await terminals[id].sendData(data);
       } catch (e: any) {
         console.error("Error writing to terminal:", e);
         io.emit("error", `Error: writing to terminal. ${e.message ?? e}`);
