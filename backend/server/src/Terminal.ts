@@ -3,9 +3,6 @@ import { Sandbox, ProcessHandle } from "e2b";
 // Terminal class to manage a pseudo-terminal (PTY) in a sandbox environment
 export class Terminal {
   private pty: ProcessHandle | undefined; // Holds the PTY process handle
-  private input:
-    | { stop: () => void; sendData: (data: Uint8Array) => void }
-    | undefined; // Holds input stream controls
   private sandbox: Sandbox; // Reference to the sandbox environment
 
   // Constructor initializes the Terminal with a sandbox
@@ -29,19 +26,18 @@ export class Terminal {
       cols,
       timeout: 0,
       onData: (data: Uint8Array) => {
-        onData(data.toString()); // Convert received data to string and pass to handler
+        onData(new TextDecoder().decode(data)); // Convert received data to string and pass to handler
       },
     });
-    // Set up input stream for the PTY
-    this.input = await this.sandbox.pty.streamInput(this.pty.pid);
   }
 
   // Send data to the terminal
-  sendData(data: string): void {
-    if (this.input) {
-      this.input.sendData(Buffer.from(data)); // Convert string to Buffer and send
+  async sendData(data: string) {
+    if (this.pty) {
+      await this.sandbox.pty.sendInput(this.pty.pid, new TextEncoder().encode(data));
+      await this.pty.wait();
     } else {
-      console.log("Cannot send data because input is not initialized.");
+      console.log("Cannot send data because pty is not initialized.");
     }
   }
 
@@ -50,7 +46,7 @@ export class Terminal {
     if (this.pty) {
       await this.sandbox.pty.resize(this.pty.pid, size);
     } else {
-      console.log("Cannot send data because pty is not initialized.");
+      console.log("Cannot resize terminal because pty is not initialized.");
     }
   }
 
@@ -60,11 +56,6 @@ export class Terminal {
       await this.pty.kill();
     } else {
       console.log("Cannot kill pty because it is not initialized.");
-    }
-    if (this.input) {
-      this.input.stop();
-    } else {
-      console.log("Cannot stop input because it is not initialized.");
     }
   }
 }

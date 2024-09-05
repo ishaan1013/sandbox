@@ -526,7 +526,7 @@ io.on("connection", async (socket) => {
               rows: 20,
               //onExit: () => console.log("Terminal exited", id),
             });
-            terminals[id].sendData(
+            await terminals[id].sendData(
               `cd "${path.join(dirName, "projects", data.sandboxId)}"\rexport PS1='user> '\rclear\r`
             );
             console.log("Created terminal", id);
