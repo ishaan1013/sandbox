@@ -35,7 +35,6 @@ export class Terminal {
   async sendData(data: string) {
     if (this.pty) {
       await this.sandbox.pty.sendInput(this.pty.pid, new TextEncoder().encode(data));
-      await this.pty.wait();
     } else {
       console.log("Cannot send data because pty is not initialized.");
     }
