@@ -531,9 +531,15 @@ io.on("connection", async (socket) => {
               rows: 20,
               //onExit: () => console.log("Terminal exited", id),
             });
-            await terminals[id].sendData(
-              `cd "${path.join(dirName, "projects", data.sandboxId)}"\rexport PS1='user> '\rclear\r`
-            );
+
+            const defaultDirectory = path.join(dirName, "projects", data.sandboxId);
+            const defaultCommands = [
+              `cd "${defaultDirectory}"`,
+              "export PS1='user> '",
+              "clear"
+            ]
+            for (const command of defaultCommands) await terminals[id].sendData(command + "\r");
+
             console.log("Created terminal", id);
           } catch (e: any) {
             console.error(`Error creating terminal ${id}:`, e);
