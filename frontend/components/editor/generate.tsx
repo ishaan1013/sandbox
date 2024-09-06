@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { Button } from "../ui/button"
 import { Check, Loader2, RotateCw, Sparkles, X } from "lucide-react"
 import { Socket } from "socket.io-client"
@@ -84,6 +84,13 @@ export default function GenerateInput({
       }
     )
   }
+  const handleGenerateForm = useCallback(
+    (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault()
+      handleGenerate({ regenerate: false })
+    },
+    []
+  )
 
   useEffect(() => {
     if (code) {
@@ -106,7 +113,10 @@ export default function GenerateInput({
 
   return (
     <div className="w-full pr-4 space-y-2">
-      <div className="flex items-center font-sans space-x-2">
+      <form
+        onSubmit={handleGenerateForm}
+        className="flex items-center font-sans space-x-2"
+      >
         <input
           ref={inputRef}
           style={{
@@ -120,8 +130,8 @@ export default function GenerateInput({
 
         <Button
           size="sm"
+          type="submit"
           disabled={loading.generate || loading.regenerate || input === ""}
-          onClick={() => handleGenerate({})}
         >
           {loading.generate ? (
             <>
@@ -137,13 +147,14 @@ export default function GenerateInput({
         </Button>
         <Button
           onClick={onClose}
+          type="button"
           variant="outline"
           size="smIcon"
           className="bg-transparent shrink-0 border-muted-foreground"
         >
           <X className="h-3 w-3" />
         </Button>
-      </div>
+      </form>
       {expanded ? (
         <>
           <div className="rounded-md border border-muted-foreground w-full h-28 overflow-y-scroll p-2">
