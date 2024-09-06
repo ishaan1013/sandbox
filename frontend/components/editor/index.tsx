@@ -1,10 +1,11 @@
 "use client"
 
 import { SetStateAction, useCallback, useEffect, useRef, useState } from "react"
-import monaco from "monaco-editor"
+import * as monaco from "monaco-editor"
 import Editor, { BeforeMount, OnMount } from "@monaco-editor/react"
 import { toast } from "sonner"
 import { useClerk } from "@clerk/nextjs"
+import { AnimatePresence, motion } from "framer-motion"
 
 import * as Y from "yjs"
 import LiveblocksProvider from "@liveblocks/yjs"
@@ -17,7 +18,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable"
-import { FileJson, Loader2, TerminalSquare } from "lucide-react"
+import { FileJson, Loader2, Sparkles, TerminalSquare } from "lucide-react"
 import Tab from "../ui/tab"
 import Sidebar from "./sidebar"
 import GenerateInput from "./generate"
@@ -30,8 +31,10 @@ import Loading from "./loading"
 import PreviewWindow from "./preview"
 import Terminals from "./terminals"
 import { ImperativePanelHandle } from "react-resizable-panels"
-import { PreviewProvider, usePreview } from '@/context/PreviewContext';
+import { PreviewProvider, usePreview } from "@/context/PreviewContext"
 import { useSocket } from "@/context/SocketContext"
+import { Button } from "../ui/button"
+import React from "react"
 
 export default function CodeEditor({
   userData,
@@ -40,9 +43,8 @@ export default function CodeEditor({
   userData: User
   sandboxData: Sandbox
 }) {
-
   //SocketContext functions and effects
-  const { socket, setUserAndSandboxId } = useSocket();
+  const { socket, setUserAndSandboxId } = useSocket()
 
   useEffect(() => {
     // Ensure userData.id and sandboxData.id are available before attempting to connect
@@ -50,10 +52,10 @@ export default function CodeEditor({
       // Check if the socket is not initialized or not connected
       if (!socket || (socket && !socket.connected)) {
         // Initialize socket connection
-        setUserAndSandboxId(userData.id, sandboxData.id);
+        setUserAndSandboxId(userData.id, sandboxData.id)
       }
     }
-  }, [socket, userData.id, sandboxData.id, setUserAndSandboxId]);
+  }, [socket, userData.id, sandboxData.id, setUserAndSandboxId])
 
   //Preview Button state
   const [isPreviewCollapsed, setIsPreviewCollapsed] = useState(true)
@@ -89,7 +91,8 @@ export default function CodeEditor({
     options: monaco.editor.IModelDeltaDecoration[]
     instance: monaco.editor.IEditorDecorationsCollection | undefined
   }>({ options: [], instance: undefined })
-
+  const [isSelected, setIsSelected] = useState(false)
+  const [showSuggestion, setShowSuggestion] = useState(false)
   // Terminal state
   const [terminals, setTerminals] = useState<
     {
@@ -99,13 +102,13 @@ export default function CodeEditor({
   >([])
 
   // Preview state
-  const [previewURL, setPreviewURL] = useState<string>("");
+  const [previewURL, setPreviewURL] = useState<string>("")
 
   const loadPreviewURL = (url: string) => {
     // This will cause a reload if previewURL changed.
-    setPreviewURL(url);
+    setPreviewURL(url)
     // If the URL didn't change, still reload the preview.
-    previewWindowRef.current?.refreshIframe();
+    previewWindowRef.current?.refreshIframe()
   }
 
   const isOwner = sandboxData.userId === userData.id
@@ -118,23 +121,29 @@ export default function CodeEditor({
 
   // Liveblocks providers map to prevent reinitializing providers
   type ProviderData = {
-    provider: LiveblocksProvider<never, never, never, never>;
-    yDoc: Y.Doc;
-    yText: Y.Text;
-    binding?: MonacoBinding;
-    onSync: (isSynced: boolean) => void;
-  };
-  const providersMap = useRef(new Map<string, ProviderData>());
+    provider: LiveblocksProvider<never, never, never, never>
+    yDoc: Y.Doc
+    yText: Y.Text
+    binding?: MonacoBinding
+    onSync: (isSynced: boolean) => void
+  }
+  const providersMap = useRef(new Map<string, ProviderData>())
 
   // Refs for libraries / features
   const editorContainerRef = useRef<HTMLDivElement>(null)
   const monacoRef = useRef<typeof monaco | null>(null)
   const generateRef = useRef<HTMLDivElement>(null)
+  const suggestionRef = useRef<HTMLDivElement>(null)
   const generateWidgetRef = useRef<HTMLDivElement>(null)
   const previewPanelRef = useRef<ImperativePanelHandle>(null)
   const editorPanelRef = useRef<ImperativePanelHandle>(null)
   const previewWindowRef = useRef<{ refreshIframe: () => void }>(null)
 
+  const debouncedSetIsSelected = useRef(
+    debounce((value: boolean) => {
+      setIsSelected(value)
+    }, 800) //
+  ).current
   // Pre-mount editor keybindings
   const handleEditorWillMount: BeforeMount = (monaco) => {
     monaco.editor.addKeybindingRules([
@@ -151,6 +160,13 @@ export default function CodeEditor({
     monacoRef.current = monaco
 
     editor.onDidChangeCursorPosition((e) => {
+      setIsSelected(false)
+      const selection = editor.getSelection()
+      if (selection !== null) {
+        const hasSelection = !selection.isEmpty()
+        debouncedSetIsSelected(hasSelection)
+        setShowSuggestion(hasSelection)
+      }
       const { column, lineNumber } = e.position
       if (lineNumber === cursorLine) return
       setCursorLine(lineNumber)
@@ -204,7 +220,44 @@ export default function CodeEditor({
       },
     })
   }
-
+  const handleAiEdit = React.useCallback(() => {
+    if (!editorRef) return
+    const selection = editorRef.getSelection()
+    if (!selection) return
+    const pos = selection.getPosition()
+    const start = selection.getStartPosition()
+    const end = selection.getEndPosition()
+    let pref: monaco.editor.ContentWidgetPositionPreference
+    let id = ""
+    const isMultiline = start.lineNumber !== end.lineNumber
+    if (isMultiline) {
+      if (pos.lineNumber <= start.lineNumber) {
+        pref = monaco.editor.ContentWidgetPositionPreference.ABOVE
+      } else {
+        pref = monaco.editor.ContentWidgetPositionPreference.BELOW
+      }
+    } else {
+      pref = monaco.editor.ContentWidgetPositionPreference.ABOVE
+    }
+    editorRef.changeViewZones(function (changeAccessor) {
+      if (!generateRef.current) return
+      if (pref === monaco.editor.ContentWidgetPositionPreference.ABOVE) {
+        id = changeAccessor.addZone({
+          afterLineNumber: start.lineNumber - 1,
+          heightInLines: 2,
+          domNode: generateRef.current,
+        })
+      }
+    })
+    setGenerate((prev) => {
+      return {
+        ...prev,
+        show: true,
+        pref: [pref],
+        id,
+      }
+    })
+  }, [editorRef])
   // Generate widget effect
   useEffect(() => {
     if (!ai) {
@@ -217,15 +270,21 @@ export default function CodeEditor({
       return
     }
     if (generate.show) {
+      setShowSuggestion(false)
       editorRef?.changeViewZones(function (changeAccessor) {
         if (!generateRef.current) return
-        const id = changeAccessor.addZone({
-          afterLineNumber: cursorLine,
-          heightInLines: 3,
-          domNode: generateRef.current,
-        })
+        if (!generate.id) {
+          const id = changeAccessor.addZone({
+            afterLineNumber: cursorLine,
+            heightInLines: 3,
+            domNode: generateRef.current,
+          })
+          setGenerate((prev) => {
+            return { ...prev, id, line: cursorLine }
+          })
+        }
         setGenerate((prev) => {
-          return { ...prev, id, line: cursorLine }
+          return { ...prev, line: cursorLine }
         })
       })
 
@@ -286,6 +345,41 @@ export default function CodeEditor({
       })
     }
   }, [generate.show])
+  // Suggestion widget effect
+  useEffect(() => {
+    if (!suggestionRef.current || !editorRef) return
+    const widgetElement = suggestionRef.current
+    const suggestionWidget: monaco.editor.IContentWidget = {
+      getDomNode: () => {
+        return widgetElement
+      },
+      getId: () => {
+        return "suggestion.widget"
+      },
+      getPosition: () => {
+        const selection = editorRef?.getSelection()
+        const column = Math.max(3, selection?.positionColumn ?? 1)
+        let lineNumber = selection?.positionLineNumber ?? 1
+        let pref = monaco.editor.ContentWidgetPositionPreference.ABOVE
+        if (lineNumber <= 3) {
+          pref = monaco.editor.ContentWidgetPositionPreference.BELOW
+        }
+        return {
+          preference: [pref],
+          position: {
+            lineNumber,
+            column,
+          },
+        }
+      },
+    }
+    if (isSelected) {
+      editorRef?.addContentWidget(suggestionWidget)
+      editorRef?.applyFontInfo(suggestionRef.current)
+    } else {
+      editorRef?.removeContentWidget(suggestionWidget)
+    }
+  }, [isSelected])
 
   // Decorations effect for generate widget tips
   useEffect(() => {
@@ -325,27 +419,27 @@ export default function CodeEditor({
         prev.map((tab) =>
           tab.id === activeFileId ? { ...tab, saved: true } : tab
         )
-      );
-      console.log(`Saving file...${activeFileId}`);
-      console.log(`Saving file...${value}`);
-      socket?.emit("saveFile", activeFileId, value);
+      )
+      console.log(`Saving file...${activeFileId}`)
+      console.log(`Saving file...${value}`)
+      socket?.emit("saveFile", activeFileId, value)
     }, Number(process.env.FILE_SAVE_DEBOUNCE_DELAY) || 1000),
     [socket]
-  );
+  )
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.key === "s" && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        debouncedSaveData(editorRef?.getValue(), activeFileId);
+        e.preventDefault()
+        debouncedSaveData(editorRef?.getValue(), activeFileId)
       }
-    };
-    document.addEventListener("keydown", down);
+    }
+    document.addEventListener("keydown", down)
 
     return () => {
-      document.removeEventListener("keydown", down);
-    };
-  }, [activeFileId, tabs, debouncedSaveData]);
+      document.removeEventListener("keydown", down)
+    }
+  }, [activeFileId, tabs, debouncedSaveData])
 
   // Liveblocks live collaboration setup effect
   useEffect(() => {
@@ -354,13 +448,13 @@ export default function CodeEditor({
 
     if (!editorRef || !tab || !model) return
 
-    let providerData: ProviderData;
+    let providerData: ProviderData
 
     // When a file is opened for the first time, create a new provider and store in providersMap.
     if (!providersMap.current.has(tab.id)) {
-      const yDoc = new Y.Doc();
-      const yText = yDoc.getText(tab.id);
-      const yProvider = new LiveblocksProvider(room, yDoc);
+      const yDoc = new Y.Doc()
+      const yText = yDoc.getText(tab.id)
+      const yProvider = new LiveblocksProvider(room, yDoc)
 
       // Inserts the file content into the editor once when the tab is changed.
       const onSync = (isSynced: boolean) => {
@@ -381,12 +475,11 @@ export default function CodeEditor({
       yProvider.on("sync", onSync)
 
       // Save the provider to the map.
-      providerData = { provider: yProvider, yDoc, yText, onSync };
-      providersMap.current.set(tab.id, providerData);
-
+      providerData = { provider: yProvider, yDoc, yText, onSync }
+      providersMap.current.set(tab.id, providerData)
     } else {
       // When a tab is opened that has been open before, reuse the existing provider.
-      providerData = providersMap.current.get(tab.id)!;
+      providerData = providersMap.current.get(tab.id)!
     }
 
     const binding = new MonacoBinding(
@@ -394,21 +487,21 @@ export default function CodeEditor({
       model,
       new Set([editorRef]),
       providerData.provider.awareness as unknown as Awareness
-    );
+    )
 
-    providerData.binding = binding;
-    setProvider(providerData.provider);
+    providerData.binding = binding
+    setProvider(providerData.provider)
 
     return () => {
       // Cleanup logic
       if (binding) {
-        binding.destroy();
+        binding.destroy()
       }
       if (providerData.binding) {
-        providerData.binding = undefined;
+        providerData.binding = undefined
       }
-    };
-  }, [room, activeFileContent]);
+    }
+  }, [room, activeFileContent])
 
   // Added this effect to clean up when the component unmounts
   useEffect(() => {
@@ -416,14 +509,14 @@ export default function CodeEditor({
       // Clean up all providers when the component unmounts
       providersMap.current.forEach((data) => {
         if (data.binding) {
-          data.binding.destroy();
+          data.binding.destroy()
         }
-        data.provider.disconnect();
-        data.yDoc.destroy();
-      });
-      providersMap.current.clear();
-    };
-  }, []);
+        data.provider.disconnect()
+        data.yDoc.destroy()
+      })
+      providersMap.current.clear()
+    }
+  }, [])
 
   // Connection/disconnection effect
   useEffect(() => {
@@ -435,7 +528,7 @@ export default function CodeEditor({
 
   // Socket event listener effect
   useEffect(() => {
-    const onConnect = () => { }
+    const onConnect = () => {}
 
     const onDisconnect = () => {
       setTerminals([])
@@ -481,48 +574,55 @@ export default function CodeEditor({
       socket?.off("disableAccess", onDisableAccess)
       socket?.off("previewURL", loadPreviewURL)
     }
-  }, [socket, terminals, setTerminals, setFiles, toast, setDisableAccess, isOwner, loadPreviewURL]);
+  }, [
+    socket,
+    terminals,
+    setTerminals,
+    setFiles,
+    toast,
+    setDisableAccess,
+    isOwner,
+    loadPreviewURL,
+  ])
 
   // Helper functions for tabs:
 
   // Select file and load content
 
   // Initialize debounced function once
-  const fileCache = useRef(new Map());
+  const fileCache = useRef(new Map())
 
   // Debounced function to get file content
-  const debouncedGetFile = 
-  (tabId: any, callback: any) => {
-    socket?.emit('getFile', tabId, callback);
+  const debouncedGetFile = (tabId: any, callback: any) => {
+    socket?.emit("getFile", tabId, callback)
   } // 300ms debounce delay, adjust as needed
 
   const selectFile = (tab: TTab) => {
+    if (tab.id === activeFileId) return
 
-    if (tab.id === activeFileId) return;
+    setGenerate((prev) => ({ ...prev, show: false }))
 
-    setGenerate((prev) => ({ ...prev, show: false }));
-
-    const exists = tabs.find((t) => t.id === tab.id);
+    const exists = tabs.find((t) => t.id === tab.id)
     setTabs((prev) => {
       if (exists) {
-        setActiveFileId(exists.id);
-        return prev;
+        setActiveFileId(exists.id)
+        return prev
       }
-      return [...prev, tab];
-    });
+      return [...prev, tab]
+    })
 
     if (fileCache.current.has(tab.id)) {
-      setActiveFileContent(fileCache.current.get(tab.id));
+      setActiveFileContent(fileCache.current.get(tab.id))
     } else {
       debouncedGetFile(tab.id, (response: SetStateAction<string>) => {
-        fileCache.current.set(tab.id, response);
-        setActiveFileContent(response);
-      });
+        fileCache.current.set(tab.id, response)
+        setActiveFileContent(response)
+      })
     }
 
-    setEditorLanguage(processFileType(tab.name));
-    setActiveFileId(tab.id);
-  };
+    setEditorLanguage(processFileType(tab.name))
+    setActiveFileId(tab.id)
+  }
 
   // Close tab and remove from tabs
   const closeTab = (id: string) => {
@@ -538,8 +638,8 @@ export default function CodeEditor({
         ? numTabs === 1
           ? null
           : index < numTabs - 1
-            ? tabs[index + 1].id
-            : tabs[index - 1].id
+          ? tabs[index + 1].id
+          : tabs[index - 1].id
         : activeFileId
 
     setTabs((prev) => prev.filter((t) => t.id !== id))
@@ -632,7 +732,7 @@ export default function CodeEditor({
         <DisableAccessModal
           message={disableAccess.message}
           open={disableAccess.isDisabled}
-          setOpen={() => { }}
+          setOpen={() => {}}
         />
         <Loading />
       </>
@@ -643,6 +743,23 @@ export default function CodeEditor({
       {/* Copilot DOM elements */}
       <PreviewProvider>
         <div ref={generateRef} />
+        <div ref={suggestionRef} className="absolute">
+          <AnimatePresence>
+            {isSelected && ai && showSuggestion && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ ease: "easeOut", duration: 0.2 }}
+              >
+                <Button size="xs" type="submit" onClick={handleAiEdit}>
+                  <Sparkles className="h-3 w-3 mr-1" />
+                  Edit Code
+                </Button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
         <div className="z-50 p-1" ref={generateWidgetRef}>
           {generate.show && ai ? (
             <GenerateInput
@@ -651,22 +768,49 @@ export default function CodeEditor({
               width={generate.width - 90}
               data={{
                 fileName: tabs.find((t) => t.id === activeFileId)?.name ?? "",
-                code: editorRef?.getValue() ?? "",
+                code:
+                  (isSelected && editorRef?.getSelection()
+                    ? editorRef
+                        ?.getModel()
+                        ?.getValueInRange(editorRef?.getSelection()!)
+                    : editorRef?.getValue()) ?? "",
                 line: generate.line,
               }}
               editor={{
                 language: editorLanguage,
               }}
               onExpand={() => {
+                const line = generate.line
+
                 editorRef?.changeViewZones(function (changeAccessor) {
                   changeAccessor.removeZone(generate.id)
 
                   if (!generateRef.current) return
-                  const id = changeAccessor.addZone({
-                    afterLineNumber: cursorLine,
-                    heightInLines: 12,
-                    domNode: generateRef.current,
-                  })
+                  let id = ""
+                  if (isSelected) {
+                    const selection = editorRef?.getSelection()
+                    if (!selection) return
+                    const isAbove =
+                      generate.pref?.[0] ===
+                      monaco.editor.ContentWidgetPositionPreference.ABOVE
+                    const afterLineNumber = isAbove ? line - 1 : line
+                    id = changeAccessor.addZone({
+                      afterLineNumber,
+                      heightInLines: isAbove?11: 12,
+                      domNode: generateRef.current,
+                    })
+                    const contentWidget= generate.widget
+                    if (contentWidget){
+                      editorRef?.layoutContentWidget(contentWidget)
+                    }
+                  } else {
+                    id = changeAccessor.addZone({
+                      afterLineNumber: cursorLine,
+                      heightInLines: 12,
+
+                      domNode: generateRef.current,
+                    })
+                  }
                   setGenerate((prev) => {
                     return { ...prev, id }
                   })
@@ -680,12 +824,14 @@ export default function CodeEditor({
                     show: !prev.show,
                   }
                 })
-                const file = editorRef?.getValue()
-
-                const lines = file?.split("\n") || []
-                lines.splice(line - 1, 0, code)
-                const updatedFile = lines.join("\n")
-                editorRef?.setValue(updatedFile)
+                const selection = editorRef?.getSelection()
+                const range =
+                  isSelected && selection
+                    ? selection
+                    : new monaco.Range(line, 1, line, 1)
+                editorRef?.executeEdits("ai-generation", [
+                  { range, text: code, forceMoveMarkers: true },
+                ])
               }}
               onClose={() => {
                 setGenerate((prev) => {
@@ -754,58 +900,58 @@ export default function CodeEditor({
                   </div>
                 </>
               ) : // Note clerk.loaded is required here due to a bug: https://github.com/clerk/javascript/issues/1643
-                clerk.loaded ? (
-                  <>
-                    {provider && userInfo ? (
-                      <Cursors yProvider={provider} userInfo={userInfo} />
-                    ) : null}
-                    <Editor
-                      height="100%"
-                      language={editorLanguage}
-                      beforeMount={handleEditorWillMount}
-                      onMount={handleEditorMount}
-                      onChange={(value) => {
-                        if (value === activeFileContent) {
-                          setTabs((prev) =>
-                            prev.map((tab) =>
-                              tab.id === activeFileId
-                                ? { ...tab, saved: true }
-                                : tab
-                            )
+              clerk.loaded ? (
+                <>
+                  {provider && userInfo ? (
+                    <Cursors yProvider={provider} userInfo={userInfo} />
+                  ) : null}
+                  <Editor
+                    height="100%"
+                    language={editorLanguage}
+                    beforeMount={handleEditorWillMount}
+                    onMount={handleEditorMount}
+                    onChange={(value) => {
+                      if (value === activeFileContent) {
+                        setTabs((prev) =>
+                          prev.map((tab) =>
+                            tab.id === activeFileId
+                              ? { ...tab, saved: true }
+                              : tab
                           )
-                        } else {
-                          setTabs((prev) =>
-                            prev.map((tab) =>
-                              tab.id === activeFileId
-                                ? { ...tab, saved: false }
-                                : tab
-                            )
+                        )
+                      } else {
+                        setTabs((prev) =>
+                          prev.map((tab) =>
+                            tab.id === activeFileId
+                              ? { ...tab, saved: false }
+                              : tab
                           )
-                        }
-                      }}
-                      options={{
-                        tabSize: 2,
-                        minimap: {
-                          enabled: false,
-                        },
-                        padding: {
-                          bottom: 4,
-                          top: 4,
-                        },
-                        scrollBeyondLastLine: false,
-                        fixedOverflowWidgets: true,
-                        fontFamily: "var(--font-geist-mono)",
-                      }}
-                      theme="vs-dark"
-                      value={activeFileContent}
-                    />
-                  </>
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-xl font-medium text-muted-foreground/50 select-none">
-                    <Loader2 className="animate-spin w-6 h-6 mr-3" />
-                    Waiting for Clerk to load...
-                  </div>
-                )}
+                        )
+                      }
+                    }}
+                    options={{
+                      tabSize: 2,
+                      minimap: {
+                        enabled: false,
+                      },
+                      padding: {
+                        bottom: 4,
+                        top: 4,
+                      },
+                      scrollBeyondLastLine: false,
+                      fixedOverflowWidgets: true,
+                      fontFamily: "var(--font-geist-mono)",
+                    }}
+                    theme="vs-dark"
+                    value={activeFileContent}
+                  />
+                </>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-xl font-medium text-muted-foreground/50 select-none">
+                  <Loader2 className="animate-spin w-6 h-6 mr-3" />
+                  Waiting for Clerk to load...
+                </div>
+              )}
             </div>
           </ResizablePanel>
           <ResizableHandle />
@@ -825,7 +971,11 @@ export default function CodeEditor({
                   open={() => {
                     usePreview().previewPanelRef.current?.expand()
                     setIsPreviewCollapsed(false)
-                  }} collapsed={isPreviewCollapsed} src={previewURL} ref={previewWindowRef} />
+                  }}
+                  collapsed={isPreviewCollapsed}
+                  src={previewURL}
+                  ref={previewWindowRef}
+                />
               </ResizablePanel>
               <ResizableHandle />
               <ResizablePanel
@@ -849,4 +999,3 @@ export default function CodeEditor({
     </>
   )
 }
-
