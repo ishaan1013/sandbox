@@ -42,13 +42,13 @@ export default function UserButton({ userData }: { userData: User }) {
         <div className="py-1.5 px-2 w-full flex flex-col items-start text-sm">
           <div className="flex items-center">
             <Sparkles className={`h-4 w-4 mr-2 text-indigo-500`} />
-            AI Usage: {userData.generations}/10
+            AI Usage: {userData.generations}/1000
           </div>
           <div className="rounded-full w-full mt-2 h-2 overflow-hidden bg-secondary">
             <div
               className="h-full bg-indigo-500 rounded-full"
               style={{
-                width: `${(userData.generations * 100) / 10}%`,
+                width: `${(userData.generations * 100) / 1000}%`,
               }}
             />
           </div>
