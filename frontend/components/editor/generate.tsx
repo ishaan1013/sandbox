@@ -89,7 +89,7 @@ export default function GenerateInput({
       e.preventDefault()
       handleGenerate({ regenerate: false })
     },
-    []
+    [input, currentPrompt]
   )
 
   useEffect(() => {
