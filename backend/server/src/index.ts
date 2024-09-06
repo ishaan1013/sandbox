@@ -612,7 +612,7 @@ io.on("connection", async (socket) => {
 
           // Generate code from cloudflare workers AI
           const generateCodePromise = fetch(
-            `${process.env.AI_WORKER_URL}/api?fileName=${fileName}&code=${code}&line=${line}&instructions=${instructions}`,
+            `${process.env.AI_WORKER_URL}/api?fileName=${encodeURIComponent(fileName)}&code=${encodeURIComponent(code)}&line=${encodeURIComponent(line)}&instructions=${encodeURIComponent(instructions)}`,
             {
               headers: {
                 "Content-Type": "application/json",
