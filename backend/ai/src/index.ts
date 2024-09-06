@@ -1,43 +1,77 @@
+import { Anthropic } from "@anthropic-ai/sdk";
+
 export interface Env {
-	AI: any
+  ANTHROPIC_API_KEY: string;
 }
 
 export default {
-	async fetch(request, env): Promise<Response> {
-		if (request.method !== "GET") {
-			return new Response("Method Not Allowed", { status: 405 })
-		}
+  async fetch(request: Request, env: Env): Promise<Response> {
+    if (request.method !== "GET") {
+      return new Response("Method Not Allowed", { status: 405 });
+    }
 
-		const url = new URL(request.url)
-		const fileName = url.searchParams.get("fileName")
-		const instructions = url.searchParams.get("instructions")
-		const line = url.searchParams.get("line")
-		const code = url.searchParams.get("code")
+    const url = new URL(request.url);
+    // const fileName = url.searchParams.get("fileName");
+    // const line = url.searchParams.get("line");
+    const instructions = url.searchParams.get("instructions");
+    const code = url.searchParams.get("code");
 
-		const response = await env.AI.run("@cf/meta/llama-3-8b-instruct", {
-			messages: [
-				{
-					role: "system",
-					content:
-						"You are an expert coding assistant. You read code from a file, and you suggest new code to add to the file. You may be given instructions on what to generate, which you should follow. You should generate code that is CORRECT, efficient, and follows best practices. You may generate multiple lines of code if necessary. When you generate code, you should ONLY return the code, and nothing else. You MUST NOT include backticks in the code you generate.",
-				},
-				{
-					role: "user",
-					content: `The file is called ${fileName}.`,
-				},
-				{
-					role: "user",
-					content: `Here are my instructions on what to generate: ${instructions}.`,
-				},
-				{
-					role: "user",
-					content: `Suggest me code to insert at line ${line} in my file. Give only the code, and NOTHING else. DO NOT include backticks in your response. My code file content is as follows 
-          
-${code}`,
-				},
-			],
-		})
+    const prompt = `
+Make the following changes to the code below:
+- ${instructions}
 
-		return new Response(JSON.stringify(response))
-	},
-} satisfies ExportedHandler<Env>
+Return the complete code chunk. Do not refer to other code files. Do not add code before or after the chunk. Start your reponse with \`\`\`, and end with \`\`\`. Do not include any other text.
+
+\`\`\`
+${code}
+\`\`\`
+`;
+console.log(prompt);
+
+    try {
+      const anthropic = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+
+      interface TextBlock {
+        type: "text";
+        text: string;
+      }
+
+      interface ToolUseBlock {
+        type: "tool_use";
+        tool_use: {
+          // Add properties if needed
+        };
+      }
+
+      type ContentBlock = TextBlock | ToolUseBlock;
+
+      function getTextContent(content: ContentBlock[]): string {
+        for (const block of content) {
+          if (block.type === "text") {
+            return block.text;
+          }
+        }
+        return "No text content found";
+      }
+
+      const response = await anthropic.messages.create({
+        model: "claude-3-5-sonnet-20240620",
+        max_tokens: 1024,
+        messages: [{ role: "user", content: prompt }],
+      });
+
+      const message = response.content as ContentBlock[];
+      const textBlockContent = getTextContent(message);
+
+      const pattern = /```[a-zA-Z]*\n([\s\S]*?)\n```/;
+      const match = textBlockContent.match(pattern);
+
+      const codeContent = match ? match[1] : "Error: Could not extract code.";
+
+      return new Response(JSON.stringify({ "response": codeContent }))
+    } catch (error) {
+      console.error("Error:", error);
+      return new Response("Internal Server Error", { status: 500 });
+    }
+  },
+};
