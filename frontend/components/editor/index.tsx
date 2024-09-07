@@ -78,7 +78,6 @@ export default function CodeEditor({
     useState<monaco.editor.IStandaloneCodeEditor>()
 
   // AI Copilot state
-  const [ai, setAi] = useState(false)
   const [generate, setGenerate] = useState<{
     show: boolean
     id: string
@@ -260,15 +259,6 @@ export default function CodeEditor({
   }, [editorRef])
   // Generate widget effect
   useEffect(() => {
-    if (!ai) {
-      setGenerate((prev) => {
-        return {
-          ...prev,
-          show: false,
-        }
-      })
-      return
-    }
     if (generate.show) {
       setShowSuggestion(false)
       editorRef?.changeViewZones(function (changeAccessor) {
@@ -386,8 +376,6 @@ export default function CodeEditor({
     if (decorations.options.length === 0) {
       decorations.instance?.clear()
     }
-
-    if (!ai) return
 
     const model = editorRef?.getModel()
     const line = model?.getLineContent(cursorLine)
@@ -745,7 +733,7 @@ export default function CodeEditor({
         <div ref={generateRef} />
         <div ref={suggestionRef} className="absolute">
           <AnimatePresence>
-            {isSelected && ai && showSuggestion && (
+            {isSelected && showSuggestion && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -761,7 +749,7 @@ export default function CodeEditor({
           </AnimatePresence>
         </div>
         <div className="z-50 p-1" ref={generateWidgetRef}>
-          {generate.show && ai ? (
+          {generate.show ? (
             <GenerateInput
               user={userData}
               socket={socket!}
@@ -857,9 +845,6 @@ export default function CodeEditor({
           setFiles={setFiles}
           addNew={(name, type) => addNew(name, type, setFiles, sandboxData)}
           deletingFolderId={deletingFolderId}
-          // AI Copilot Toggle
-          ai={ai}
-          setAi={setAi}
         />
 
         {/* Shadcn resizeable panels: https://ui.shadcn.com/docs/components/resizable */}

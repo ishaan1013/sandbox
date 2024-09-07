@@ -32,8 +32,6 @@ export default function Sidebar({
   socket,
   setFiles,
   addNew,
-  ai,
-  setAi,
   deletingFolderId,
 }: {
   sandboxData: Sandbox;
@@ -50,8 +48,6 @@ export default function Sidebar({
   socket: Socket;
   setFiles: (files: (TFile | TFolder)[]) => void;
   addNew: (name: string, type: "file" | "folder") => void;
-  ai: boolean;
-  setAi: React.Dispatch<React.SetStateAction<boolean>>;
   deletingFolderId: string;
 }) {
   const ref = useRef(null); // drop target
@@ -186,20 +182,6 @@ export default function Sidebar({
         </div>
       </div>
       <div className="w-full space-y-4">
-        <div className="flex items-center justify-between w-full">
-          <div className="flex items-center">
-            <Sparkles
-              className={`h-4 w-4 mr-2 ${
-                ai ? "text-indigo-500" : "text-muted-foreground"
-              }`}
-            />
-            Copilot{" "}
-            <span className="font-mono text-muted-foreground inline-block ml-1.5 text-xs leading-none border border-b-2 border-muted-foreground py-1 px-1.5 rounded-md">
-              ⌘G
-            </span>
-          </div>
-          <Switch checked={ai} onCheckedChange={setAi} />
-        </div>
         {/* <Button className="w-full">
           <MonitorPlay className="w-4 h-4 mr-2" /> Run
         </Button> */}
