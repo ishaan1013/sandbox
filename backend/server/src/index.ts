@@ -177,7 +177,7 @@ io.on("connection", async (socket) => {
     };
 
     const sandboxFiles = await getSandboxFiles(data.sandboxId);
-    sandboxFiles.fileData.forEach(async (file) => {
+    const promises = sandboxFiles.fileData.map(async (file) => {
       const filePath = path.join(dirName, file.id);
       try {
         await containers[data.sandboxId].files.makeDir(
@@ -188,6 +188,8 @@ io.on("connection", async (socket) => {
       }
       await containers[data.sandboxId].files.write(filePath, file.data);
     });
+    await Promise.all(promises);
+
     fixPermissions();
 
     socket.emit("loaded", sandboxFiles.files);
