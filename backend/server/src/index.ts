@@ -21,7 +21,7 @@ import {
 } from "./fileoperations";
 import { LockManager } from "./utils";
 
-import { Sandbox, Filesystem } from "e2b";
+import { Sandbox, Filesystem, FilesystemEvent } from "e2b";
 
 import { Terminal } from "./Terminal"
 
@@ -170,9 +170,9 @@ io.on("connection", async (socket) => {
     });
 
     // Change the owner of the project directory to user
-    const fixPermissions = async () => {
+    const fixPermissions = async (projectDirectory: string) => {
       await containers[data.sandboxId].commands.run(
-        `sudo chown -R user "${path.join(dirName, "projects", data.sandboxId)}"`
+        `sudo chown -R user "${projectDirectory}"`
       );
     };
 
@@ -193,7 +193,26 @@ io.on("connection", async (socket) => {
     });
     await Promise.all(promises);
 
-    fixPermissions();
+    const projectDirectory = path.join(dirName, "projects", data.sandboxId);
+
+    // Make the logged in user the owner of all project files
+    fixPermissions(projectDirectory);
+
+    // Start filesystem watcher for the /home directory
+    containerFiles.watch(projectDirectory, (event: FilesystemEvent) => {
+      const filePath = path.join(projectDirectory, event.name);
+      if (event.type === "create") {
+        sandboxFiles.files.push({
+          id: filePath,
+          name: event.name,
+          type: "file",
+        });
+        console.log(`Create ${filePath}`);
+      } else if (event.type === "remove") {
+        console.log(`Remove ${filePath}`);
+      }
+      socket.emit("loaded", sandboxFiles.files);
+    });
 
     socket.emit("loaded", sandboxFiles.files);
 
@@ -248,7 +267,7 @@ io.on("connection", async (socket) => {
           path.join(dirName, file.id),
           body
         );
-        fixPermissions();
+        fixPermissions(projectDirectory);
       } catch (e: any) {
         console.error("Error saving file:", e);
         io.emit("error", `Error: file saving. ${e.message ?? e}`);
@@ -270,7 +289,7 @@ io.on("connection", async (socket) => {
             path.join(dirName, fileId),
             path.join(dirName, newFileId)
           );
-          fixPermissions();
+          fixPermissions(projectDirectory);
 
           file.id = newFileId;
 
@@ -363,7 +382,7 @@ io.on("connection", async (socket) => {
           path.join(dirName, id),
           ""
         );
-        fixPermissions();
+        fixPermissions(projectDirectory);
 
         sandboxFiles.files.push({
           id,
@@ -429,7 +448,7 @@ io.on("connection", async (socket) => {
           path.join(dirName, fileId),
           path.join(dirName, newFileId)
         );
-        fixPermissions();
+        fixPermissions(projectDirectory);
         await renameFile(fileId, newFileId, file.data);
       } catch (e: any) {
         console.error("Error renaming folder:", e);
