@@ -176,17 +176,20 @@ io.on("connection", async (socket) => {
       );
     };
 
+    // Copy all files from the project to the container
     const sandboxFiles = await getSandboxFiles(data.sandboxId);
+    const containerFiles = containers[data.sandboxId].files;
     const promises = sandboxFiles.fileData.map(async (file) => {
-      const filePath = path.join(dirName, file.id);
       try {
-        await containers[data.sandboxId].files.makeDir(
-          path.dirname(filePath)
-        );
+        const filePath = path.join(dirName, file.id);
+        const parentDirectory = path.dirname(filePath);
+        if (!containerFiles.exists(parentDirectory)) {
+          await containerFiles.makeDir(parentDirectory);
+        }
+        await containerFiles.write(filePath, file.data);
       } catch (e: any) {
-        console.log("Failed to create directory: " + e);
+        console.log("Failed to create file: " + e);
       }
-      await containers[data.sandboxId].files.write(filePath, file.data);
     });
     await Promise.all(promises);
 
