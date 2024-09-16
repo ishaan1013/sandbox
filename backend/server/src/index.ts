@@ -172,7 +172,7 @@ io.on("connection", async (socket) => {
     // Change the owner of the project directory to user
     const fixPermissions = async () => {
       await containers[data.sandboxId].commands.run(
-        `sudo chown -R user "${path.join(dirName, "projects", data.sandboxId)}"`
+        `sudo chown -R user "${path.posix.join(dirName, "projects", data.sandboxId)}"`
       );
     };
 
@@ -181,7 +181,7 @@ io.on("connection", async (socket) => {
     const containerFiles = containers[data.sandboxId].files;
     const promises = sandboxFiles.fileData.map(async (file) => {
       try {
-        const filePath = path.join(dirName, file.id);
+        const filePath = path.posix.join(dirName, file.id);
         const parentDirectory = path.dirname(filePath);
         if (!containerFiles.exists(parentDirectory)) {
           await containerFiles.makeDir(parentDirectory);
@@ -245,7 +245,7 @@ io.on("connection", async (socket) => {
         file.data = body;
 
         await containers[data.sandboxId].files.write(
-          path.join(dirName, file.id),
+          path.posix.join(dirName, file.id),
           body
         );
         fixPermissions();
@@ -267,8 +267,8 @@ io.on("connection", async (socket) => {
 
           await moveFile(
             containers[data.sandboxId].files,
-            path.join(dirName, fileId),
-            path.join(dirName, newFileId)
+            path.posix.join(dirName, fileId),
+            path.posix.join(dirName, newFileId)
           );
           fixPermissions();
 
@@ -360,7 +360,7 @@ io.on("connection", async (socket) => {
         const id = `projects/${data.sandboxId}/${name}`;
 
         await containers[data.sandboxId].files.write(
-          path.join(dirName, id),
+          path.posix.join(dirName, id),
           ""
         );
         fixPermissions();
@@ -397,7 +397,7 @@ io.on("connection", async (socket) => {
         const id = `projects/${data.sandboxId}/${name}`;
 
         await containers[data.sandboxId].files.makeDir(
-          path.join(dirName, id)
+          path.posix.join(dirName, id)
         );
 
         callback();
@@ -426,8 +426,8 @@ io.on("connection", async (socket) => {
 
         await moveFile(
           containers[data.sandboxId].files,
-          path.join(dirName, fileId),
-          path.join(dirName, newFileId)
+          path.posix.join(dirName, fileId),
+          path.posix.join(dirName, newFileId)
         );
         fixPermissions();
         await renameFile(fileId, newFileId, file.data);
@@ -449,7 +449,7 @@ io.on("connection", async (socket) => {
         if (!file) return;
 
         await containers[data.sandboxId].files.remove(
-          path.join(dirName, fileId)
+          path.posix.join(dirName, fileId)
         );
         sandboxFiles.fileData = sandboxFiles.fileData.filter(
           (f) => f.id !== fileId
@@ -476,7 +476,7 @@ io.on("connection", async (socket) => {
         await Promise.all(
           files.map(async (file) => {
             await containers[data.sandboxId].files.remove(
-              path.join(dirName, file)
+              path.posix.join(dirName, file)
             );
 
             sandboxFiles.fileData = sandboxFiles.fileData.filter(
@@ -532,7 +532,7 @@ io.on("connection", async (socket) => {
               //onExit: () => console.log("Terminal exited", id),
             });
 
-            const defaultDirectory = path.join(dirName, "projects", data.sandboxId);
+            const defaultDirectory = path.posix.join(dirName, "projects", data.sandboxId);
             const defaultCommands = [
               `cd "${defaultDirectory}"`,
               "export PS1='user> '",

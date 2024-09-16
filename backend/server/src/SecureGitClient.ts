@@ -22,13 +22,13 @@ export class SecureGitClient {
 
     try {
       // Create a temporary directory
-      tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'git-push-'));
+      tempDir = fs.mkdtempSync(path.posix.join(os.tmpdir(), 'git-push-'));
       console.log(`Temporary directory created: ${tempDir}`);
 
       // Write files to the temporary directory
       console.log(`Writing ${fileData.length} files.`);
       for (const { id, data } of fileData) {
-        const filePath = path.join(tempDir, id);
+        const filePath = path.posix.join(tempDir, id);
         const dirPath = path.dirname(filePath);
       
         if (!fs.existsSync(dirPath)) {
