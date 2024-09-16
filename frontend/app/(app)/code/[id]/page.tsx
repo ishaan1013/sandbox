@@ -6,6 +6,7 @@ import { notFound, redirect } from "next/navigation"
 import Loading from "@/components/editor/loading"
 import dynamic from "next/dynamic"
 import fs from "fs"
+import { TerminalProvider } from "@/context/TerminalContext"
 
 export const revalidate = 0
 
@@ -87,8 +88,10 @@ export default async function CodePage({ params }: { params: { id: string } }) {
   }
 
   return (
+    <>
     <div className="overflow-hidden overscroll-none w-screen flex flex-col h-screen bg-background">
       <Room id={sandboxId}>
+      <TerminalProvider>
         <Navbar userData={userData} sandboxData={sandboxData} shared={shared} />
         <div className="w-screen flex grow">
           <CodeEditor
@@ -96,7 +99,9 @@ export default async function CodePage({ params }: { params: { id: string } }) {
             sandboxData={sandboxData}
           />
         </div>
+      </TerminalProvider>
       </Room>
     </div>
+    </>
   )
 }

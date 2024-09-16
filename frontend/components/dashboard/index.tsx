@@ -51,7 +51,7 @@ export default function Dashboard({
 
   useEffect(() => { // update the dashboard to show a new project
       router.refresh() 
-  }, [sandboxes])
+  }, [])
 
   return (
     <>
