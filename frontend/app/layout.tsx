@@ -6,7 +6,6 @@ import { ThemeProvider } from "@/components/layout/themeProvider"
 import { ClerkProvider } from "@clerk/nextjs"
 import { Toaster } from "@/components/ui/sonner"
 import { Analytics } from "@vercel/analytics/react"
-import { TerminalProvider } from '@/context/TerminalContext';
 import { PreviewProvider } from "@/context/PreviewContext";
 import { SocketProvider } from '@/context/SocketContext'
 
@@ -32,9 +31,7 @@ export default function RootLayout({
           >
             <SocketProvider>
             <PreviewProvider>
-            <TerminalProvider>
             {children}
-            </TerminalProvider>
             </PreviewProvider>
             </SocketProvider>
             <Analytics />
