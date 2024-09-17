@@ -159,8 +159,9 @@ io.on("connection", async (socket) => {
 
     await lockManager.acquireLock(data.sandboxId, async () => {
       try {
-        if (!containers[data.sandboxId]) {
-          containers[data.sandboxId] = await Sandbox.create({ timeoutMs: 1200000 });
+        // Start a new container if the container doesn't exist or it timed out.
+        if (!containers[data.sandboxId] || !(await containers[data.sandboxId].isRunning())) {
+          containers[data.sandboxId] = await Sandbox.create({ timeoutMs: 1200_000 });
           console.log("Created container ", data.sandboxId);
         }
       } catch (e: any) {
