@@ -71,7 +71,7 @@ const data: {
     icon: "/project-icons/python.svg",
     description: "A JavaScript runtime built on the V8 JavaScript engine",
     disabled: false,
-  }
+  },
 ]
 
 const formSchema = z.object({
@@ -124,7 +124,7 @@ export default function NewProjectModal({
         if (!loading) setOpen(open)
       }}
     >
-      <DialogContent>
+      <DialogContent className="max-h-[95vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create A Sandbox</DialogTitle>
         </DialogHeader>
