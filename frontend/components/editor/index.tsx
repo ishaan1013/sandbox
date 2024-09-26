@@ -35,6 +35,8 @@ import { PreviewProvider, usePreview } from "@/context/PreviewContext"
 import { useSocket } from "@/context/SocketContext"
 import { Button } from "../ui/button"
 import React from "react"
+import { parseTSConfigToMonacoOptions } from "@/lib/tsconfig"
+import { deepMerge } from "@/lib/utils"
 
 export default function CodeEditor({
   userData,
@@ -154,9 +156,78 @@ export default function CodeEditor({
   }
 
   // Post-mount editor keybindings and actions
-  const handleEditorMount: OnMount = (editor, monaco) => {
+  const handleEditorMount: OnMount = async (editor, monaco) => {
     setEditorRef(editor)
     monacoRef.current = monaco
+    /**
+     * Sync all the models to the worker eagerly.
+     * This enables intelliSense for all files without needing an `addExtraLib` call.
+     */
+    monaco.languages.typescript.typescriptDefaults.setEagerModelSync(true)
+    monaco.languages.typescript.javascriptDefaults.setEagerModelSync(true)
+
+    monaco.languages.typescript.typescriptDefaults.setCompilerOptions(
+      defaultCompilerOptions
+    )
+    monaco.languages.typescript.javascriptDefaults.setCompilerOptions(
+      defaultCompilerOptions
+    )
+    const fetchFileContent = (fileId: string): Promise<string> => {
+      return new Promise((resolve) => {
+        socket?.emit("getFile", fileId, (content: string) => {
+          resolve(content)
+        })
+      })
+    }
+    const loadTSConfig = async (files: (TFolder | TFile)[]) => {
+      const tsconfigFiles = files.filter((file) =>
+        file.name.endsWith("tsconfig.json")
+      )
+      let mergedConfig: any = { compilerOptions: {} }
+
+      for (const file of tsconfigFiles) {
+        const containerId = file.id.split("/").slice(0, 2).join("/")
+        const content = await fetchFileContent(file.id)
+
+        try {
+          let tsConfig = JSON.parse(content)
+
+          // Handle references
+          if (tsConfig.references) {
+            for (const ref of tsConfig.references) {
+              const path = ref.path.replace("./", "")
+              const fileId = `${containerId}/${path}`
+              const refContent = await fetchFileContent(fileId)
+              const referenceTsConfig = JSON.parse(refContent)
+
+              // Merge configurations
+              mergedConfig = deepMerge(mergedConfig, referenceTsConfig)
+            }
+          }
+
+          // Merge current file's config
+          mergedConfig = deepMerge(mergedConfig, tsConfig)
+        } catch (error) {
+          console.error("Error parsing TSConfig:", error)
+        }
+      }
+      // Apply merged compiler options
+      if (mergedConfig.compilerOptions) {
+        const updatedOptions = parseTSConfigToMonacoOptions({
+          ...defaultCompilerOptions,
+          ...mergedConfig.compilerOptions,
+        })
+        monaco.languages.typescript.typescriptDefaults.setCompilerOptions(
+          updatedOptions
+        )
+        monaco.languages.typescript.javascriptDefaults.setCompilerOptions(
+          updatedOptions
+        )
+      }
+    }
+
+    // Call the function with your file structure
+    await loadTSConfig(files)
 
     editor.onDidChangeCursorPosition((e) => {
       setIsSelected(false)
@@ -784,11 +855,11 @@ export default function CodeEditor({
                     const afterLineNumber = isAbove ? line - 1 : line
                     id = changeAccessor.addZone({
                       afterLineNumber,
-                      heightInLines: isAbove?11: 12,
+                      heightInLines: isAbove ? 11 : 12,
                       domNode: generateRef.current,
                     })
-                    const contentWidget= generate.widget
-                    if (contentWidget){
+                    const contentWidget = generate.widget
+                    if (contentWidget) {
                       editorRef?.layoutContentWidget(contentWidget)
                     }
                   } else {
@@ -983,4 +1054,19 @@ export default function CodeEditor({
       </PreviewProvider>
     </>
   )
+}
+
+/**
+ * Configure the typescript compiler to detect JSX and load type definitions
+ */
+const defaultCompilerOptions: monaco.languages.typescript.CompilerOptions = {
+  allowJs: true,
+  allowSyntheticDefaultImports: true,
+  allowNonTsExtensions: true,
+  resolveJsonModule: true,
+
+  jsx: monaco.languages.typescript.JsxEmit.ReactJSX,
+  module: monaco.languages.typescript.ModuleKind.ESNext,
+  moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
+  target: monaco.languages.typescript.ScriptTarget.ESNext,
 }

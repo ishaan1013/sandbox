@@ -1,18 +1,20 @@
-"use client";
+"use client"
 
-import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
-import { getIconForFolder, getIconForOpenFolder } from "vscode-icons-js";
-import { TFile, TFolder, TTab } from "@/lib/types";
-import SidebarFile from "./file";
+import Image from "next/image"
+import { useEffect, useRef, useState } from "react"
+import { getIconForFolder, getIconForOpenFolder } from "vscode-icons-js"
+import { TFile, TFolder, TTab } from "@/lib/types"
+import SidebarFile from "./file"
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
-} from "@/components/ui/context-menu";
-import { Loader2, Pencil, Trash2 } from "lucide-react";
-import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+} from "@/components/ui/context-menu"
+import { ChevronRight, Loader2, Pencil, Trash2 } from "lucide-react"
+import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter"
+import { cn } from "@/lib/utils"
+import { motion, AnimatePresence } from "framer-motion"
 
 // Note: Renaming has not been implemented in the backend yet, so UI relating to renaming is commented out
 
@@ -25,27 +27,27 @@ export default function SidebarFolder({
   movingId,
   deletingFolderId,
 }: {
-  data: TFolder;
-  selectFile: (file: TTab) => void;
+  data: TFolder
+  selectFile: (file: TTab) => void
   handleRename: (
     id: string,
     newName: string,
     oldName: string,
     type: "file" | "folder"
-  ) => boolean;
-  handleDeleteFile: (file: TFile) => void;
-  handleDeleteFolder: (folder: TFolder) => void;
-  movingId: string;
-  deletingFolderId: string;
+  ) => boolean
+  handleDeleteFile: (file: TFile) => void
+  handleDeleteFolder: (folder: TFolder) => void
+  movingId: string
+  deletingFolderId: string
 }) {
-  const ref = useRef(null); // drop target
-  const [isDraggedOver, setIsDraggedOver] = useState(false);
+  const ref = useRef(null) // drop target
+  const [isDraggedOver, setIsDraggedOver] = useState(false)
 
   const isDeleting =
-    deletingFolderId.length > 0 && data.id.startsWith(deletingFolderId);
+    deletingFolderId.length > 0 && data.id.startsWith(deletingFolderId)
 
   useEffect(() => {
-    const el = ref.current;
+    const el = ref.current
 
     if (el)
       return dropTargetForElements({
@@ -67,17 +69,17 @@ export default function SidebarFolder({
 
         // no dropping while awaiting move
         canDrop: () => {
-          return !movingId;
+          return !movingId
         },
-      });
-  }, []);
+      })
+  }, [])
 
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false)
   const folder = isOpen
     ? getIconForOpenFolder(data.name)
-    : getIconForFolder(data.name);
+    : getIconForFolder(data.name)
 
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null)
   // const [editing, setEditing] = useState(false);
 
   // useEffect(() => {
@@ -96,6 +98,12 @@ export default function SidebarFolder({
           isDraggedOver ? "bg-secondary/50 rounded-t-sm" : "rounded-sm"
         } w-full flex items-center h-7 px-1 transition-colors hover:bg-secondary cursor-pointer`}
       >
+        <ChevronRight
+          className={cn(
+            "min-w-3 min-h-3 mr-1 ml-auto transition-all duration-300",
+            isOpen ? "transform rotate-90" : ""
+          )}
+        />
         <Image
           src={`/icons/${folder}`}
           alt="Folder icon"
@@ -149,48 +157,65 @@ export default function SidebarFolder({
         <ContextMenuItem
           disabled={isDeleting}
           onClick={() => {
-            handleDeleteFolder(data);
+            handleDeleteFolder(data)
           }}
         >
           <Trash2 className="w-4 h-4 mr-2" />
           Delete
         </ContextMenuItem>
       </ContextMenuContent>
-      {isOpen ? (
-        <div
-          className={`flex w-full items-stretch ${
-            isDraggedOver ? "rounded-b-sm bg-secondary/50" : ""
-          }`}
-        >
-          <div className="w-[1px] bg-border mx-2 h-full"></div>
-          <div className="flex flex-col grow">
-            {data.children.map((child) =>
-              child.type === "file" ? (
-                <SidebarFile
-                  key={child.id}
-                  data={child}
-                  selectFile={selectFile}
-                  handleRename={handleRename}
-                  handleDeleteFile={handleDeleteFile}
-                  movingId={movingId}
-                  deletingFolderId={deletingFolderId}
-                />
-              ) : (
-                <SidebarFolder
-                  key={child.id}
-                  data={child}
-                  selectFile={selectFile}
-                  handleRename={handleRename}
-                  handleDeleteFile={handleDeleteFile}
-                  handleDeleteFolder={handleDeleteFolder}
-                  movingId={movingId}
-                  deletingFolderId={deletingFolderId}
-                />
-              )
-            )}
-          </div>
-        </div>
-      ) : null}
+      <AnimatePresence>
+        {isOpen ? (
+          <motion.div
+            className="overflow-y-hidden"
+            initial={{
+              height: 0,
+              opacity: 0,
+            }}
+            animate={{
+              height: "auto",
+              opacity: 1,
+            }}
+            exit={{
+              height: 0,
+              opacity: 0,
+            }}
+          >
+            <div
+              className={cn(
+                isDraggedOver ? "rounded-b-sm bg-secondary/50" : ""
+              )}
+            >
+              <div className="flex flex-col grow ml-2 pl-2 border-l border-border">
+                {data.children.map((child) =>
+                  child.type === "file" ? (
+                    <SidebarFile
+                      key={child.id}
+                      data={child}
+                      selectFile={selectFile}
+                      handleRename={handleRename}
+                      handleDeleteFile={handleDeleteFile}
+                      movingId={movingId}
+                      deletingFolderId={deletingFolderId}
+                    />
+                  ) : (
+                    <SidebarFolder
+                      key={child.id}
+                      data={child}
+                      selectFile={selectFile}
+                      handleRename={handleRename}
+                      handleDeleteFile={handleDeleteFile}
+                      handleDeleteFolder={handleDeleteFolder}
+                      movingId={movingId}
+                      deletingFolderId={deletingFolderId}
+                    />
+                  )
+                )}
+              </div>
+            </div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </ContextMenu>
-  );
+  )
 }

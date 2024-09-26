@@ -8,6 +8,7 @@ import { Clock, Globe, Lock } from "lucide-react"
 import { Sandbox } from "@/lib/types"
 import { Card } from "@/components/ui/card"
 import { useRouter } from "next/navigation"
+import { projectTemplates } from "@/lib/data"
 
 export default function ProjectCard({
   children,
@@ -43,7 +44,9 @@ export default function ProjectCard({
       setDate(`${Math.floor(diffInMinutes / 1440)}d ago`)
     }
   }, [sandbox])
-
+  const projectIcon =
+    projectTemplates.find((p) => p.id === sandbox.type)?.icon ??
+    "/project-icons/node.svg"
   return (
     <Card
       tabIndex={0}
@@ -65,16 +68,7 @@ export default function ProjectCard({
       </AnimatePresence>
 
       <div className="space-x-2 flex items-center justify-start w-full z-10">
-        <Image
-          alt=""
-          src={
-            sandbox.type === "react"
-              ? "/project-icons/react.svg"
-              : "/project-icons/node.svg"
-          }
-          width={20}
-          height={20}
-        />
+        <Image alt="" src={projectIcon} width={20} height={20} />
         <div className="font-medium static whitespace-nowrap w-full text-ellipsis overflow-hidden">
           {sandbox.name}
         </div>
