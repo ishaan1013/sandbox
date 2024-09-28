@@ -79,6 +79,8 @@ export default function CodeEditor({
   const [activeFileId, setActiveFileId] = useState<string>("")
   const [activeFileContent, setActiveFileContent] = useState("")
   const [deletingFolderId, setDeletingFolderId] = useState("")
+  // Added this state to track the most recent content for each file
+  const [fileContents, setFileContents] = useState<Record<string, string>>({});
 
   // Editor state
   const [editorLanguage, setEditorLanguage] = useState("plaintext")
@@ -335,6 +337,7 @@ export default function CodeEditor({
       }
     })
   }, [editorRef])
+
   // Generate widget effect
   useEffect(() => {
     if (generate.show) {
@@ -413,6 +416,7 @@ export default function CodeEditor({
       })
     }
   }, [generate.show])
+  
   // Suggestion widget effect
   useEffect(() => {
     if (!suggestionRef.current || !editorRef) return
@@ -456,11 +460,20 @@ export default function CodeEditor({
     }
 
     const model = editorRef?.getModel()
-    const line = model?.getLineContent(cursorLine)
-
-    if (line === undefined || line.trim() !== "") {
-      decorations.instance?.clear()
-      return
+    // added this because it was giving client side exception - Illegal value for lineNumber when opening an empty file
+    if (model) {
+      const totalLines = model.getLineCount();
+      // Check if the cursorLine is a valid number, If cursorLine is out of bounds, we fall back to 1 (the first line) as a default safe value.
+      const lineNumber = cursorLine > 0 && cursorLine <= totalLines ? cursorLine : 1; // fallback to a valid line number
+      // If for some reason the content doesn't exist, we use an empty string as a fallback.
+      const line = model.getLineContent(lineNumber) ?? "";
+      // Check if the line is not empty or only whitespace (i.e., `.trim()` removes spaces).
+      // If the line has content, we clear any decorations using the instance of the `decorations` object.
+      // Decorations refer to editor highlights, underlines, or markers, so this clears those if conditions are met.
+      if (line.trim() !== "") {
+        decorations.instance?.clear();
+        return
+      }
     }
 
     if (decorations.instance) {
@@ -479,25 +492,33 @@ export default function CodeEditor({
   }, [decorations.options])
 
   // Save file keybinding logic effect
+  // Function to save the file content after a debounce period
   const debouncedSaveData = useCallback(
-    debounce((value: string | undefined, activeFileId: string | undefined) => {
-      setTabs((prev) =>
-        prev.map((tab) =>
-          tab.id === activeFileId ? { ...tab, saved: true } : tab
-        )
-      )
-      console.log(`Saving file...${activeFileId}`)
-      console.log(`Saving file...${value}`)
-      socket?.emit("saveFile", activeFileId, value)
-    }, Number(process.env.FILE_SAVE_DEBOUNCE_DELAY) || 1000),
-    [socket]
-  )
+    debounce((activeFileId: string | undefined) => {
+      if (activeFileId) {
+        // Get the current content of the file
+        const content = fileContents[activeFileId];
 
+        // Mark the file as saved in the tabs
+        setTabs((prev) =>
+          prev.map((tab) =>
+            tab.id === activeFileId ? { ...tab, saved: true } : tab
+          )
+        );
+        console.log(`Saving file...${activeFileId}`);
+        console.log(`Saving file...${content}`);
+        socket?.emit("saveFile", activeFileId, content);
+      }
+    }, Number(process.env.FILE_SAVE_DEBOUNCE_DELAY) || 1000),
+    [socket, fileContents]
+  );
+
+  // Keydown event listener to trigger file save on Ctrl+S or Cmd+S
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.key === "s" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault()
-        debouncedSaveData(editorRef?.getValue(), activeFileId)
+        debouncedSaveData(activeFileId);
       }
     }
     document.addEventListener("keydown", down)
@@ -594,7 +615,7 @@ export default function CodeEditor({
 
   // Socket event listener effect
   useEffect(() => {
-    const onConnect = () => {}
+    const onConnect = () => { }
 
     const onDisconnect = () => {
       setTerminals([])
@@ -664,31 +685,46 @@ export default function CodeEditor({
   } // 300ms debounce delay, adjust as needed
 
   const selectFile = (tab: TTab) => {
-    if (tab.id === activeFileId) return
-
-    setGenerate((prev) => ({ ...prev, show: false }))
-
-    const exists = tabs.find((t) => t.id === tab.id)
+    if (tab.id === activeFileId) return;
+  
+    setGenerate((prev) => ({ ...prev, show: false }));
+  
+    // Check if the tab already exists in the list of open tabs
+    const exists = tabs.find((t) => t.id === tab.id);
     setTabs((prev) => {
       if (exists) {
-        setActiveFileId(exists.id)
-        return prev
+        // If the tab exists, make it the active tab
+        setActiveFileId(exists.id);
+        return prev;
       }
-      return [...prev, tab]
-    })
-
-    if (fileCache.current.has(tab.id)) {
-      setActiveFileContent(fileCache.current.get(tab.id))
+      // If the tab doesn't exist, add it to the list of tabs and make it active
+      return [...prev, tab];
+    });
+  
+    // If the file's content is already cached, set it as the active content
+    if (fileContents[tab.id]) {
+      setActiveFileContent(fileContents[tab.id]);
     } else {
-      debouncedGetFile(tab.id, (response: SetStateAction<string>) => {
-        fileCache.current.set(tab.id, response)
-        setActiveFileContent(response)
-      })
+      // Otherwise, fetch the content of the file and cache it
+      debouncedGetFile(tab.id, (response: string) => {
+        setFileContents(prev => ({ ...prev, [tab.id]: response }));
+        setActiveFileContent(response);
+      });
     }
+  
+    // Set the editor language based on the file type
+    setEditorLanguage(processFileType(tab.name));
+    // Set the active file ID to the new tab
+    setActiveFileId(tab.id);
+  };
 
-    setEditorLanguage(processFileType(tab.name))
-    setActiveFileId(tab.id)
-  }
+  // Added this effect to update fileContents when the editor content changes
+  useEffect(() => {
+    if (activeFileId) {
+      // Cache the current active file content using the file ID as the key
+      setFileContents(prev => ({ ...prev, [activeFileId]: activeFileContent }));
+    }
+  }, [activeFileContent, activeFileId]);
 
   // Close tab and remove from tabs
   const closeTab = (id: string) => {
@@ -704,8 +740,8 @@ export default function CodeEditor({
         ? numTabs === 1
           ? null
           : index < numTabs - 1
-          ? tabs[index + 1].id
-          : tabs[index - 1].id
+            ? tabs[index + 1].id
+            : tabs[index - 1].id
         : activeFileId
 
     setTabs((prev) => prev.filter((t) => t.id !== id))
@@ -798,11 +834,24 @@ export default function CodeEditor({
         <DisableAccessModal
           message={disableAccess.message}
           open={disableAccess.isDisabled}
-          setOpen={() => {}}
+          setOpen={() => { }}
         />
         <Loading />
       </>
     )
+
+    useEffect(() => {
+      console.log('Editor mounted');
+      return () => console.log('Editor unmounted');
+    }, []);
+    
+    useEffect(() => {
+      console.log('activeFileContent changed:');
+    }, [activeFileContent]);
+    
+    useEffect(() => {
+      console.log('activeFileId changed:');
+    }, [activeFileId]);
 
   return (
     <>
@@ -837,8 +886,8 @@ export default function CodeEditor({
                 code:
                   (isSelected && editorRef?.getSelection()
                     ? editorRef
-                        ?.getModel()
-                        ?.getValueInRange(editorRef?.getSelection()!)
+                      ?.getModel()
+                      ?.getValueInRange(editorRef?.getSelection()!)
                     : editorRef?.getValue()) ?? "",
                 line: generate.line,
               }}
@@ -963,58 +1012,62 @@ export default function CodeEditor({
                   </div>
                 </>
               ) : // Note clerk.loaded is required here due to a bug: https://github.com/clerk/javascript/issues/1643
-              clerk.loaded ? (
-                <>
-                  {provider && userInfo ? (
-                    <Cursors yProvider={provider} userInfo={userInfo} />
-                  ) : null}
-                  <Editor
-                    height="100%"
-                    language={editorLanguage}
-                    beforeMount={handleEditorWillMount}
-                    onMount={handleEditorMount}
-                    onChange={(value) => {
-                      if (value === activeFileContent) {
-                        setTabs((prev) =>
-                          prev.map((tab) =>
-                            tab.id === activeFileId
-                              ? { ...tab, saved: true }
-                              : tab
+                clerk.loaded ? (
+                  <>
+                    {provider && userInfo ? (
+                      <Cursors yProvider={provider} userInfo={userInfo} />
+                    ) : null}
+                    <Editor
+                      height="100%"
+                      language={editorLanguage}
+                      beforeMount={handleEditorWillMount}
+                      onMount={handleEditorMount}
+                      onChange={(value) => {
+                        // If the new content is different from the cached content, update it
+                        if (value !== fileContents[activeFileId]) {
+                            setActiveFileContent(value ?? ""); // Update the active file content
+                          // Mark the file as unsaved by setting 'saved' to false
+                          setTabs((prev) =>
+                            prev.map((tab) =>
+                              tab.id === activeFileId
+                                ? { ...tab, saved: false }
+                                : tab
+                            )
                           )
-                        )
-                      } else {
-                        setTabs((prev) =>
-                          prev.map((tab) =>
-                            tab.id === activeFileId
-                              ? { ...tab, saved: false }
-                              : tab
+                        } else {
+                          // If the content matches the cached content, mark the file as saved
+                          setTabs((prev) =>
+                            prev.map((tab) =>
+                              tab.id === activeFileId
+                                ? { ...tab, saved: true }
+                                : tab
+                            )
                           )
-                        )
-                      }
-                    }}
-                    options={{
-                      tabSize: 2,
-                      minimap: {
-                        enabled: false,
-                      },
-                      padding: {
-                        bottom: 4,
-                        top: 4,
-                      },
-                      scrollBeyondLastLine: false,
-                      fixedOverflowWidgets: true,
-                      fontFamily: "var(--font-geist-mono)",
-                    }}
-                    theme="vs-dark"
-                    value={activeFileContent}
-                  />
-                </>
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-xl font-medium text-muted-foreground/50 select-none">
-                  <Loader2 className="animate-spin w-6 h-6 mr-3" />
-                  Waiting for Clerk to load...
-                </div>
-              )}
+                        }
+                      }}
+                      options={{
+                        tabSize: 2,
+                        minimap: {
+                          enabled: false,
+                        },
+                        padding: {
+                          bottom: 4,
+                          top: 4,
+                        },
+                        scrollBeyondLastLine: false,
+                        fixedOverflowWidgets: true,
+                        fontFamily: "var(--font-geist-mono)",
+                      }}
+                      theme="vs-dark"
+                      value={activeFileContent}
+                    />
+                  </>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-xl font-medium text-muted-foreground/50 select-none">
+                    <Loader2 className="animate-spin w-6 h-6 mr-3" />
+                    Waiting for Clerk to load...
+                  </div>
+                )}
             </div>
           </ResizablePanel>
           <ResizableHandle />
