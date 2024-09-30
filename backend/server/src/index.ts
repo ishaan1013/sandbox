@@ -239,9 +239,9 @@ io.on("connection", async (socket) => {
     }
 
     // Start filesystem watcher for the project directory
-    const watchDirectory = (directory: string) => {
+    const watchDirectory = async (directory: string) => {
       try {
-        containerFiles.watch(directory, async (event: FilesystemEvent) => {
+        await containerFiles.watch(directory, async (event: FilesystemEvent) => {
           try {
 
             function removeDirName(path : string, dirName : string) {
@@ -340,17 +340,17 @@ io.on("connection", async (socket) => {
     };
 
     // Watch the project directory
-    watchDirectory(projectDirectory);
+    await watchDirectory(projectDirectory);
 
     // Watch all subdirectories of the project directory, but not deeper
     // This also means directories created after the container is created won't be watched
     const dirContent = await containerFiles.list(projectDirectory);
-    dirContent.forEach((item : EntryInfo) => {
+    await Promise.all(dirContent.map(async (item : EntryInfo) => {
       if (item.type === "dir") {
         console.log("Watching " + item.path);
-        watchDirectory(item.path);
+        await watchDirectory(item.path);
       }
-    })
+    }))
   
     socket.emit("loaded", sandboxFiles.files);
 
