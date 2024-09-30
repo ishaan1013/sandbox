@@ -57,6 +57,13 @@ export default function CodeEditor({
     }
   }, [socket, userData.id, sandboxData.id, setUserAndSandboxId])
 
+  // This heartbeat is critical to preventing the E2B sandbox from timing out
+  useEffect(() => {
+    // 10000 ms = 10 seconds
+    const interval = setInterval(() => socket?.emit("heartbeat"), 10000);
+    return () => clearInterval(interval);
+  }, [socket]);
+
   //Preview Button state
   const [isPreviewCollapsed, setIsPreviewCollapsed] = useState(true)
   const [disableAccess, setDisableAccess] = useState({

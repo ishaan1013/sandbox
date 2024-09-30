@@ -51,6 +51,9 @@ process.on('unhandledRejection', (reason, promise) => {
   // You can also handle the rejected promise here if needed
 });
 
+// The amount of time in ms that a container will stay alive without a hearbeat.
+const CONTAINER_TIMEOUT = 60_000;
+
 dotenv.config();
 
 const app: Express = express();
@@ -178,7 +181,7 @@ io.on("connection", async (socket) => {
       try {
         // Start a new container if the container doesn't exist or it timed out.
         if (!containers[data.sandboxId] || !(await containers[data.sandboxId].isRunning())) {
-          containers[data.sandboxId] = await Sandbox.create({ timeoutMs: 1200_000 });
+          containers[data.sandboxId] = await Sandbox.create({ timeoutMs: CONTAINER_TIMEOUT });
           console.log("Created container ", data.sandboxId);
           return true;
         }
@@ -354,6 +357,17 @@ io.on("connection", async (socket) => {
     }))
   
     socket.emit("loaded", sandboxFiles.files);
+
+    socket.on("heartbeat", async () => {
+      try {
+        // This keeps the container alive for another CONTAINER_TIMEOUT seconds.
+        // The E2B docs are unclear, but the timeout is relative to the time of this method call. 
+        await containers[data.sandboxId].setTimeout(CONTAINER_TIMEOUT);
+      } catch (e: any) {
+        console.error("Error setting timeout:", e);
+        io.emit("error", `Error: set timeout. ${e.message ?? e}`);
+      }
+    });
 
     socket.on("getFile", (fileId: string, callback) => {
       console.log(fileId);
@@ -807,25 +821,6 @@ io.on("connection", async (socket) => {
         }
 
         if (data.isOwner && connections[data.sandboxId] <= 0) {
-          await Promise.all(
-            Object.entries(terminals).map(async ([key, terminal]) => {
-              await terminal.close();
-              delete terminals[key];
-            })
-          );
-
-          await lockManager.acquireLock(data.sandboxId, async () => {
-            try {
-              if (containers[data.sandboxId]) {
-                await containers[data.sandboxId].kill();
-                delete containers[data.sandboxId];
-                console.log("Closed container", data.sandboxId);
-              }
-            } catch (error) {
-              console.error("Error closing container ", data.sandboxId, error);
-            }
-          });
-
           socket.broadcast.emit(
             "disableAccess",
             "The sandbox owner has disconnected."
