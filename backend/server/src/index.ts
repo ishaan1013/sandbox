@@ -6,10 +6,15 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import { DokkuClient } from "./DokkuClient";
 import { SecureGitClient, FileData } from "./SecureGitClient";
-import fs from "fs";
+import fs, { readFile } from "fs";
 
 import { z } from "zod";
-import { User } from "./types";
+import {
+  TFile,
+  TFileData,
+  TFolder,
+  User
+} from "./types";
 import {
   createFile,
   deleteFile,
@@ -21,7 +26,7 @@ import {
 } from "./fileoperations";
 import { LockManager } from "./utils";
 
-import { Sandbox, Filesystem, FilesystemEvent } from "e2b";
+import { Sandbox, Filesystem, FilesystemEvent, EntryInfo } from "e2b";
 
 import { Terminal } from "./Terminal"
 
@@ -55,14 +60,14 @@ const terminals: Record<string, Terminal> = {};
 
 const dirName = "/home/user";
 
-const moveFile = async (
-  filesystem: Filesystem,
-  filePath: string,
-  newFilePath: string
-) => {
-  const fileContents = await filesystem.read(filePath);
-  await filesystem.write(newFilePath, fileContents);
-  await filesystem.remove(filePath);
+const moveFile = async (filesystem: Filesystem, filePath: string, newFilePath: string) => {
+  try {
+    const fileContents = await filesystem.read(filePath);
+    await filesystem.write(newFilePath, fileContents);
+    await filesystem.remove(filePath);
+  } catch (e) {
+    console.error(`Error moving file from ${filePath} to ${newFilePath}:`, e);
+  }
 };
 
 io.use(async (socket, next) => {
@@ -157,17 +162,22 @@ io.on("connection", async (socket) => {
       }
     }
 
-    await lockManager.acquireLock(data.sandboxId, async () => {
+    const createdContainer = await lockManager.acquireLock(data.sandboxId, async () => {
       try {
         if (!containers[data.sandboxId]) {
           containers[data.sandboxId] = await Sandbox.create({ timeoutMs: 1200000 });
           console.log("Created container ", data.sandboxId);
+          return true;
         }
       } catch (e: any) {
         console.error(`Error creating container ${data.sandboxId}:`, e);
         io.emit("error", `Error: container creation. ${e.message ?? e}`);
       }
     });
+
+    const sandboxFiles = await getSandboxFiles(data.sandboxId);
+    const projectDirectory = path.join(dirName, "projects", data.sandboxId);
+    const containerFiles = containers[data.sandboxId].files;
 
     // Change the owner of the project directory to user
     const fixPermissions = async (projectDirectory: string) => {
@@ -180,44 +190,156 @@ io.on("connection", async (socket) => {
       }
     };
 
-    // Copy all files from the project to the container
-    const sandboxFiles = await getSandboxFiles(data.sandboxId);
-    const containerFiles = containers[data.sandboxId].files;
-    const promises = sandboxFiles.fileData.map(async (file) => {
+    // Check if the given path is a directory
+    const isDirectory = async (projectDirectory: string): Promise<boolean> => {
       try {
-        const filePath = path.join(dirName, file.id);
-        const parentDirectory = path.dirname(filePath);
-        if (!containerFiles.exists(parentDirectory)) {
-          await containerFiles.makeDir(parentDirectory);
-        }
-        await containerFiles.write(filePath, file.data);
+        const result = await containers[data.sandboxId].commands.run(
+          `[ -d "${projectDirectory}" ] && echo "true" || echo "false"`
+        );
+        return result.stdout.trim() === "true";
       } catch (e: any) {
-        console.log("Failed to create file: " + e);
+        console.log("Failed to check if directory: " + e);
+        return false;
       }
-    });
-    await Promise.all(promises);
+    };
 
-    const projectDirectory = path.join(dirName, "projects", data.sandboxId);
+    // Only continue to container setup if a new container was created
+    if (createdContainer) {
 
-    // Make the logged in user the owner of all project files
-    fixPermissions(projectDirectory);
+      // Copy all files from the project to the container
+      const promises = sandboxFiles.fileData.map(async (file) => {
+        try {
+          const filePath = path.join(dirName, file.id);
+          const parentDirectory = path.dirname(filePath);
+          if (!containerFiles.exists(parentDirectory)) {
+            await containerFiles.makeDir(parentDirectory);
+          }
+          await containerFiles.write(filePath, file.data);
+        } catch (e: any) {
+          console.log("Failed to create file: " + e);
+        }
+      });
+      await Promise.all(promises);
 
-    // Start filesystem watcher for the /home directory
-    containerFiles.watch(projectDirectory, (event: FilesystemEvent) => {
-      const filePath = path.join(projectDirectory, event.name);
-      if (event.type === "create") {
-        sandboxFiles.files.push({
-          id: filePath,
-          name: event.name,
-          type: "file",
-        });
-        console.log(`Create ${filePath}`);
-      } else if (event.type === "remove") {
-        console.log(`Remove ${filePath}`);
+      // Make the logged in user the owner of all project files
+      fixPermissions(projectDirectory);
+
+    }
+
+    // Start filesystem watcher for the project directory
+    const watchDirectory = (directory: string) => {
+      try {
+        containerFiles.watch(directory, async (event: FilesystemEvent) => {
+          try {
+
+            function removeDirName(path : string, dirName : string) {
+                return path.startsWith(dirName) ? path.slice(dirName.length) : path;
+            }
+
+            // This is the absolute file path in the container
+            const containerFilePath = path.join(directory, event.name);
+            // This is the file path relative to the home directory
+            const sandboxFilePath = removeDirName(containerFilePath, dirName + "/");
+            // This is the directory being watched relative to the home directory
+            const sandboxDirectory = removeDirName(directory, dirName + "/");
+
+            // Helper function to find a folder by id
+            function findFolderById(files: (TFolder | TFile)[], folderId : string) {
+              return files.find((file : TFolder | TFile) => file.type === "folder" && file.id === folderId);
+            }
+
+            // A new file or directory was created.
+            if (event.type === "create") {
+              const folder = findFolderById(sandboxFiles.files, sandboxDirectory) as TFolder;
+              const isDir = await isDirectory(containerFilePath);
+
+              const newItem = isDir
+                ? { id: sandboxFilePath, name: event.name, type: "folder", children: [] } as TFolder
+                : { id: sandboxFilePath, name: event.name, type: "file" } as TFile;
+
+              if (folder) {
+                // If the folder exists, add the new item (file/folder) as a child
+                folder.children.push(newItem);
+              } else {
+                // If folder doesn't exist, add the new item to the root
+                sandboxFiles.files.push(newItem);
+              }
+
+              if (!isDir) {
+                const fileData = await containers[data.sandboxId].files.read(containerFilePath);
+                const fileContents = typeof fileData === "string" ? fileData : "";
+                sandboxFiles.fileData.push({ id: sandboxFilePath, data: fileContents });
+              }
+
+              console.log(`Create ${sandboxFilePath}`);
+            }
+
+            // A file or directory was removed or renamed.
+            else if (event.type === "remove" || event.type == "rename") {
+              const folder = findFolderById(sandboxFiles.files, sandboxDirectory) as TFolder;
+              const isDir = await isDirectory(containerFilePath);
+
+              const isFileMatch = (file: TFolder | TFile | TFileData) => file.id === sandboxFilePath || file.id.startsWith(containerFilePath + '/');
+
+              if (folder) {
+                // Remove item from its parent folder
+                folder.children = folder.children.filter((file: TFolder | TFile) => !isFileMatch(file));
+              } else {
+                // Remove from the root if it's not inside a folder
+                sandboxFiles.files = sandboxFiles.files.filter((file: TFolder | TFile) => !isFileMatch(file));
+              }
+
+              // Also remove any corresponding file data
+              sandboxFiles.fileData = sandboxFiles.fileData.filter((file: TFileData) => !isFileMatch(file));
+
+              console.log(`Removed: ${sandboxFilePath}`);
+            }
+
+            // The contents of a file were changed.
+            else if (event.type === "write") {
+              const folder = findFolderById(sandboxFiles.files, sandboxDirectory) as TFolder;
+              const fileToWrite = sandboxFiles.fileData.find(file => file.id === sandboxFilePath);
+
+              if (fileToWrite) {
+                fileToWrite.data = await containers[data.sandboxId].files.read(containerFilePath);
+                console.log(`Write to ${sandboxFilePath}`);
+              } else {
+                // If the file is part of a folder structure, locate it and update its data
+                const fileInFolder = folder?.children.find(file => file.id === sandboxFilePath);
+                if (fileInFolder) {
+                  const fileData = await containers[data.sandboxId].files.read(containerFilePath);
+                  const fileContents = typeof fileData === "string" ? fileData : "";
+                  sandboxFiles.fileData.push({ id: sandboxFilePath, data: fileContents });
+                  console.log(`Write to ${sandboxFilePath}`);
+                }
+              }
+            }
+
+            // Tell the client to reload the file list
+            socket.emit("loaded", sandboxFiles.files);
+
+          } catch (error) {
+            console.error(`Error handling ${event.type} event for ${event.name}:`, error);
+          }
+        })
+      } catch (error) {
+        console.error(`Error watching filesystem:`, error);
       }
-      socket.emit("loaded", sandboxFiles.files);
-    });
+    };
 
+    // Watch the project directory
+    watchDirectory(projectDirectory);
+
+    // Watch all subdirectories of the project directory, but not deeper
+    // This also means directories created after the container is created won't be watched
+    const dirContent = await containerFiles.list(projectDirectory);
+    dirContent.forEach((item : EntryInfo) => {
+      if (item.type === "dir") {
+        console.log("Watching " + item.path);
+        watchDirectory(item.path);
+      }
+    })
+  
     socket.emit("loaded", sandboxFiles.files);
 
     socket.on("getFile", (fileId: string, callback) => {
