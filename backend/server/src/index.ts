@@ -171,9 +171,13 @@ io.on("connection", async (socket) => {
 
     // Change the owner of the project directory to user
     const fixPermissions = async (projectDirectory: string) => {
-      await containers[data.sandboxId].commands.run(
-        `sudo chown -R user "${projectDirectory}"`
-      );
+      try {
+        await containers[data.sandboxId].commands.run(
+          `sudo chown -R user "${projectDirectory}"`
+        );
+      } catch (e: any) {
+        console.log("Failed to fix permissions: " + e);
+      }
     };
 
     // Copy all files from the project to the container
