@@ -39,6 +39,18 @@ import {
   saveFileRL,
 } from "./ratelimit";
 
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  // Do not exit the process
+  // You can add additional logging or recovery logic here
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  // Do not exit the process
+  // You can also handle the rejected promise here if needed
+});
+
 dotenv.config();
 
 const app: Express = express();
