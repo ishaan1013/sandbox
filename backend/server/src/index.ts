@@ -499,7 +499,8 @@ io.on("connection", async (socket) => {
 
     socket.on("createTerminal", async (id: string, callback) => {
       try {
-        if (terminals[id] || Object.keys(terminals).length >= 4) {
+        // Note: The number of terminals per window is limited on the frontend, but not backend
+        if (terminals[id]) {
           return;
         }
 
