@@ -840,19 +840,6 @@ export default function CodeEditor({
       </>
     )
 
-    useEffect(() => {
-      console.log('Editor mounted');
-      return () => console.log('Editor unmounted');
-    }, []);
-    
-    useEffect(() => {
-      console.log('activeFileContent changed:');
-    }, [activeFileContent]);
-    
-    useEffect(() => {
-      console.log('activeFileId changed:');
-    }, [activeFileId]);
-
   return (
     <>
       {/* Copilot DOM elements */}
