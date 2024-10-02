@@ -26,7 +26,7 @@ import {
 } from "./fileoperations";
 import { LockManager } from "./utils";
 
-import { Sandbox, Filesystem, FilesystemEvent, EntryInfo } from "e2b";
+import { Sandbox, Filesystem, FilesystemEvent, EntryInfo, WatchHandle } from "e2b";
 
 import { Terminal } from "./Terminal"
 
@@ -194,6 +194,7 @@ io.on("connection", async (socket) => {
     const sandboxFiles = await getSandboxFiles(data.sandboxId);
     const projectDirectory = path.join(dirName, "projects", data.sandboxId);
     const containerFiles = containers[data.sandboxId].files;
+    const fileWatchers: WatchHandle[] = [];
 
     // Change the owner of the project directory to user
     const fixPermissions = async (projectDirectory: string) => {
@@ -243,9 +244,9 @@ io.on("connection", async (socket) => {
     }
 
     // Start filesystem watcher for the project directory
-    const watchDirectory = async (directory: string) => {
+    const watchDirectory = async (directory: string): Promise<WatchHandle | undefined> => {
       try {
-        await containerFiles.watch(directory, async (event: FilesystemEvent) => {
+        return await containerFiles.watch(directory, async (event: FilesystemEvent) => {
           try {
 
             function removeDirName(path : string, dirName : string) {
@@ -337,14 +338,16 @@ io.on("connection", async (socket) => {
           } catch (error) {
             console.error(`Error handling ${event.type} event for ${event.name}:`, error);
           }
-        })
+        }, { "timeout": 0 } )
       } catch (error) {
         console.error(`Error watching filesystem:`, error);
       }
     };
 
     // Watch the project directory
-    await watchDirectory(projectDirectory);
+    const handle = await watchDirectory(projectDirectory);
+    // Keep track of watch handlers to close later
+    if (handle) fileWatchers.push(handle);
 
     // Watch all subdirectories of the project directory, but not deeper
     // This also means directories created after the container is created won't be watched
@@ -352,7 +355,9 @@ io.on("connection", async (socket) => {
     await Promise.all(dirContent.map(async (item : EntryInfo) => {
       if (item.type === "dir") {
         console.log("Watching " + item.path);
-        await watchDirectory(item.path);
+        // Keep track of watch handlers to close later
+        const handle = await watchDirectory(item.path);
+        if (handle) fileWatchers.push(handle);
       }
     }))
   
@@ -819,6 +824,11 @@ io.on("connection", async (socket) => {
         if (data.isOwner) {
           connections[data.sandboxId]--;
         }
+
+        // Stop watching file changes in the container
+        Promise.all(fileWatchers.map(async (handle : WatchHandle) => {
+          await handle.close();
+        }));
 
         if (data.isOwner && connections[data.sandboxId] <= 0) {
           socket.broadcast.emit(
