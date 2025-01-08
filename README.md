@@ -1,4 +1,4 @@
-# Sandbox 📦🪄
+# Sandbox 📦🪄 ([Case Study](https://www.ishaand.com/sandbox))
 
 <img width="1799" alt="Screenshot 2024-05-31 at 8 33 56 AM" src="https://github.com/ishaan1013/sandbox/assets/69771365/3f73d7c0-f82a-4997-b01e-eaa043e95113">
 
