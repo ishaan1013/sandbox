@@ -18,6 +18,7 @@ import {
   saveFile,
 } from "./fileoperations";
 import { LockManager } from "./utils";
+import { registerCodeGeneration } from "./generation";
 import { Sandbox, Terminal, FilesystemManager } from "e2b";
 import {
   MAX_BODY_SIZE,
@@ -489,55 +490,7 @@ io.on("connection", async (socket) => {
       }
     });
 
-    socket.on(
-      "generateCode",
-      async (
-        fileName: string,
-        code: string,
-        line: number,
-        instructions: string,
-        callback
-      ) => {
-        try {
-          const fetchPromise = fetch(
-            `${process.env.DATABASE_WORKER_URL}/api/sandbox/generate`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `${process.env.WORKERS_KEY}`,
-              },
-              body: JSON.stringify({
-                userId: data.userId,
-              }),
-            }
-          );
-
-          // Generate code from cloudflare workers AI
-          const generateCodePromise = fetch(
-            `${process.env.AI_WORKER_URL}/api?fileName=${fileName}&code=${code}&line=${line}&instructions=${instructions}`,
-            {
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `${process.env.CF_AI_KEY}`,
-              },
-            }
-          );
-
-          const [fetchResponse, generateCodeResponse] = await Promise.all([
-            fetchPromise,
-            generateCodePromise,
-          ]);
-
-          const json = await generateCodeResponse.json();
-
-          callback({ response: json.response, success: true });
-        } catch (e: any) {
-          console.error("Error generating code:", e);
-          io.emit("error", `Error: code generation. ${e.message ?? e}`);
-        }
-      }
-    );
+    registerCodeGeneration(socket, data);
 
     socket.on("disconnect", async () => {
       try {

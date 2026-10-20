@@ -3,5 +3,9 @@ main = "src/index.ts"
 compatibility_date = "2024-05-12"
 compatibility_flags = ["nodejs_compat"]
 
+# Set to "false" to disable all outgoing web-reference requests.
+[vars]
+WEB_SEARCH_ENABLED = "true"
+
 [ai]
 binding = "AI"

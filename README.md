@@ -93,6 +93,33 @@ Deploy to Cloudflare with [Wrangler](https://developers.cloudflare.com/workers/w
 npx wrangler deploy
 ```
 
+### AI Copilot web references
+
+With AI Copilot enabled, open **Generate** and describe the code you want to add.
+**Web references** is enabled initially and uses
+[Parallel Search MCP](https://docs.parallel.ai/integrations/mcp/search-mcp) to find
+current API and framework documentation. Search runs in Fast mode, with no search
+account or API key required. Include an HTTP or HTTPS documentation URL in your
+prompt to fetch that page instead. Reference links appear below the generated
+code; review the suggestion before accepting it.
+
+The generation prompt is sent to Parallel for web references. The file name and
+file contents are not sent to search; they continue to go to Workers AI for code
+generation. Turn off **Web references** to generate without contacting Parallel.
+Your choice is saved in this browser. Administrators can disable web references
+for the deployment by setting `WEB_SEARCH_ENABLED = "false"` in the AI worker's
+`[vars]` configuration. This does not enable AI Copilot or change its model or
+credentials.
+
+If references fail or the anonymous service reaches its usage limit, generation
+reports an error. Retry later, or explicitly turn off **Web references** to proceed
+without them. A new generation popup starts a new research session; regenerating
+within that popup keeps the same session.
+
+The AI worker's deterministic tests run with `cd backend/ai && npm test -- --run`.
+They exercise the Worker and MCP HTTP transport with fixture responses and a
+scripted inference binding, without Cloudflare credentials.
+
 ---
 
 ## Contributing
