@@ -199,7 +199,7 @@ export default function CodeEditor({
         if (!generateRef.current) return
         const id = changeAccessor.addZone({
           afterLineNumber: cursorLine,
-          heightInLines: 3,
+          heightInLines: 5,
           domNode: generateRef.current,
         })
         setGenerate((prev) => {
@@ -611,7 +611,7 @@ export default function CodeEditor({
                 if (!generateRef.current) return
                 const id = changeAccessor.addZone({
                   afterLineNumber: cursorLine,
-                  heightInLines: 12,
+                  heightInLines: 16,
                   domNode: generateRef.current,
                 })
                 setGenerate((prev) => {
